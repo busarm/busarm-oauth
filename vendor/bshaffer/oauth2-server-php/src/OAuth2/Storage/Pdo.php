@@ -501,23 +501,30 @@ class Pdo implements
 
         // if it exists, update it.
         if ($this->getUser($user_id)) {
+            $done = false;
             if (!empty($password))
             {
                 $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET password=sha2(CONCAT(:user_id,\':\',:salt,\':\',:password),256), salt=:salt where user_id=:user_id', $this->config['user_table']));
-                return $stmt->execute(compact('user_id', 'password','salt'));
+                $done = $stmt->execute(compact('user_id', 'password','salt'));
             }
             if (!empty($email))
             {
                 $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET email=:email where user_id=:user_id', $this->config['user_table']));
-                return $stmt->execute(compact('user_id', 'email'));
+                $done = $stmt->execute(compact('user_id', 'email'));
             }
 
-        } else {
+            if (!empty($scope))
+            {
+                $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET scope=:scope where user_id=:user_id', $this->config['user_table']));
+                $done = $stmt->execute(compact('user_id', 'scope'));
+            }
+
+            return $done;
+        }
+        else {
             $stmt = $this->db->prepare(sprintf('INSERT INTO %s (user_id, password, salt, email, scope) VALUES (:user_id, sha2(CONCAT(:user_id,\':\',:salt,\':\',:password),256), :salt, :email, :scope)', $this->config['user_table']));
             return $stmt->execute(compact('user_id', 'password','salt','email','scope'));
         }
-
-        return false;
     }
 
     /**

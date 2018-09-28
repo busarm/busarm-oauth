@@ -52,6 +52,32 @@ class Resource extends Server
     }
 
 
+    /**Delete Access token and refresh token*/
+    public function removeAccess()
+    {
+        $request = OAuth2\Request::createFromGlobals();
+        $response = new OAuth2\Response();
+
+        $access_token = $request->request('access_token');
+        $refresh_token = $request->request('refresh_token');
+
+        $done = false;
+        if (!empty($access_token)){
+            $done = $this->get_oauth_storage()->unsetAccessToken($access_token);
+
+        }
+        if (!empty($refresh_token)){
+            $done = $this->get_oauth_storage()->unsetRefreshToken($refresh_token);
+        }
+
+        $response->setParameters(array('success' => $done));
+        $response->send();
+        die;
+    }
+
+
+
+
     /**Insert New Oauth User*/
     public function createUser()
     {
@@ -80,7 +106,7 @@ class Resource extends Server
             }
             else
             {
-                //Insert Client
+                //Insert User
                 $result = $this->get_oauth_storage()->setUser($user_id,$password,$email,$scope);
 
                 $response->setParameters(array('success' => $result));
@@ -88,6 +114,41 @@ class Resource extends Server
         }
         $response->send();
 
+        die;
+    }
+
+
+
+
+    /**Update Existing Oauth User*/
+    public function updateUser()
+    {
+        $request = OAuth2\Request::createFromGlobals();
+        $response = new OAuth2\Response();
+
+        $user_id = $request->request('user_id');
+        $password = $request->request('password');
+        $email = $request->request('email');
+        $scope = $request->request('scope');
+
+        //Check if scope is valid if it's available
+        if (!empty($scope)) {
+            $scope = $this->get_oauth_storage()->scopeExists($scope)?$scope:null;
+        }
+
+        //Check if email with scope exists
+        $userInfo = $this->get_oauth_storage()->getUser($user_id);
+        if ($userInfo)
+        {
+            //Update User
+            $result = $this->get_oauth_storage()->setUser($user_id,$password,$email,$scope);
+            $response->setParameters(array('success' => $result));
+        }
+        else
+        {
+            $response->setParameters(array('success' => false,'error'=>'invalid_grant','error_description'=>sprintf("%s with email %s doesn't exist",$scope,$email)));
+        }
+        $response->send();
         die;
     }
 
