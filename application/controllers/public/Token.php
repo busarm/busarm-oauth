@@ -12,30 +12,31 @@ require_once OAUTH_BASE_PATH.'Server.php';
 
 class Token extends Server
 {
-    public function __construct()
-    {
+    private $request;
+    private $response;
+
+    public function __construct(){
         parent::__construct();
+        
+        $this->request = OAuth2\Request::createFromGlobals();
+        $this->response = new OAuth2\Response();
     }
 
     /**Obtain access token if authorized*/
     public function get_token()
     {
-        $request = OAuth2\Request::createFromGlobals();
-        $response = new OAuth2\Response();
-
-        $result = $this->get_oauth_server()->grantAccessToken($request,$response);
+        $result = $this->get_oauth_server()->grantAccessToken($this->request,$this->response);
 
         if (is_bool($result))
         {
-            $response->setParameters(array('success' => $result));
+            $this->response->setParameters(array('success' => $result));
         }
         elseif (!is_null($result))
         {
-            $response->setParameters($result);
+            $this->response->setParameters($result);
 
         }
-        $response->send();
-
+        $this->response->send();
 
         die();
     }

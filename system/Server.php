@@ -19,7 +19,10 @@ class Server
     private $username = 'root';
     private $password = '';
 
+    /**@var OAuth2\Storage\Pdo*/
     private $oauth_storage;
+
+    /**@var OAuth2\Server*/
     private $oauth_server;
 
     /**
@@ -62,7 +65,7 @@ class Server
     /**get oauth server
      * @return OAuth2\Server
      */
-    protected function get_oauth_server()
+    public function get_oauth_server()
     {
         return $this->oauth_server;
     }

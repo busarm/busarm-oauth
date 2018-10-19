@@ -26,9 +26,7 @@ RewriteRule "(^|/)\." - [F]
     Header set Access-Control-Allow-Credentials true
     Header set Access-Control-Allow-Methods "GET, POST, DELETE, PUT, OPTIONS"
     Header set Access-Control-Allow-Headers "*"
-
     Header set X-XSS-Protection "1; mode=block"
-    Header set Content-Security-Policy "default-src 'self' 'unsafe-inline' *.ebusgh.com ebusgh.com *.google.com google.com code.jquery.com *.googleapis.com *.gstatic.com;"
 </IfModule>
 
 

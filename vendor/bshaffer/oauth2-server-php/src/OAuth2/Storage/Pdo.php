@@ -429,19 +429,14 @@ class Pdo implements
     }
 
     /**
-     * @param string $user_id
+     * @param string $user_id User ID or Email
      * @param string $password
-     * @param string $scope
      * @return bool
      */
-    public function checkUserCredentials($user_id, $password,$scope = null)
+    public function checkUserCredentials($user_id, $password)
     {
-        if (empty($scope)) {
-            $stmt = $this->db->prepare($sql = sprintf('SELECT * FROM %s WHERE (user_id=:user_id OR email=:user_id) AND password=sha2(CONCAT(user_id,\':\',salt,\':\',:password),256)', $this->config['user_table']));
-        } else {
-            $stmt = $this->db->prepare($sql = sprintf('SELECT * FROM %s WHERE scope=:scope AND (user_id=:user_id OR email=:user_id) AND password=sha2(CONCAT(user_id,\':\',salt,\':\',:password),256)', $this->config['user_table']));
-        }
-        $stmt->execute(array('scope' =>$scope,'user_id' => $user_id,'password' => $password));
+        $stmt = $this->db->prepare($sql = sprintf('SELECT * FROM %s WHERE (user_id=:user_id OR email=:user_id) AND password=sha2(CONCAT(user_id,\':\',salt,\':\',:password),256) LIMIT 1', $this->config['user_table']));
+        $stmt->execute(array('user_id' => $user_id,'password' => $password));
 
         if ($userInfo = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             if (!empty($userInfo['user_id']))
@@ -452,31 +447,14 @@ class Pdo implements
     }
 
     /**Get User data
-     * @param string user_id
-     * @return array|bool
-     */
-    public function getUser($user_id)
-    {
-        $stmt = $this->db->prepare($sql = sprintf('SELECT * FROM %s WHERE user_id=:user_id', $this->config['user_table']));
-        $stmt->execute(array('user_id' => $user_id));
-
-        if (!$userInfo = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-            return false;
-        }
-
-        return $userInfo;
-    }
-
-
-    /**Get user data using email and scope
+     * @param $user_id
      * @param $email
-     * @param $scope
      * @return array|bool
      */
-    public function getUserWithEmailAndScope($email,$scope)
+    public function getUser($user_id,$email = null)
     {
-        $stmt = $this->db->prepare($sql = sprintf('SELECT * FROM %s WHERE email=:email AND scope=:scope', $this->config['user_table']));
-        $stmt->execute(array('email' => $email,'scope' => $scope));
+        $stmt = $this->db->prepare($sql = sprintf('SELECT * FROM %s WHERE user_id=:user_id OR email=:email LIMIT 1', $this->config['user_table']));
+        $stmt->execute(array('user_id' => $user_id,'email' => $email));
 
         if (!$userInfo = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             return false;
@@ -484,6 +462,7 @@ class Pdo implements
 
         return $userInfo;
     }
+
 
     /**
      * plaintext passwords are bad!  Override this for your application
@@ -544,6 +523,31 @@ class Pdo implements
 
         return false;
     }
+
+
+    /**Check if User has the requested scope
+     * @param $scope
+     * @param $user_id
+     * @return bool
+     */
+    public function scopeExistsForUser($scope,$user_id){
+
+        $scopes = explode(' ', $scope);
+        $stmt = $this->db->prepare(sprintf('SELECT scope FROM %s WHERE user_id = ?', $this->config['user_table']));
+        $stmt->execute([$user_id]);
+
+        if ($result = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $found = true;
+            foreach ($scopes as $sc){
+                if (strpos(trim(strtolower($result['scope'] )),trim(strtolower($sc))) === false){
+                    $found = false;
+                }
+            }
+            return $found;
+        }
+        return false;
+    }
+
 
     /**
      * @param mixed $client_id

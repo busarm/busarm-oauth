@@ -6,12 +6,15 @@ $server_protocol = (isset($_SERVER['SERVER_PROTOCOL']) && in_array($_SERVER['SER
 define("PROTOCOL_HEADER", $server_protocol, true); //Server Protocol header
 
 $base_url = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == "on") ? "https" : "http");
+define("OAUTH_BASE_SCHEME",$base_url);
 $base_url .= "://". @$_SERVER['HTTP_HOST'];
 define("OAUTH_BASE_SERVER",$base_url);
 $base_url .=     str_replace(basename($_SERVER['SCRIPT_NAME']),"",$_SERVER['SCRIPT_NAME']);
 $config['base_url'] = $base_url;
-
 define("OAUTH_BASE_URL",$base_url);
+define("OAUTH_CURRENT_URL",OAUTH_BASE_SERVER.@$_SERVER['REQUEST_URI']);
+
+
 define("ENV_DEV", "development", true);
 define("ENV_PROD", "production", true);
 define("ENV_TEST", "testing", true);
@@ -201,25 +204,27 @@ define('OAUTH_APP_PATH','application/controllers/');
 define('OAUTH_APP_PUBLIC_PATH',OAUTH_APP_PATH.'public/');
 define('OAUTH_BASE_PATH','system/');
 define('OAUTH_VIEW_PATH','application/views/');
-$server_protocol = (isset($_SERVER['SERVER_PROTOCOL']) && in_array($_SERVER['SERVER_PROTOCOL'], array('HTTP/1.0', 'HTTP/1.1', 'HTTP/2'), TRUE))
-    ? $_SERVER['SERVER_PROTOCOL'] : 'HTTP/1.1';
-
-define("PROTOCOL_HEADER", $server_protocol); //Server Protocol header
-
 
 
 /*Initiate rerouting*/
 $request_path = isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:null;
-if (!isset($request_path))
-{
+if (!isset($request_path)) {
     $request_path = isset($_SERVER['ORIG_PATH_INFO'])?$_SERVER['ORIG_PATH_INFO']:null;
 }
 
 if (isset($request_path)) {
-
-    $routes = explode('/', $request_path);
-    reroute($routes);
-    
+    try {
+        if (!isset($_SESSION)) {
+            //Start Session
+            session_start([
+                'name' => 'ebusgh_oauth_session'
+            ]);
+        }
+    }
+    finally{
+        $routes = explode('/', $request_path);
+        reroute($routes);
+    }
 }
 else {
     showError(404,"Invalid Request","Invalid Request Path");
@@ -386,14 +391,18 @@ function fileExists($fileName, $caseSensitive = true) {
  * @param $code string Error Code
  * @param $title string Error Title
  * @param $msg string Error Message
+ * @param $isHtml
  */
-function showError($code,$title,$msg)
+function showError($code,$title,$msg,$isHtml = false)
 {
     header(PROTOCOL_HEADER.' '.$code.' '.$title, TRUE, $code);
     header("Content-type: text/html");
-
-    echo
-        "
+    if ($isHtml){
+        echo $msg;
+    }
+    else{
+        echo
+            "
             <!DOCTYPE html>
             <html>
             <head>
@@ -406,7 +415,8 @@ function showError($code,$title,$msg)
             </body>
             </html>
         ";
-    exit($code);
+    }
+    exit;
 }
 
 
@@ -448,34 +458,75 @@ function get_file($filePath)
 
 /**Load View
  * @param $path
+ * @param array $vars
  * @param bool $return
- * @return bool|null|string
+ * @return string
  * @throws Exception
  */
-function loadView($path,$return = false)
-{
-    if ($filePath = fileExists(OAUTH_VIEW_PATH.$path.".php"))
-    {
-        if ($file = get_file($filePath))
-        {
-            if ($return)
-                return $file;
-            else
-            {
-                echo $file;
-            }
+function loadView($path,$vars = array(),$return = false){
+    if ($filePath = fileExists(OAUTH_VIEW_PATH.$path.".php")) {
+
+        if (!empty($vars))
+            extract($vars);
+
+        ob_start();
+        include $filePath;
+        $content =  ob_get_contents();
+        ob_end_clean();
+
+        if ($return){
+            return $content;
         }
-        else
-        {
-            throw new Exception("Failed to load view");
+        else{
+            echo $content;
+            ob_flush();
+            exit;
         }
     }
-    else
-    {
+    else {
         throw new Exception("File does not Exist");
     }
+}
 
-    return false;
+/**Alert Message
+ * @param $msg
+ */
+function alert($msg){
+    echo "<script>alert('$msg')</script>";
+}
+
+
+/**Encode CSRF TOKEN With validation params
+ * @param $csrf_token
+ * @return string
+ */
+function encode_csrf_token($csrf_token){
+    $dateObj = new DateTime("now", new DateTimeZone("GMT"));
+    $unique_id = md5(IPADDRESS.$dateObj->format('Y-m-d H'));
+    $csrf_token = base64_encode(sprintf("%s/%s",$csrf_token,$unique_id));
+    return $csrf_token;
+}
+
+
+
+/**Get String from data
+ * @param $data
+ * @return string
+ */
+function to_string($data){
+    $str = "";
+    if (isset($data)) {
+        $arr = json_decode($data);
+        if (!empty($arr) && is_array($data)){
+            foreach ($data as $item) {
+                $str .= $item . " ";
+            }
+        }
+        else{
+            $str = $data;
+        }
+    }
+    return trim($str);
 }
 
 

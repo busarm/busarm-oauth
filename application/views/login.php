@@ -1,5 +1,15 @@
 <?php
 defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
+
+/**
+ * @var string $email
+ * @var string $msg
+ */
+
+defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
+$_SESSION['csrf_token'] = md5(uniqid(OAUTH_BASE_URL));
+$csrf_token = encode_csrf_token($_SESSION['csrf_token']);
+$action = OAUTH_CURRENT_URL;
 ?>
 
 <!DOCTYPE html>
@@ -13,30 +23,106 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
     <link rel="icon" type="image/png" href="https://ebusgh.com/cdn/public/img/favicon/favicon-64x64.png" sizes="64x64" />
     <title>Login</title>
     <style>
-        .login-page {
-            width: 360px;
-            padding: 8% 0 0;
+        body{
+            margin: auto !important;
+            user-select: none;
+            background: #335038 !important;
+        }
+        oauth-login h1,h2,h3,h4,h5,p,div,input,button,textarea {
+            font-family: "Palatino Linotype", sans-serif !important;
+        }
+
+        oauth-login h1{
+            font-size: 26px;
+            font-weight: bold;
+        }
+        oauth-login h2{
+            font-size: 24px;
+            font-weight: bold;
+        }
+        oauth-login h3{
+            font-size: 20px;
+            font-weight: bold;
+        }
+        oauth-login h4{
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        oauth-login footer {
+            height: auto;
+            background: transparent;
+            padding: 10px;
+            text-align: center;
+        }
+        oauth-login footer .copyright {
+            color: #fff;
+            font-size: 0.9em;
+            padding: 0;
+            text-align: center;
+        }
+
+        oauth-login footer .copyright a {
+            color: inherit;
+        }
+
+        oauth-login footer .copyright li {
+            border-left: solid 1px #dddddd;
+            display: inline-block;
+            list-style: none;
+            margin: 5px;
+            padding:5px;
+        }
+
+        oauth-login footer .copyright li:first-child {
+            border-left: 0;
+            margin-left: 0;
+            padding-left: 0;
+        }
+
+        oauth-login .login-page {
+            display: flex;
+            align-self: center;
+            justify-content: center;
+            width: auto;
+            max-width: 500px;
+            padding: 20px !important;
             margin: auto;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
-        .logo{
+
+        oauth-login .login-page .logo.icon{
+            margin: auto;
+            height: 100%;
+            padding: 0;
+            image-resolution: from-image;
             image-rendering: auto;
-            image-resolution: normal;
-            width: 80px;
-            height: 80px;
+            object-fit: contain;
+            border: 0;
+            background: transparent;
         }
-        .form {
+        oauth-login .login-page .logo.logo_icon{
+            height:80px;
+        }
+        oauth-login .login-page .icon{
+            height:25px;
+        }
+        oauth-login .login-page .logo.logo_txt{
+            height:25px;
+        }
+
+        oauth-login .login-page .form {
+            height: auto;
             font-family: "", sans-serif;
-            position: relative;
-            z-index: 1;
             background: #fff;
             max-width: 360px;
-            margin: 0 auto 100px;
             padding: 45px;
             text-align: center;
             border-radius: 3px;
             box-shadow:  0 2px 5px 0 rgba(77, 80, 79, 0.6)
         }
-        .form input {
+        oauth-login .login-page .form input {
             font-family: "", sans-serif;
             outline: 0;
             background: #f2f2f2;
@@ -47,93 +133,86 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             box-sizing: border-box;
             font-size: 14px;
         }
-        .form button {
-            font-family: "", sans-serif;
-            text-transform: uppercase;
+        oauth-login .login-page .form button {
             outline: 0;
             background: #3F5F44;
             width: 100%;
             border: 0;
             padding: 15px;
             color: #FFFFFF;
-            font-size: 14px;
+            font-size: 18px;
             -webkit-transition: all 0.3s ease;
             transition: all 0.3s ease;
             cursor: pointer;
         }
-        .form button:hover,.form button:active,.form button:focus {
-            background: #335038;
+        oauth-login .login-page .form button:hover,.form button:active,.form button:focus {
+            opacity: .8;
         }
-        .form .message {
+
+        oauth-login .login-page .form .message {
             margin: 15px 0 0;
-            color: #b3b3b3;
+            color: #DF632D;
             font-size: 12px;
         }
-        .form .message a {
+        oauth-login .login-page .form .message a {
             color: #3F5F44;
             text-decoration: none;
         }
-        .container {
-            position: relative;
-            z-index: 1;
-            width: auto;
-            margin: 0 auto;
-        }
-        .container:before, .container:after {
-            content: "";
-            display: block;
-            clear: both;
-        }
-        .container .info {
-            margin: 50px auto;
-            text-align: center;
-        }
-        .container .info h1 {
-            margin: 0 0 15px;
-            padding: 0;
-            font-size: 36px;
-            font-weight: 300;
-            color: #1a1a1a;
-        }
-        .container .info span {
-            color: #4d4d4d;
-            font-size: 12px;
-        }
-        .container .info span a {
-            color: #000000;
-            text-decoration: none;
-        }
-        .container .info span .fa {
-            color: #EF3B3A;
-        }
-        body {
-            user-select: none;
-            background: rgba(63, 95, 68, 1);
-            font-family: "", sans-serif;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
     </style>
-    <!-- <script
-            src="https://code.jquery.com/jquery-3.3.1.min.js"
-            integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
-            crossorigin="anonymous">
-    </script> -->
 </head>
 <body>
-<div class="container login-page">
-
-    <div class="form">
-        <div>
-            <img class="logo" src="https://ebusgh.com/cdn/public/img/favicon/favicon-128x128.png">
+<oauth-login>
+    <div class="login-page">
+        <div class="form">
+            <div>
+                <img class="logo logo_icon" src="https://ebusgh.com/cdn/public/img/logo/dark/logo_128px.png">
+            </div>
+            <div>
+                <img class="logo logo_txt" src="https://ebusgh.com/cdn/public/img/logo/dark/logo_txt_128px.png">
+            </div>
+            <br>
+            <form class="login-form" method="post" action="<?=$action?>">
+                <?php
+                if (!empty($email)){
+                    ?>
+                    <h3> Authorize access to this account</h3>
+                    <br>
+                    <div>
+                        <img class="icon" src="https://ebusgh.com/cdn/public/img/Name_104px.png">
+                        <div>
+                            <?= $email ?>
+                        </div>
+                    </div>
+                    <br>
+                    <input type="hidden" required="required" name="username" value="<?= $email ?>"/>
+                    <?php
+                }
+                else{
+                    ?>
+                    <h2> Login </h2>
+                    <input type="text" required="required" name="username" placeholder="Username/Email"/>
+                    <?php
+                }
+                ?>
+                <input type="password" required="required" name="password" placeholder="Password"/>
+                <input type="hidden" required="required" name="csrf_token" value="<?=$csrf_token?>"/>
+                <button>Proceed</button>
+                <?php
+                if (isset($msg)){
+                    ?>
+                    <div class="message"><?=$msg?></div>
+                    <?php
+                }
+                ?>
+            </form>
         </div>
-        <br>
-        <form class="login-form" method="post">
-            <input type="text" name="username" placeholder="Username/Email"/>
-            <input type="password" name="password" placeholder="Password"/>
-            <button>login</button>
-        </form>
     </div>
-</div>
+    <!-- Footer -->
+    <footer>
+        <ul class="copyright">
+            <li>&copy; eBusGh All rights reserved.</li>
+        </ul>
+    </footer>
+</oauth-login>
 </body>
 </html>
