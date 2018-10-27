@@ -1,8 +1,6 @@
 <?php
 defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
 
-require_once OAUTH_BASE_PATH."Server.php";
-
 /**
  * Created by PhpStorm.
  * User: Samuel
@@ -26,12 +24,9 @@ class Resource extends Server
     /**Verify Token only*/
     public function verifyToken()
     {
-        $result = $this->get_oauth_server()->verifyResourceRequest($this->request,$this->response);
-
-        if ($result) {
+        if ($this->get_oauth_server()->verifyResourceRequest($this->request,$this->response)) {
             $this->response->setParameters(array('success' => true, 'message' => 'Api access granted'));
         }
-
         $this->response->send();
         die;
     }
@@ -39,12 +34,9 @@ class Resource extends Server
     /**Verify token and obtain data*/
     public function getTokenData()
     {
-        $result = $this->get_oauth_server()->getAccessTokenData($this->request,$this->response);
-        
-        if ($result) {
+        if ($result = $this->get_oauth_server()->getAccessTokenData($this->request,$this->response)) {
             $this->response->setParameters(array('success' => true, 'data' => $result));
         }
-
         $this->response->send();
         die;
     }
@@ -73,29 +65,30 @@ class Resource extends Server
     /**Insert New Oauth User*/
     public function createUser()
     {
-        $user_id = $this->request->request('user_id');
-        $password = $this->request->request('password');
-        $email = $this->request->request('email');
-        $scope = $this->request->request('scope');
+        if ($this->get_oauth_server()->verifyResourceRequest($this->request,$this->response)){
+            $user_id = $this->request->request('user_id');
+            $password = $this->request->request('password');
+            $email = $this->request->request('email');
+            $scope = $this->request->request('scope');
 
-        $scopes = to_string($scope);
+            $scopes = to_string($scope);
 
-        //Check if scope is valid
-        $scopes = $this->get_oauth_storage()->scopeExists($scopes)?$scopes:$this->get_oauth_storage()->getDefaultScope();
+            //Check if scope is valid
+            $scopes = $this->get_oauth_storage()->scopeExists($scopes)?$scopes:$this->get_oauth_storage()->getDefaultScope();
 
-        //Check if user exists
-        $userInfo = $this->get_oauth_storage()->getUser($user_id,$email);
-        if ($userInfo) {
-            $this->response->setParameters(array('success' => false,'error'=>'duplicate_user','error_description'=>sprintf("User with email %s already exists",$email)));
-        }
-        else {
+            //Check if user exists
+            $userInfo = $this->get_oauth_storage()->getUser($user_id,$email);
+            if ($userInfo) {
+                $this->response->setParameters(array('success' => false,'error'=>'duplicate_user','error_description'=>sprintf("User with email %s already exists",$email)));
+            }
+            else {
 
-            //Insert User
-            $result = $this->get_oauth_storage()->setUser($user_id,$password,$email,$scopes);
-            $this->response->setParameters(array('success' => $result));
+                //Insert User
+                $result = $this->get_oauth_storage()->setUser($user_id,$password,$email,$scopes);
+                $this->response->setParameters(array('success' => $result));
+            }
         }
         $this->response->send();
-
         die;
     }
 
@@ -105,27 +98,31 @@ class Resource extends Server
     /**Update Existing Oauth User*/
     public function updateUser()
     {
-        $user_id = $this->request->request('user_id');
-        $password = $this->request->request('password');
-        $email = $this->request->request('email');
-        $scope = $this->request->request('scope');
+        if ($this->get_oauth_server()->verifyResourceRequest($this->request,$this->response)){
+            $user_id = $this->request->request('user_id');
+            $password = $this->request->request('password');
+            $email = $this->request->request('email');
+            $scope = $this->request->request('scope');
 
-        //Check if scope is valid if it's available
-        if (!empty($scope)) {
-            $scope = $this->get_oauth_storage()->scopeExists($scope)?$scope:null;
-        }
+            $scopes = to_string($scope);
 
-        //Check if user exists
-        $userInfo = $this->get_oauth_storage()->getUser($user_id,$email);
-        if ($userInfo)
-        {
-            //Update User
-            $result = $this->get_oauth_storage()->setUser($user_id,$password,$email,$scope);
-            $this->response->setParameters(array('success' => $result));
-        }
-        else
-        {
-            $this->response->setParameters(array('success' => false,'error'=>'invalid_user','error_description'=>sprintf("%s with email %s doesn't exist",$scope,$email)));
+            //Check if scope is valid if it's available
+            if (!empty($scopes)) {
+                $scopes = $this->get_oauth_storage()->scopeExists($scopes)?$scopes:null;
+            }
+
+            //Check if user exists
+            $userInfo = $this->get_oauth_storage()->getUser($user_id,$email);
+            if ($userInfo)
+            {
+                //Update User
+                $result = $this->get_oauth_storage()->setUser($user_id,$password,$email,$scopes);
+                $this->response->setParameters(array('success' => $result));
+            }
+            else
+            {
+                $this->response->setParameters(array('success' => false,'error'=>'invalid_user','error_description'=>"User doesn't exist"));
+            }
         }
         $this->response->send();
         die;
@@ -135,26 +132,29 @@ class Resource extends Server
     /**Insert new oauth client credentials*/
     public function createClient()
     {
-        $client_id = $this->request->request('client_id');
-        $redirect_uri= $this->request->request('redirect_url');
-        $grant_types = $this->request->request('grant_types');
-        $scope = $this->request->request('scope');
-        $user_id = $this->request->request('user_id');
+        if ($this->get_oauth_server()->verifyResourceRequest($this->request,$this->response)){
+            $client_id = $this->request->request('client_id');
+            $redirect_uri= $this->request->request('redirect_url');
+            $grant_types = $this->request->request('grant_types');
+            $scope = $this->request->request('scope');
+            $user_id = $this->request->request('user_id');
 
-        $client_secret = md5(uniqid($client_id));
+            $client_secret = md5(uniqid($client_id));
 
-        $grants = to_string($grant_types);
-        $scopes = to_string($scope);
+            $grants = to_string($grant_types);
+            $scopes = to_string($scope);
 
-        //Check if scope is valid
-        $scopes = $this->get_oauth_storage()->scopeExists($scopes)?$scopes:$this->get_oauth_storage()->getDefaultScope();
+            //Check if scope is valid
+            $scopes = $this->get_oauth_storage()->scopeExists($scopes)?$scopes:$this->get_oauth_storage()->getDefaultScope();
 
-        //Insert Client
-        $result = $this->get_oauth_storage()->setClientDetails($client_id,$client_secret,$redirect_uri,$grants,$scopes,$user_id);
+            //Insert Client
+            $result = $this->get_oauth_storage()->setClientDetails($client_id,$client_secret,$redirect_uri,$grants,$scopes,$user_id);
 
-        $this->response->setParameters(array('success' => $result));
+            $this->response->setParameters(array('success' => $result));
 
-        $this->response->send();
+            $this->response->send();
+        }
+
         die;
     }
 

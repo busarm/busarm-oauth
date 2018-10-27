@@ -1,8 +1,6 @@
 <?php
 defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
 
-require_once OAUTH_BASE_PATH.'Server.php';
-
 /**
  * Created by PhpStorm.
  * User: Samuel

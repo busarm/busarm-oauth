@@ -8,16 +8,27 @@
 
 defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
 
+use PHPMailer\PHPMailer\PHPMailer;
+
 class Server
 {
 
-//    private $dsn = 'mysql:dbname=ebusghco_13243546576879_oauth;host=localhost';  //TODO UNCOMMENT FOR PRODUCTION
-//    private $username = 'ebusghco_eb_pub';  //TODO UNCOMMENT FOR PRODUCTION
-//    private $password = 'ebusgh@2018';  //TODO UNCOMMENT FOR PRODUCTION
+    const EBUSGH_INFO_EMAIL = "info@ebusgh.com";
 
-    private $dsn = 'mysql:dbname=13243546576879_oauth;host=localhost';
-    private $username = 'root';
-    private $password = '';
+    private $dsn = ENVIRONMENT == ENV_DEV ?
+        'mysql:dbname=13243546576879_oauth;host=localhost':
+        'mysql:dbname=ebusghco_13243546576879_oauth;host=localhost';
+    private $username = ENVIRONMENT == ENV_DEV ?'root':'ebusghco_eb_pub';
+    private $password = ENVIRONMENT == ENV_DEV ?'':'ebusgh@2018';
+
+    protected $protocol = 'mail';
+    protected $smtp_host = "stormerhost.com";
+    protected $smtp_port = 465; //SSL/TLS
+    protected $smtp_user = "info@ebusgh.com";
+    protected $smtp_pass = "ebugh@2018";
+    protected $smtp_timeout = 10;
+    protected $charset = 'utf-8';
+
 
     /**@var OAuth2\Storage\Pdo*/
     private $oauth_storage;
@@ -37,7 +48,7 @@ class Server
             $this->oauth_server = new OAuth2\Server($this->oauth_storage,array(
                 'access_lifetime'=> 86400, //1 day
                 'refresh_token_lifetime' => 2419200, //28 days
-                'auth_code_lifetime' => 300, //5 mins
+                'auth_code_lifetime' => 3600, //1 hour
                 'allow_credentials_in_request_body' => true,
                 'allow_implicit' => false,
             ));
@@ -57,6 +68,7 @@ class Server
             )));
 
         } catch (Exception $e) {
+            header("Content-Type: application/json",true);
             exit(json_encode(['status'=>'error','message'=>$e->getMessage()]));
         }
     }
@@ -76,6 +88,63 @@ class Server
     protected function get_oauth_storage()
     {
         return $this->oauth_storage;
+    }
+
+
+
+    /**Send Mail to an intended client
+     * @param string $subject
+     * @param string $message
+     * @param string $to
+     * @param string $from
+     * @return bool
+     */
+    public function sendMail($subject,
+                             $message,
+                             $to,
+                             $from = Server::EBUSGH_INFO_EMAIL)
+    {
+
+        try {
+
+            loadLibrary("PHPMailer/PHPMailer");
+            loadLibrary("PHPMailer/SMTP");
+            loadLibrary("PHPMailer/Exception");
+
+            $mail = new PHPMailer(true);
+
+            //Server settings
+            if ($this->protocol == "mail") {
+                $mail->isMail();
+            } else if ($this->protocol == "smtp") {
+                $mail->isSMTP();
+            } else if ($this->protocol == "sendmail") {
+                $mail->isSendmail();
+            }
+            $mail->Host = $this->smtp_host;
+            $mail->SMTPAuth = true;
+            $mail->Username = $this->smtp_user;
+            $mail->Password = $this->smtp_pass;
+            $mail->SMTPSecure = 'tls';
+            $mail->Port = $this->smtp_port;
+            $mail->Timeout = $this->smtp_timeout;
+            $mail->CharSet = $this->charset;
+
+            //Recipients
+            $mail->setFrom($from, 'EbusGh');
+            $mail->addReplyTo($from, 'Ebusgh');
+            $mail->addAddress($to);
+
+            //Content
+            $mail->isHTML(true);
+            $mail->Subject = $subject;
+            $mail->Body = $message;
+
+            return $mail->send();
+        }
+        catch (Exception $e) {}
+
+        return false;
     }
 
 }

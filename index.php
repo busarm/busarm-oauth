@@ -5,38 +5,40 @@ $server_protocol = (isset($_SERVER['SERVER_PROTOCOL']) && in_array($_SERVER['SER
 
 define("PROTOCOL_HEADER", $server_protocol, true); //Server Protocol header
 
-$base_url = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == "on") ? "https" : "http");
+$base_url = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == "on") ? "https" : "http")."://";
 define("OAUTH_BASE_SCHEME",$base_url);
-$base_url .= "://". @$_SERVER['HTTP_HOST'];
+$base_url .=  @$_SERVER['HTTP_HOST'];
 define("OAUTH_BASE_SERVER",$base_url);
 $base_url .=     str_replace(basename($_SERVER['SCRIPT_NAME']),"",$_SERVER['SCRIPT_NAME']);
 $config['base_url'] = $base_url;
 define("OAUTH_BASE_URL",$base_url);
 define("OAUTH_CURRENT_URL",OAUTH_BASE_SERVER.@$_SERVER['REQUEST_URI']);
 
+define('OAUTH_APP_PATH','application/controllers/');
+define('OAUTH_APP_PUBLIC_PATH',OAUTH_APP_PATH.'public/');
+define('OAUTH_BASE_PATH','system/');
+define('OAUTH_VIEW_PATH','application/views/');
+define('OAUTH_LIBRARY_PATH','application/library/');
 
 define("ENV_DEV", "development", true);
 define("ENV_PROD", "production", true);
 define("ENV_TEST", "testing", true);
 
-   
+
 // fix cross site to option request error
 if($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     $headers = getallheaders();
-
-    //Exit if option request contains authentication headers
-    if(preg_match("/access-token|authorization|authentication|client-id|client-secret/",$headers[@"Access-Control-Request-Headers"])){
-        header(PROTOCOL_HEADER." 200 OK", TRUE, 200);
-        exit();
-    }
+    header(PROTOCOL_HEADER." 200 OK", TRUE, 200);
+    exit();
 }
 
+
 /**
- *
  * Get Ip of users
- * @return string
+ *
  */
-function get_ip_address() {
+function get_ip_address()
+{
 
     // check for shared internet/ISP IP
     if (!empty($_SERVER['HTTP_CLIENT_IP']) && $this->validate_ip($_SERVER['HTTP_CLIENT_IP'])) {
@@ -44,24 +46,19 @@ function get_ip_address() {
     }
 
     // check for IPs passing through proxies
-    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR']))
-    {
+    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
 
         // check if multiple ips exist in var
-        if (strpos($_SERVER['HTTP_X_FORWARDED_FOR'], ',') !== false)
-        {
+        if (strpos($_SERVER['HTTP_X_FORWARDED_FOR'], ',') !== false) {
 
             $iplist = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
 
-            foreach ($iplist as $ip)
-            {
+            foreach ($iplist as $ip) {
                 if ($this->validate_ip($ip))
                     return $ip;
             }
 
-        }
-        else
-        {
+        } else {
 
             if ($this->validate_ip($_SERVER['HTTP_X_FORWARDED_FOR']))
                 return $_SERVER['HTTP_X_FORWARDED_FOR'];
@@ -91,9 +88,10 @@ function get_ip_address() {
  * Ensures an ip address is both a valid IP and does not fall within
  * a private network range.
  * @param $ip
- * @return boolean
+ * @return bool
  */
-function validate_ip($ip) {
+function validate_ip($ip)
+{
 
     if (strtolower($ip) === 'unknown')
         return false;
@@ -102,8 +100,7 @@ function validate_ip($ip) {
     $ip = ip2long($ip);
 
     // if the ip is set and not equivalent to 255.255.255.255
-    if ($ip !== false && $ip !== -1)
-    {
+    if ($ip !== false && $ip !== -1) {
 
         // make sure to get unsigned long representation of ip
         // due to discrepancies between 32 and 64 bit OSes and
@@ -125,15 +122,18 @@ function validate_ip($ip) {
 }
 
 
-$ip = get_ip_address();
-
 /*
  * Define user's IP Address as
  * to be viewed across the server
  *
  */
 
-define('IPADDRESS', $ip);
+define('IPADDRESS', get_ip_address());
+
+/*
+ * Define Server Local Ip
+ */
+define('LOCALHOST', getHostByName(getHostName()));
 
 /*
 |
@@ -142,7 +142,10 @@ define('IPADDRESS', $ip);
 |
 */
 
-$dev_IPS =  array('::1','127.0.0.1',$_SERVER['SERVER_NAME']);
+$test_IPS = array(
+    "61.6.177.69",
+    "175.143.101.237"
+);
 
 /*
  *---------------------------------------------------------------
@@ -162,8 +165,10 @@ $dev_IPS =  array('::1','127.0.0.1',$_SERVER['SERVER_NAME']);
  * NOTE: If you change these, also change the error_reporting() code below
  */
 
-if (IPADDRESS == $_SERVER['SERVER_ADDR'] || in_array(IPADDRESS, $dev_IPS)) {
+if (strpos(OAUTH_BASE_URL,"localhost") || strpos(OAUTH_BASE_URL,LOCALHOST)) {
     define('ENVIRONMENT', ENV_DEV);
+} else if (in_array(IPADDRESS, $test_IPS)) {
+    define('ENVIRONMENT', ENV_TEST);
 } else {
     define('ENVIRONMENT', ENV_PROD);
 }
@@ -198,12 +203,6 @@ switch (ENVIRONMENT) {
         echo 'The application environment is not set correctly.';
         exit(1); // EXIT_ERROR
 }
-
-
-define('OAUTH_APP_PATH','application/controllers/');
-define('OAUTH_APP_PUBLIC_PATH',OAUTH_APP_PATH.'public/');
-define('OAUTH_BASE_PATH','system/');
-define('OAUTH_VIEW_PATH','application/views/');
 
 
 /*Initiate rerouting*/
@@ -283,16 +282,16 @@ function reroute($routes)
                 {
 
                     try {
-                        
+
+                        /*
+                         * Let's Go...
+                         */
+                        require_once OAUTH_BASE_PATH.'OAuth2/Autoloader.php';
+                        OAuth2\Autoloader::register();
+                        require_once OAUTH_BASE_PATH.'Server.php';
                         require_once $realPath;
 
                         if (class_exists(ucfirst($controller))) {
-                            
-                            /*
-                             * Let's Go...
-                             */
-                            require_once('vendor/bshaffer/oauth2-server-php/src/OAuth2/Autoloader.php');
-                            OAuth2\Autoloader::register();
 
                             /*Load Class*/
                             switch (strtolower($controller)) {
@@ -410,7 +409,6 @@ function showError($code,$title,$msg,$isHtml = false)
             </head>
             <body>
                 <h2 align='center'>".$msg."</h2>
-                <h3 align='center'> Your IP : ".IPADDRESS."</h3>
                 <h3 align='center'> ENVIRONMENT : ".ENVIRONMENT."</h3>
             </body>
             </html>
@@ -473,20 +471,39 @@ function loadView($path,$vars = array(),$return = false){
         include $filePath;
         $content =  ob_get_contents();
         ob_end_clean();
+        ob_flush();
 
         if ($return){
             return $content;
         }
         else{
             echo $content;
-            ob_flush();
             exit;
         }
+    }
+    else {
+        if ($return){
+            return null;
+        }
+        else{
+            throw new Exception("File does not Exist");
+        }
+    }
+}
+
+/**Load View
+ * @param $path
+ * @throws Exception
+ */
+function loadLibrary($path){
+    if ($filePath = fileExists(OAUTH_LIBRARY_PATH.$path.".php")) {
+        require_once $filePath;
     }
     else {
         throw new Exception("File does not Exist");
     }
 }
+
 
 /**Alert Message
  * @param $msg

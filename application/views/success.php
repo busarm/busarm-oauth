@@ -7,9 +7,6 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
  */
 
 defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
-$_SESSION['csrf_token'] = md5(uniqid(OAUTH_BASE_URL));
-$csrf_token = encode_csrf_token($_SESSION['csrf_token']);
-$action = OAUTH_CURRENT_URL;
 ?>
 
 <!DOCTYPE html>
@@ -28,45 +25,45 @@ $action = OAUTH_CURRENT_URL;
             user-select: none;
             background: #335038 !important;
         }
-        oauth-login h1,h2,h3,h4,h5,p,div,input,button,textarea {
+        oauth-success h1,h2,h3,h4,h5,p,div,input,button,textarea {
             font-family: "Palatino Linotype", sans-serif !important;
         }
 
-        oauth-login h1{
+        oauth-success h1{
             font-size: 26px;
             font-weight: bold;
         }
-        oauth-login h2{
+        oauth-success h2{
             font-size: 24px;
             font-weight: bold;
         }
-        oauth-login h3{
+        oauth-success h3{
             font-size: 20px;
             font-weight: bold;
         }
-        oauth-login h4{
+        oauth-success h4{
             font-size: 16px;
             font-weight: bold;
         }
 
-        oauth-login footer {
+        oauth-success footer {
             height: auto;
             background: transparent;
             padding: 10px;
             text-align: center;
         }
-        oauth-login footer .copyright {
+        oauth-success footer .copyright {
             color: #fff;
             font-size: 0.9em;
             padding: 0;
             text-align: center;
         }
 
-        oauth-login footer .copyright a {
+        oauth-success footer .copyright a {
             color: inherit;
         }
 
-        oauth-login footer .copyright li {
+        oauth-success footer .copyright li {
             border-left: solid 1px #dddddd;
             display: inline-block;
             list-style: none;
@@ -74,13 +71,13 @@ $action = OAUTH_CURRENT_URL;
             padding:5px;
         }
 
-        oauth-login footer .copyright li:first-child {
+        oauth-success footer .copyright li:first-child {
             border-left: 0;
             margin-left: 0;
             padding-left: 0;
         }
 
-        oauth-login .login-page {
+        oauth-success .success-page {
             display: flex;
             align-self: center;
             justify-content: center;
@@ -92,7 +89,7 @@ $action = OAUTH_CURRENT_URL;
             -moz-osx-font-smoothing: grayscale;
         }
 
-        oauth-login .login-page .logo.icon{
+        oauth-success .success-page .logo.icon{
             margin: auto;
             height: 100%;
             padding: 0;
@@ -102,17 +99,17 @@ $action = OAUTH_CURRENT_URL;
             border: 0;
             background: transparent;
         }
-        oauth-login .login-page .logo.logo_icon{
-            height:80px;
+        oauth-success .success-page .logo.logo_icon{
+            height:80px !important;
         }
-        oauth-login .login-page .icon{
-            height:40px;
+        oauth-success .success-page .logo.icon{
+            height:100px !important;
         }
-        oauth-login .login-page .logo.logo_txt{
-            height:25px;
+        oauth-success .success-page .logo.logo_txt{
+            height:25px !important;
         }
 
-        oauth-login .login-page .form {
+        oauth-success .success-page .form {
             height: auto;
             font-family: "", sans-serif;
             background: #fff;
@@ -122,7 +119,7 @@ $action = OAUTH_CURRENT_URL;
             border-radius: 3px;
             box-shadow:  0 2px 5px 0 rgba(77, 80, 79, 0.6)
         }
-        oauth-login .login-page .form input {
+        oauth-success .success-page .form input {
             font-family: "", sans-serif;
             outline: 0;
             background: #f2f2f2;
@@ -133,7 +130,7 @@ $action = OAUTH_CURRENT_URL;
             box-sizing: border-box;
             font-size: 14px;
         }
-        oauth-login .login-page .form button {
+        oauth-success .success-page .form button,a {
             outline: 0;
             background: #3F5F44;
             width: 100%;
@@ -145,24 +142,27 @@ $action = OAUTH_CURRENT_URL;
             transition: all 0.3s ease;
             cursor: pointer;
         }
-        oauth-login .login-page .form button:hover,.form button:active,.form button:focus {
+        oauth-success .success-page .form button:hover,.form button:active,.form button:focus {
+            opacity: .8;
+        }
+        oauth-success .success-page .form a:hover,.form a:active,.form a:focus {
             opacity: .8;
         }
 
-        oauth-login .login-page .form .message {
+        oauth-success .success-page .form .message {
             margin: 15px 0 0;
             color: #DF632D;
             font-size: 12px;
         }
-        oauth-login .login-page .form .message a {
+        oauth-success .success-page .form .message a {
             color: #3F5F44;
             text-decoration: none;
         }
     </style>
 </head>
 <body>
-<oauth-login>
-    <div class="login-page">
+<oauth-success>
+    <div class="success-page">
         <div class="form">
             <div>
                 <img class="logo logo_icon" src="https://ebusgh.com/cdn/public/img/logo/dark/logo_128px.png">
@@ -170,41 +170,14 @@ $action = OAUTH_CURRENT_URL;
             <div>
                 <img class="logo logo_txt" src="https://ebusgh.com/cdn/public/img/logo/dark/logo_txt_128px.png">
             </div>
+            <br/>
+            <div>
+                <img class="logo icon" src="https://ebusgh.com/cdn/public/img/Verified.png">
+            </div>
             <br>
-            <form class="login-form" method="post" action="<?=$action?>">
-                <?php
-                if (!empty($email)){
-                    ?>
-                    <h3> Authorize access to this account</h3>
-                    <br>
-                    <div>
-                        <img class="icon" src="https://ebusgh.com/cdn/public/img/Name_104px.png">
-                        <div>
-                            <?= $email ?>
-                        </div>
-                    </div>
-                    <br>
-                    <input type="hidden" required="required" name="username" value="<?= $email ?>"/>
-                    <?php
-                }
-                else{
-                    ?>
-                    <h2> Login </h2>
-                    <input type="text" required="required" name="username" placeholder="Username/Email"/>
-                    <?php
-                }
-                ?>
-                <input type="password" required="required" name="password" placeholder="Password"/>
-                <input type="hidden" required="required" name="csrf_token" value="<?=$csrf_token?>"/>
-                <button>Proceed</button>
-                <?php
-                if (isset($msg)){
-                    ?>
-                    <div class="message"><?=$msg?></div>
-                    <?php
-                }
-                ?>
-            </form>
+            <h3> Authorization link Sent to <strong style="font-size: 16px"><?=$email?></strong></h3>
+            <i>(Please check your email)</i>
+
         </div>
     </div>
     <!-- Footer -->
@@ -213,6 +186,6 @@ $action = OAUTH_CURRENT_URL;
             <li>&copy; eBusGh All rights reserved.</li>
         </ul>
     </footer>
-</oauth-login>
+</oauth-success>
 </body>
 </html>
