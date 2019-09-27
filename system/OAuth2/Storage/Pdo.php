@@ -72,6 +72,7 @@ class Pdo implements
         $connection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 
         $this->config = array_merge(array(
+            'configs_table' => 'oauth_configs',
             'client_table' => 'oauth_clients',
             'access_token_table' => 'oauth_access_tokens',
             'refresh_token_table' => 'oauth_refresh_tokens',
@@ -166,6 +167,37 @@ class Pdo implements
         return true;
     }
 
+
+    /**Get Configuration for name
+     * @param $name
+     * @return string|boolean
+     */
+    public function getConfig($name)
+    {
+        $stmt = $this->db->prepare(sprintf('SELECT value FROM %s WHERE name = :name ', $this->config['configs_table']));
+        $stmt->execute(compact('name'));
+        if ($config = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            return $config!=null && isset($config['value'])?$config['value']:false;
+        }
+        else
+            return false;
+    }
+
+
+    /**Get Configurations
+     * @return array
+     */
+    public function getConfigs()
+    {
+        $stmt = $this->db->prepare(sprintf('SELECT * from %s', $this->config['configs_table']));
+        $stmt->execute();
+        if ($configs = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            return $configs;
+        }
+        else
+            return [];
+    }
+
     /**
      * @param string $access_token
      * @return array|bool|mixed|null
@@ -174,7 +206,7 @@ class Pdo implements
     {
         $stmt = $this->db->prepare(sprintf('SELECT * from %s where access_token = :access_token', $this->config['access_token_table']));
 
-        $token = $stmt->execute(compact('access_token'));
+        $stmt->execute(compact('access_token'));
         if ($token = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             // convert date string back to timestamp
             $token['expires'] = strtotime($token['expires']);
@@ -446,7 +478,7 @@ class Pdo implements
         return false;
     }
 
-    /**Get User data
+    /**Get User
      * @param $user_id
      * @param $email
      * @return array|bool
@@ -461,6 +493,53 @@ class Pdo implements
         }
 
         return $userInfo;
+    }
+
+
+    /**Get User
+     * @param $user_id
+     * @param $email
+     * @return array|bool
+     */
+    public function getSingletUserInfo($user_id,$email = null)
+    {
+        $stmt = $this->db->prepare($sql = sprintf('SELECT user_id,email,scope  FROM %s WHERE user_id=:user_id OR email=:email LIMIT 1', $this->config['user_table']));
+        $stmt->execute(array('user_id' => $user_id,'email' => $email));
+
+        if (!$userInfo = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            return false;
+        }
+
+        return $userInfo;
+    }
+
+
+
+    /**Get Users
+     * @param array $user_ids
+     * @param array $emails
+     * @return array|bool
+     */
+    public function getMultipleUserInfo($user_ids,$emails = array())
+    {
+        $users = [];
+        if (!empty($user_ids)){
+            $whereInUserIds = implode(',', array_fill(0, is_array($user_ids)?count($user_ids):0, '?'));
+            $stmt = $this->db->prepare(sprintf('SELECT user_id,email,scope FROM %s WHERE user_id IN (%s)', $this->config['user_table'], $whereInUserIds));
+            $stmt->execute($user_ids);
+            if ($result = $stmt->fetchAll(\PDO::FETCH_ASSOC)) {
+                $users = (array_merge($users,$result));
+            }
+        }
+        if (!empty($emails)){
+            $whereInEmails = implode(',', array_fill(0, is_array($emails)?count($emails):0, '?'));
+            $stmt = $this->db->prepare(sprintf('SELECT user_id,email,scope FROM %s WHERE email IN (%s)', $this->config['user_table'], $whereInEmails));
+            $stmt->execute($emails);
+            if ($result = $stmt->fetchAll(\PDO::FETCH_ASSOC)) {
+                $users = (array_merge($users,$result));
+            }
+        }
+        return $users;
     }
 
 

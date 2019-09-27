@@ -21,21 +21,13 @@ class Token extends Server
     }
 
     /**Obtain access token if authorized*/
-    public function get_token()
+    public function get()
     {
         $result = $this->get_oauth_server()->grantAccessToken($this->request,$this->response);
-
-        if (is_bool($result))
-        {
-            $this->response->setParameters(array('success' => $result));
-        }
-        elseif (!is_null($result))
-        {
+        if ($result) {
             $this->response->setParameters($result);
-
         }
         $this->response->send();
-
         die();
     }
 

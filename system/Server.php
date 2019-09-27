@@ -17,24 +17,30 @@ class Server
 
     private $dsn = ENVIRONMENT == ENV_DEV ?
         'mysql:dbname=13243546576879_oauth;host=localhost':
-        'mysql:dbname=ebusghco_13243546576879_oauth;host=localhost';
-    private $username = ENVIRONMENT == ENV_DEV ?'root':'ebusghco_eb_pub';
-    private $password = ENVIRONMENT == ENV_DEV ?'':'ebusgh@2018';
+        'mysql:dbname=13243546576879_oauth;host=ebusgh-db-instance.csmi9qep3thc.us-east-2.rds.amazonaws.com';
+    private $username = ENVIRONMENT == ENV_DEV ?'root':'ebusgh_public';
+    private $password = ENVIRONMENT == ENV_DEV ?'root':'ebusgh13243546@2019';
 
-    protected $protocol = 'mail';
-    protected $smtp_host = "stormerhost.com";
-    protected $smtp_port = 465; //SSL/TLS
-    protected $smtp_user = "info@ebusgh.com";
-    protected $smtp_pass = "ebugh@2018";
+    protected $protocol = 'smtp';
+    protected $smtp_port = 587; //SSL/TLS
     protected $smtp_timeout = 10;
     protected $charset = 'utf-8';
-
 
     /**@var OAuth2\Storage\Pdo*/
     private $oauth_storage;
 
     /**@var OAuth2\Server*/
     private $oauth_server;
+
+
+    public $user_scope = 'user';
+    public $admin_scope = 'admin';
+    public $agent_scope = 'agent';
+    public $partner_scope = 'partner';
+    public $public_scope = 'public';
+    public $tester_scope = 'tester';
+    public $developer_scope = 'developer';
+    public $staff_scope = 'staff';
 
     /**
      * Server constructor.
@@ -121,18 +127,19 @@ class Server
             } else if ($this->protocol == "sendmail") {
                 $mail->isSendmail();
             }
-            $mail->Host = $this->smtp_host;
+
+            $mail->Username = $this->get_oauth_storage()->getConfig("aws_smtp_user");
+            $mail->Password = $this->get_oauth_storage()->getConfig("aws_smtp_pass");
+            $mail->Host = $this->get_oauth_storage()->getConfig("aws_smtp_host");
+            $mail->Port = $this->get_oauth_storage()->getConfig("aws_smtp_port");
             $mail->SMTPAuth = true;
-            $mail->Username = $this->smtp_user;
-            $mail->Password = $this->smtp_pass;
             $mail->SMTPSecure = 'tls';
-            $mail->Port = $this->smtp_port;
             $mail->Timeout = $this->smtp_timeout;
             $mail->CharSet = $this->charset;
 
             //Recipients
-            $mail->setFrom($from, 'EbusGh');
-            $mail->addReplyTo($from, 'Ebusgh');
+            $mail->setFrom($from, 'EBusGh');
+            $mail->addReplyTo($from, 'EBusGh');
             $mail->addAddress($to);
 
             //Content
@@ -147,4 +154,51 @@ class Server
         return false;
     }
 
+
+    /**Explode array
+     * @param string $data
+     * @param string $delimiter
+     * @return array
+     */
+    public function explode($data,$delimiter = " ")
+    {
+        if (!empty($data)) {
+            if (is_string($data) && !empty($res = json_decode($data,true))){
+                return $res;
+            }
+            else{
+                if (is_array($data)) {
+                    return $data;
+                } else {
+                    return explode($delimiter, $data);
+                }
+            }
+        } else {
+            return [];
+        }
+    }
+
+    /**Implode data
+     * @param mixed $data
+     * @param string $glue
+     * @return string
+     */
+    public function implode($data,$glue = " ")
+    {
+        $str = "";
+        if (!empty($data)) {
+            if (is_string($data) && !empty($arr = json_decode($data))) {
+                $str = implode($glue,$arr);
+            }
+            else {
+                if (is_array($data)){
+                    $str = implode($glue,$data);
+                }
+                else{
+                    $str = $data;
+                }
+            }
+        }
+        return trim($str);
+    }
 }

@@ -5,7 +5,7 @@
  * Date: 3/18/2018
  * Time: 1:40 AM
  *
- * @var $this APP_Controller
+ * @var $this MY_Controller
  * @var string $content
  */
 if (empty($content)) {
@@ -230,7 +230,7 @@ if (empty($content)) {
             margin: 0 0 2em 0;
         }
 
-        .table-wrapper {
+        .x-scroll {
             -webkit-overflow-scrolling: touch;
             overflow-scrolling: touch;
             overflow-x: auto;
@@ -364,8 +364,8 @@ if (empty($content)) {
         <td height="40" align="center"
             style="padding:10px;display: flex; align-content: center; justify-content: center;">
             <img style="height:40px !important;margin:auto;object-fit: contain;user-select: none;image-rendering:auto;"
-                 src="https://ebusgh.com/cdn/public/img/logo/white/logo_txt_256px.png"
-                 alt="EbusGh Logo"/>
+                 src="https://cdn.ebusgh.com/public/img/logo/white/logo_txt_256px.png"
+                 alt="EBusGh Logo"/>
         </td>
     </tr>
     <!--Content-->

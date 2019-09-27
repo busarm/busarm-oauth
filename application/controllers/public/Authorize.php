@@ -36,21 +36,31 @@ class Authorize extends Server
         $state = $this->request->query("state");
         $redirect_uri = $this->request->query("redirect_uri");
 
+
         if ($userInfo = $this->processLoginRequest()) { //Process Login
             $user_id = $userInfo['user_id'];
             $scope = !empty($scope) ? $scope : $this->get_oauth_storage()->getDefaultScope();
-            $is_authorized = $this->get_oauth_storage()->scopeExistsForUser($scope, $user_id) &&
-                $this->get_oauth_server()->validateAuthorizeRequest($this->request, $this->response);
 
+            $is_authorized = $this->get_oauth_storage()->scopeExistsForUser($scope, $user_id);
             if ($is_authorized) {
-                $this->get_oauth_server()->handleAuthorizeRequest($this->request, $this->response, $is_authorized, $user_id);
-                $this->response->send();
-                die();
+
+                $is_authorized = $this->get_oauth_server()->validateAuthorizeRequest($this->request, $this->response);
+                if ($is_authorized) {
+
+                    $this->get_oauth_server()->handleAuthorizeRequest($this->request, $this->response, $is_authorized, $user_id);
+                    $this->response->send();
+                    die();
+                } else {
+                    $this->showAuthorizationForm(["msg" => $this->response->getParameter("error_description")]);
+                    die();
+                }
+
             } else {
-                $this->showAuthorizationForm(["msg" => $this->response->getParameter("error_description")]);
+                $this->showAuthorizationForm(["msg" => "Scope(s) '$scope' not available for this user"]);
                 die();
             }
-        } else {
+        }
+        else {
             if (!empty($email)) { //Validate and Send authorization url
                 if ($userInfo = $this->get_oauth_storage()->getUser(null, $email)) {
 

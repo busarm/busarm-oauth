@@ -1,24 +1,37 @@
 <?php
 
+
+/**Check if https enabled*/
+function is_https(){
+    if (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off') {
+        return TRUE;
+    } elseif (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https') {
+        return TRUE;
+    } elseif (!empty($_SERVER['HTTP_FRONT_END_HTTPS']) && strtolower($_SERVER['HTTP_FRONT_END_HTTPS']) !== 'off') {
+        return TRUE;
+    }
+    return FALSE;
+}
+
 $server_protocol = (isset($_SERVER['SERVER_PROTOCOL']) && in_array($_SERVER['SERVER_PROTOCOL'], array('HTTP/1.0', 'HTTP/1.1', 'HTTP/2'), TRUE))
     ? $_SERVER['SERVER_PROTOCOL'] : 'HTTP/1.1';
 
 define("PROTOCOL_HEADER", $server_protocol, true); //Server Protocol header
 
-$base_url = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == "on") ? "https" : "http")."://";
-define("OAUTH_BASE_SCHEME",$base_url);
-$base_url .=  @$_SERVER['HTTP_HOST'];
-define("OAUTH_BASE_SERVER",$base_url);
-$base_url .=     str_replace(basename($_SERVER['SCRIPT_NAME']),"",$_SERVER['SCRIPT_NAME']);
+$base_url = (is_https() ? "https" : "http") . "://";
+define("OAUTH_BASE_SCHEME", $base_url);
+$base_url .= @$_SERVER['HTTP_HOST'];
+define("OAUTH_BASE_SERVER", $base_url);
+$base_url .= str_replace(basename($_SERVER['SCRIPT_NAME']), "", $_SERVER['SCRIPT_NAME']);
 $config['base_url'] = $base_url;
-define("OAUTH_BASE_URL",$base_url);
-define("OAUTH_CURRENT_URL",OAUTH_BASE_SERVER.@$_SERVER['REQUEST_URI']);
+define("OAUTH_BASE_URL", $base_url);
+define("OAUTH_CURRENT_URL", OAUTH_BASE_SERVER . @$_SERVER['REQUEST_URI']);
 
-define('OAUTH_APP_PATH','application/controllers/');
-define('OAUTH_APP_PUBLIC_PATH',OAUTH_APP_PATH.'public/');
-define('OAUTH_BASE_PATH','system/');
-define('OAUTH_VIEW_PATH','application/views/');
-define('OAUTH_LIBRARY_PATH','application/library/');
+define('OAUTH_APP_PATH', 'application/controllers/');
+define('OAUTH_APP_PUBLIC_PATH', OAUTH_APP_PATH . 'public/');
+define('OAUTH_BASE_PATH', 'system/');
+define('OAUTH_VIEW_PATH', 'application/views/');
+define('OAUTH_LIBRARY_PATH', 'application/library/');
 
 define("ENV_DEV", "development", true);
 define("ENV_PROD", "production", true);
@@ -26,9 +39,8 @@ define("ENV_TEST", "testing", true);
 
 
 // fix cross site to option request error
-if($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    $headers = getallheaders();
-    header(PROTOCOL_HEADER." 200 OK", TRUE, 200);
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    header(PROTOCOL_HEADER . " 200 OK", TRUE, 200);
     exit();
 }
 
@@ -165,7 +177,7 @@ $test_IPS = array(
  * NOTE: If you change these, also change the error_reporting() code below
  */
 
-if (strpos(OAUTH_BASE_URL,"localhost") || strpos(OAUTH_BASE_URL,LOCALHOST)) {
+if (strpos(OAUTH_BASE_URL, "localhost") || strpos(OAUTH_BASE_URL, LOCALHOST)) {
     define('ENVIRONMENT', ENV_DEV);
 } else if (in_array(IPADDRESS, $test_IPS)) {
     define('ENVIRONMENT', ENV_TEST);
@@ -192,8 +204,7 @@ switch (ENVIRONMENT) {
         ini_set('display_errors', 0);
         if (version_compare(PHP_VERSION, '5.3', '>=')) {
             error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT & ~E_USER_NOTICE & ~E_USER_DEPRECATED);
-        }
-        else {
+        } else {
             error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_USER_NOTICE);
         }
         break;
@@ -206,9 +217,9 @@ switch (ENVIRONMENT) {
 
 
 /*Initiate rerouting*/
-$request_path = isset($_SERVER['PATH_INFO'])?$_SERVER['PATH_INFO']:null;
+$request_path = isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : null;
 if (!isset($request_path)) {
-    $request_path = isset($_SERVER['ORIG_PATH_INFO'])?$_SERVER['ORIG_PATH_INFO']:null;
+    $request_path = isset($_SERVER['ORIG_PATH_INFO']) ? $_SERVER['ORIG_PATH_INFO'] : null;
 }
 
 if (isset($request_path)) {
@@ -216,123 +227,84 @@ if (isset($request_path)) {
         if (!isset($_SESSION)) {
             //Start Session
             session_start([
-                'name' => 'ebusgh_oauth_session'
+                'name' => 'ebusgh_oauth_session',
+                'cookie_secure' => ENVIRONMENT == ENV_PROD
             ]);
         }
-    }
-    finally{
+    } finally {
         $routes = explode('/', $request_path);
         reroute($routes);
     }
+} else {
+    showError(404, "Invalid Request", "Invalid Request Path");
 }
-else {
-    showError(404,"Invalid Request","Invalid Request Path");
-}
-
 
 
 /**Re-Routing
- *@param $routes
+ * @param $routes
  */
 function reroute($routes)
 {
 
     $actualPath = "";
-    $controller ="";
-    $function ="";
+    $controller = "";
+    $function = "";
     $params = null;
     $param_key = null;
     $param_count = 0;
-    foreach($routes as $key => $route)
-    {
-        if(!empty(trim($route,"\n\r'\"\\/&%!@#$*)(|<>{}")))
-        {
+    foreach ($routes as $key => $route) {
+        if (!empty(trim($route, "\n\r'\"\\/&%!@#$*)(|<>{}"))) {
 
             if ($key == 0) //Route at section 0 = Controller
             {
-                $controller = basename(trim(OAUTH_APP_PUBLIC_PATH.$route));
+                $controller = basename(trim(OAUTH_APP_PUBLIC_PATH . $route));
                 $actualPath .= $controller;
-                $actualPath.=".php";
-            }
-            else if ($key == 1) //Route at section 1 = Function
+                $actualPath .= ".php";
+            } else if ($key == 1) //Route at section 1 = Function
             {
                 $function = $route;
-            }
-            else //Every other section. = Url params
+            } else //Every other section. = Url params
             {
                 $param_count++;
 
-                if ($param_count%2==0)
-                {
+                if ($param_count % 2 == 0) {
                     $params[$param_key] = $route;
-                }
-                else
-                {
+                } else {
                     $param_key = $route;
                 }
             }
 
-            if ($key == count($routes)-1) //Last
+            if ($key == count($routes) - 1) //Last
             {
                 if (isset($params)) {
                     $_GET = $params;
                 }
-                                   
-                if ($realPath = fileExists(OAUTH_APP_PUBLIC_PATH.$actualPath,false))
-                {
+
+                if ($realPath = fileExists(OAUTH_APP_PUBLIC_PATH . $actualPath, false)) {
 
                     try {
 
                         /*
                          * Let's Go...
                          */
-                        require_once OAUTH_BASE_PATH.'OAuth2/Autoloader.php';
+                        require_once OAUTH_BASE_PATH . 'OAuth2/Autoloader.php';
                         OAuth2\Autoloader::register();
-                        require_once OAUTH_BASE_PATH.'Server.php';
+                        require_once OAUTH_BASE_PATH . 'Server.php';
                         require_once $realPath;
 
                         if (class_exists(ucfirst($controller))) {
 
                             /*Load Class*/
-                            switch (strtolower($controller)) {
-                                case 'token':
-                                case 'authorize':
-                                case 'resource':
+                            /*Create instance of controller*/
+                            $token = new $controller();
 
-                                    /*Create instance of controller*/
-                                    $token = new $controller();
-
-                                    /*Load function*/
-                                    switch (strtolower($function)) {
-                                        case 'get':
-                                            $function = 'get_' . strtolower($controller);
-                                            break;
-                                        case 'post':
-                                            $function = 'post_' . strtolower($controller);
-                                            break;
-                                        case 'put':
-                                            $function = 'put_' . strtolower($controller);
-                                            break;
-                                        case 'delete':
-                                            $function = 'delete_' . strtolower($controller);
-                                            break;
-                                        case 'patch':
-                                            $function = 'patch_' . strtolower($controller);
-                                            break;
-                                    }
-
-                                    if (method_exists($token, $function)
-                                        && is_callable(array($token, $function))) {
-                                        call_user_func(
-                                            array($token, $function)
-                                        );
-                                    } else {
-                                        showError(401, "Unknown Method", "Unknown Method - " . $function);
-                                    }
-
-                                    break;
-                                default:
-                                    showError(401, "Unauthorized Request", "Unauthorized Request - " . $controller);
+                            if (method_exists($token, $function)
+                                && is_callable(array($token, $function))) {
+                                call_user_func(
+                                    array($token, $function)
+                                );
+                            } else {
+                                showError(401, "Unknown Method", "Unknown Method - " . $function);
                             }
 
                         } else {
@@ -340,16 +312,13 @@ function reroute($routes)
                         }
                     } catch (Exception $e) {
                     }
-                }
-                else
-                {
-                    showError(404,"Invalid Request","Invalid Request - ".$controller);
+                } else {
+                    showError(404, "Invalid Request", "Invalid Request - " . $controller);
                 }
 
                 break; //unnecessary but just in-case... Sh*t happens.. can't be too sure ;)
             }
-        }
-        else {
+        } else {
             unset($routes[$key]);
             $routes = array_values($routes);
             reroute($routes);
@@ -360,25 +329,25 @@ function reroute($routes)
 }
 
 
-
 /**Case Insensitive search
  * @param $fileName string
  * @param $caseSensitive bool
  * @return mixed
  */
-function fileExists($fileName, $caseSensitive = true) {
+function fileExists($fileName, $caseSensitive = true)
+{
 
-    if(file_exists($fileName)) {
+    if (file_exists($fileName)) {
         return $fileName;
     }
-    if($caseSensitive) return false;
+    if ($caseSensitive) return false;
 
     // Handle case insensitive requests
     $directoryName = dirname($fileName);
     $fileArray = glob($directoryName . '/*', GLOB_NOSORT);
     $fileNameLowerCase = strtolower($fileName);
-    foreach($fileArray as $file) {
-        if(strtolower($file) == $fileNameLowerCase) {
+    foreach ($fileArray as $file) {
+        if (strtolower($file) == $fileNameLowerCase) {
             return $file;
         }
     }
@@ -392,24 +361,23 @@ function fileExists($fileName, $caseSensitive = true) {
  * @param $msg string Error Message
  * @param $isHtml
  */
-function showError($code,$title,$msg,$isHtml = false)
+function showError($code, $title, $msg, $isHtml = false)
 {
-    header(PROTOCOL_HEADER.' '.$code.' '.$title, TRUE, $code);
+    header(PROTOCOL_HEADER . ' ' . $code . ' ' . $title, TRUE, $code);
     header("Content-type: text/html");
-    if ($isHtml){
+    if ($isHtml) {
         echo $msg;
-    }
-    else{
+    } else {
         echo
             "
             <!DOCTYPE html>
             <html>
             <head>
-                <title>".$code." ".$title."</title>
+                <title>" . $code . " " . $title . "</title>
             </head>
             <body>
-                <h2 align='center'>".$msg."</h2>
-                <h3 align='center'> ENVIRONMENT : ".ENVIRONMENT."</h3>
+                <h2 align='center'>" . $msg . "</h2>
+                <h3 align='center'> ENVIRONMENT : " . ENVIRONMENT . "</h3>
             </body>
             </html>
         ";
@@ -425,8 +393,7 @@ function showError($code,$title,$msg,$isHtml = false)
 function get_file($filePath)
 {
     $data = false;
-    if (isset($filePath))
-    {
+    if (isset($filePath)) {
         //$dl_file = preg_replace("([^\w\s\d\-_~,;:\[\]\(\).]|[\.]{2,})", '', $filePath); // simple file name validation
         $dl_file = filter_var($filePath, FILTER_SANITIZE_URL); // Remove (more) invalid characters
         $fullPath = $dl_file;
@@ -439,13 +406,13 @@ function get_file($filePath)
 
             } finally {
 
-                if ($fd)
-                {
-                    $file = @fread($fd,filesize($fullPath));
-                    $data = $file;
-                }
+                if ($fd) {
 
-                fclose($fd);
+                    $file = @fread($fd, filesize($fullPath));
+                    $data = $file;
+
+                    fclose($fd);
+                }
             }
         }
     }
@@ -461,31 +428,27 @@ function get_file($filePath)
  * @return string
  * @throws Exception
  */
-function loadView($path,$vars = array(),$return = false){
-    if ($filePath = fileExists(OAUTH_VIEW_PATH.$path.".php")) {
-
+function loadView($path, $vars = array(), $return = false)
+{
+    if ($filePath = fileExists(OAUTH_VIEW_PATH . $path . ".php")) {
+        ob_start();
         if (!empty($vars))
             extract($vars);
-
-        ob_start();
         include $filePath;
-        $content =  ob_get_contents();
+        $content = ob_get_contents();
         ob_end_clean();
         ob_flush();
 
-        if ($return){
+        if ($return) {
             return $content;
-        }
-        else{
+        } else {
             echo $content;
             exit;
         }
-    }
-    else {
-        if ($return){
+    } else {
+        if ($return) {
             return null;
-        }
-        else{
+        } else {
             throw new Exception("File does not Exist");
         }
     }
@@ -493,59 +456,31 @@ function loadView($path,$vars = array(),$return = false){
 
 /**Load View
  * @param $path
+ * @param array $vars
  * @throws Exception
  */
-function loadLibrary($path){
-    if ($filePath = fileExists(OAUTH_LIBRARY_PATH.$path.".php")) {
+function loadLibrary($path, $vars = array())
+{
+    if ($filePath = fileExists(OAUTH_LIBRARY_PATH . $path . ".php")) {
+        if (!empty($vars))
+            extract($vars);
         require_once $filePath;
-    }
-    else {
+    } else {
         throw new Exception("File does not Exist");
     }
 }
-
-
-/**Alert Message
- * @param $msg
- */
-function alert($msg){
-    echo "<script>alert('$msg')</script>";
-}
-
 
 /**Encode CSRF TOKEN With validation params
  * @param $csrf_token
  * @return string
  */
-function encode_csrf_token($csrf_token){
+function encode_csrf_token($csrf_token)
+{
     $dateObj = new DateTime("now", new DateTimeZone("GMT"));
-    $unique_id = md5(IPADDRESS.$dateObj->format('Y-m-d H'));
-    $csrf_token = base64_encode(sprintf("%s/%s",$csrf_token,$unique_id));
+    $unique_id = md5(IPADDRESS . $dateObj->format('Y-m-d H'));
+    $csrf_token = base64_encode(sprintf("%s/%s", $csrf_token, $unique_id));
     return $csrf_token;
 }
-
-
-
-/**Get String from data
- * @param $data
- * @return string
- */
-function to_string($data){
-    $str = "";
-    if (isset($data)) {
-        $arr = json_decode($data);
-        if (!empty($arr) && is_array($data)){
-            foreach ($data as $item) {
-                $str .= $item . " ";
-            }
-        }
-        else{
-            $str = $data;
-        }
-    }
-    return trim($str);
-}
-
 
 
 

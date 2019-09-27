@@ -18,9 +18,10 @@ $action = OAUTH_CURRENT_URL;
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <link rel="icon" type="image/png" href="https://ebusgh.com/cdn/public/img/favicon/favicon-16x16.png" sizes="16x16" />
-    <link rel="icon" type="image/png" href="https://ebusgh.com/cdn/public/img/favicon/favicon-32x32.png" sizes="32x32" />
-    <link rel="icon" type="image/png" href="https://ebusgh.com/cdn/public/img/favicon/favicon-64x64.png" sizes="64x64" />
+    <link rel="icon" type="image/png" href="https://cdn.ebusgh.com/public/img/favicon/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="https://cdn.ebusgh.com/public/img/favicon/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="https://cdn.ebusgh.com/public/img/favicon/favicon-64x64.png" sizes="64x64" />
+    <link rel="icon" type="image/png" href="https://cdn.ebusgh.com/public/img/favicon/favicon-96x96.png" sizes="96x96" />
     <title>Login</title>
     <style>
         body{
@@ -165,10 +166,10 @@ $action = OAUTH_CURRENT_URL;
     <div class="login-page">
         <div class="form">
             <div>
-                <img class="logo logo_icon" src="https://ebusgh.com/cdn/public/img/logo/dark/logo_128px.png">
+                <img class="logo logo_icon" src="https://cdn.ebusgh.com/public/img/logo/dark/logo_128px.png">
             </div>
             <div>
-                <img class="logo logo_txt" src="https://ebusgh.com/cdn/public/img/logo/dark/logo_txt_128px.png">
+                <img class="logo logo_txt" src="https://cdn.ebusgh.com/public/img/logo/dark/logo_txt_256px.png">
             </div>
             <br>
             <form class="login-form" method="post" action="<?=$action?>">
@@ -178,7 +179,7 @@ $action = OAUTH_CURRENT_URL;
                     <h3> Authorize access to this account</h3>
                     <br>
                     <div>
-                        <img class="icon" src="https://ebusgh.com/cdn/public/img/Name_104px.png">
+                        <img class="icon" src="https://cdn.ebusgh.com/public/img/Name_104px.png">
                         <div>
                             <?= $email ?>
                         </div>
