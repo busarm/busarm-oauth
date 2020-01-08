@@ -4,12 +4,9 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
 /**
  * @var string $email
  * @var string $msg
- */
-
-defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
-$_SESSION['csrf_token'] = md5(uniqid(OAUTH_BASE_URL));
-$csrf_token = encode_csrf_token($_SESSION['csrf_token']);
-$action = OAUTH_CURRENT_URL;
+ * @var string $csrf_token
+ * @var string $action
+ */ 
 ?>
 
 <!DOCTYPE html>
@@ -18,10 +15,10 @@ $action = OAUTH_CURRENT_URL;
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <link rel="icon" type="image/png" href="https://cdn.ebusgh.com/public/img/favicon/favicon-16x16.png" sizes="16x16" />
-    <link rel="icon" type="image/png" href="https://cdn.ebusgh.com/public/img/favicon/favicon-32x32.png" sizes="32x32" />
-    <link rel="icon" type="image/png" href="https://cdn.ebusgh.com/public/img/favicon/favicon-64x64.png" sizes="64x64" />
-    <link rel="icon" type="image/png" href="https://cdn.ebusgh.com/public/img/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="https://cdn.wecari.com/public/images/favicon/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="https://cdn.wecari.com/public/images/favicon/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="https://cdn.wecari.com/public/images/favicon/favicon-64x64.png" sizes="64x64" />
+    <link rel="icon" type="image/png" href="https://cdn.wecari.com/public/images/favicon/favicon-96x96.png" sizes="96x96" />
     <title>Login</title>
     <style>
         body{
@@ -166,10 +163,10 @@ $action = OAUTH_CURRENT_URL;
     <div class="login-page">
         <div class="form">
             <div>
-                <img class="logo logo_icon" src="https://cdn.ebusgh.com/public/img/logo/dark/logo_128px.png">
+                <img class="logo logo_icon" src="https://cdn.wecari.com/public/images/logo/dark/logo_128px.png">
             </div>
             <div>
-                <img class="logo logo_txt" src="https://cdn.ebusgh.com/public/img/logo/dark/logo_txt_256px.png">
+                <img class="logo logo_txt" src="https://cdn.wecari.com/public/images/logo/dark/logo_txt_256px.png">
             </div>
             <br>
             <form class="login-form" method="post" action="<?=$action?>">
@@ -179,7 +176,7 @@ $action = OAUTH_CURRENT_URL;
                     <h3> Authorize access to this account</h3>
                     <br>
                     <div>
-                        <img class="icon" src="https://cdn.ebusgh.com/public/img/Name_104px.png">
+                        <img class="icon" src="https://cdn.wecari.com/public/images/icons/Name_104px.png">
                         <div>
                             <?= $email ?>
                         </div>
@@ -211,7 +208,7 @@ $action = OAUTH_CURRENT_URL;
     <!-- Footer -->
     <footer>
         <ul class="copyright">
-            <li>&copy; eBusGh All rights reserved.</li>
+            <li>&copy; Wecari All rights reserved.</li>
         </ul>
     </footer>
 </oauth-login>

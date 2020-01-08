@@ -21,7 +21,7 @@ RewriteRule "(^|/)\." - [F]
 
 
 # ------------------------------------------------------------------------------
-# | Heder setting                                                             |
+# | Header setting                                                             |
 # ------------------------------------------------------------------------------
 
 <IfModule mod_headers.c>
@@ -29,5 +29,6 @@ RewriteRule "(^|/)\." - [F]
     Header set Access-Control-Allow-Credentials true
     Header set Access-Control-Allow-Methods "GET, POST, DELETE, PUT, OPTIONS"
     Header set Access-Control-Allow-Headers "*"
+    Header set Access-Control-Expose-Headers "*"
     Header set X-XSS-Protection "1; mode=block"
 </IfModule>

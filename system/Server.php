@@ -12,51 +12,77 @@ use PHPMailer\PHPMailer\PHPMailer;
 
 class Server
 {
+    private $smtp_protocol = 'smtp';
+    private $smtp_timeout = 10;
+    private $smtp_charset = 'utf-8';
 
-    const EBUSGH_INFO_EMAIL = "info@ebusgh.com";
 
-    private $dsn = ENVIRONMENT == ENV_DEV ?
-        'mysql:dbname=13243546576879_oauth;host=localhost':
-        'mysql:dbname=13243546576879_oauth;host=ebusgh-db-instance.csmi9qep3thc.us-east-2.rds.amazonaws.com';
-    private $username = ENVIRONMENT == ENV_DEV ?'root':'ebusgh_public';
-    private $password = ENVIRONMENT == ENV_DEV ?'root':'ebusgh13243546@2019';
-
-    protected $protocol = 'smtp';
-    protected $smtp_port = 587; //SSL/TLS
-    protected $smtp_timeout = 10;
-    protected $charset = 'utf-8';
-
-    /**@var OAuth2\Storage\Pdo*/
+    /**@var OAuth2\Storage\Pdo */
     private $oauth_storage;
 
-    /**@var OAuth2\Server*/
+    /**@var OAuth2\Server */
     private $oauth_server;
 
-
+    public $public_scope = 'public';
+    public $system_scope = 'system';
     public $user_scope = 'user';
     public $admin_scope = 'admin';
     public $agent_scope = 'agent';
     public $partner_scope = 'partner';
-    public $public_scope = 'public';
     public $tester_scope = 'tester';
     public $developer_scope = 'developer';
     public $staff_scope = 'staff';
 
+    protected $request;
+    protected $response;
+
+    /**@var array Current oraganization info of client*/
+    private $org_info;
+
+    /**@var array Current client info*/
+    private $client_info;
+
+    //TODO ADD Client settings
+    
     /**
      * Server constructor.
+     * @param boolean $validateClient Validate client
      */
-    protected function __construct()
-    {
-        try {
-            $this->oauth_storage = new OAuth2\Storage\Pdo(array('dsn' => $this->dsn, 'username' => $this->username, 'password' => $this->password));
+    protected function __construct($validateClient = false)
+    { 
 
-            //create server without implicit
-            $this->oauth_server = new OAuth2\Server($this->oauth_storage,array(
-                'access_lifetime'=> 86400, //1 day
+        //Create request & response objects
+        $this->request = OAuth2\Request::createFromGlobals();
+        $this->response = new OAuth2\Response();
+
+        try {
+
+            //Load custom model
+            OAUTH_APP::getInstance()->loadModel("OauthPdo");
+
+            //Create storage
+            $dsn = ENVIRONMENT == ENV_DEV ? 'mysql:dbname=13243546576879_oauth;host=localhost' : (ENVIRONMENT == ENV_TEST ? "mysql:dbname=".getServer('STAGE_DB_NAME').";host=".getServer('STAGE_DB_HOST') : "mysql:dbname=".getServer('DB_NAME').";host=".getServer('DB_HOST'));
+            $username = ENVIRONMENT == ENV_DEV ? 'root' : (ENVIRONMENT == ENV_TEST ? getServer('STAGE_DB_USER') : getServer('DB_USER'));
+            $password = ENVIRONMENT == ENV_DEV ? 'root13243546' : (ENVIRONMENT == ENV_TEST ? getServer('STAGE_DB_PASS') : getServer('DB_PASS'));
+            $this->oauth_storage = new OauthPdo(array('dsn' => $dsn, 'username' => $username, 'password' => $password));
+
+            /*
+            // create storage
+            $storage = new OAuth2\Storage\Memory(array('keys' => array(
+                'public_key'  => "",
+                'private_key' => "",
+            )));
+            */
+
+            //Create server without implicit
+            $this->oauth_server = new OAuth2\Server([$this->oauth_storage], array(
+                'access_lifetime' => 86400, //1 day
                 'refresh_token_lifetime' => 2419200, //28 days
                 'auth_code_lifetime' => 3600, //1 hour
                 'allow_credentials_in_request_body' => true,
                 'allow_implicit' => false,
+                'use_jwt_access_tokens' => false,
+                'use_openid_connect' => false,
             ));
 
             /*User Credentials grant type*/
@@ -73,9 +99,18 @@ class Server
                 'always_issue_new_refresh_token' => true
             )));
 
+            /**Check if client is valid*/
+            if($validateClient){
+                if (!$this->validateClient($this->system_scope)) {
+                    $this->response->send();
+                    die;
+                }
+            }
+
         } catch (Exception $e) {
-            header("Content-Type: application/json",true);
-            exit(json_encode(['status'=>'error','message'=>$e->getMessage()]));
+            $this->response->setParameters(['success' => false, 'error' => 'internal_error', 'error_description' => $e->getMessage()]);
+            $this->response->send();
+            die();
         }
     }
 
@@ -89,13 +124,43 @@ class Server
     }
 
     /**get oauth storage
-     * @return  OAuth2\Storage\Pdo
+     * @return OauthPdo
      */
     protected function get_oauth_storage()
     {
         return $this->oauth_storage;
     }
 
+
+    /** Validate Client credentials
+     * @param string $scope
+     * @return bool
+     */
+    protected function validateClient($scope = null)
+    {
+        if($this->get_oauth_storage()->checkClientCredentials(
+            !empty($client_id = $this->request->headers("client_id")) ? $client_id : $client_id = $this->request->request("client_id"),
+            !empty($client_secret = $this->request->headers("client_secret")) ? $client_secret : $client_secret = $this->request->request("client_secret")
+        )){
+            if (!empty($scope)){
+                if ($this->get_oauth_storage()->scopeExistsForClient($scope,$client_id)){
+                    $this->client_info = $this->get_oauth_storage()->getClientDetails($client_id);
+                    return true;
+                }
+                else {
+                    $this->response->setParameters(array('success' => false, 'error' => 'invalid_scope', 'error_description' => "Scope($scope) does not exist for client $client_id"));
+                    return false;
+                }
+            }
+            else {
+                return true;
+            }
+        }
+        else {
+            $this->response->setParameters(array('success' => false, 'error' => 'invalid_client', 'error_description' => "Invalid Client Credentials"));
+            return false;
+        }
+    }
 
 
     /**Send Mail to an intended client
@@ -108,23 +173,19 @@ class Server
     public function sendMail($subject,
                              $message,
                              $to,
-                             $from = Server::EBUSGH_INFO_EMAIL)
+                             $from = null)
     {
 
         try {
 
-            loadLibrary("PHPMailer/PHPMailer");
-            loadLibrary("PHPMailer/SMTP");
-            loadLibrary("PHPMailer/Exception");
-
             $mail = new PHPMailer(true);
 
             //Server settings
-            if ($this->protocol == "mail") {
+            if ($this->smtp_protocol == "mail") {
                 $mail->isMail();
-            } else if ($this->protocol == "smtp") {
+            } else if ($this->smtp_protocol == "smtp") {
                 $mail->isSMTP();
-            } else if ($this->protocol == "sendmail") {
+            } else if ($this->smtp_protocol == "sendmail") {
                 $mail->isSendmail();
             }
 
@@ -135,11 +196,12 @@ class Server
             $mail->SMTPAuth = true;
             $mail->SMTPSecure = 'tls';
             $mail->Timeout = $this->smtp_timeout;
-            $mail->CharSet = $this->charset;
+            $mail->CharSet = $this->smtp_charset;
 
             //Recipients
-            $mail->setFrom($from, 'EBusGh');
-            $mail->addReplyTo($from, 'EBusGh');
+            $from = !empty($from)?$from:$this->getInfoEmail();
+            $mail->setFrom($from, 'Wecari');
+            $mail->addReplyTo($from, 'Wecari');
             $mail->addAddress($to);
 
             //Content
@@ -148,57 +210,70 @@ class Server
             $mail->Body = $message;
 
             return $mail->send();
+        } catch (Exception $e) {
         }
-        catch (Exception $e) {}
 
         return false;
     }
 
+    /**Get Info Email
+     * @return string
+     */
+    public function getInfoEmail(){
+        return $this->get_oauth_storage()->getConfig("email_info");
+    }
 
-    /**Explode array
-     * @param string $data
+    /**Get Support Email
+     * @return string
+     */
+    public function getSupportEmail(){
+        return $this->get_oauth_storage()->getConfig("email_support");
+    }
+
+
+    /**
+     * Explode array
+     * @param mixed $data
      * @param string $delimiter
      * @return array
      */
-    public function explode($data,$delimiter = " ")
+    public function explode($data, $delimiter = " ")
     {
+        $res = [];
         if (!empty($data)) {
-            if (is_string($data) && !empty($res = json_decode($data,true))){
-                return $res;
-            }
-            else{
-                if (is_array($data)) {
-                    return $data;
-                } else {
-                    return explode($delimiter, $data);
+            if (is_array($data)) {
+                $res = $data;
+            } else {
+                if (is_string($data) && !empty($arr = json_decode($data, true))) {
+                    $res = $arr;
+                } else if(is_string($data)) {
+                    $res = explode($delimiter, $data);
                 }
             }
-        } else {
-            return [];
-        }
+        } 
+        return $res;
     }
 
-    /**Implode data
+    /**
+     * Implode data
      * @param mixed $data
      * @param string $glue
      * @return string
      */
-    public function implode($data,$glue = " ")
+    public function implode($data, $glue = " ")
     {
-        $str = "";
+        $res = "";
         if (!empty($data)) {
-            if (is_string($data) && !empty($arr = json_decode($data))) {
-                $str = implode($glue,$arr);
-            }
-            else {
-                if (is_array($data)){
-                    $str = implode($glue,$data);
-                }
-                else{
-                    $str = $data;
+            if (is_array($data)) {
+                $res = implode($glue, $data);
+            } else {
+                if (is_string($data) && !empty($arr = json_decode($data))) {
+                    $res = implode($glue, $arr);
+                } else if (is_string($data)) {
+                    $res = $data;
                 }
             }
         }
-        return trim($str);
+        return trim($res);
     }
 }

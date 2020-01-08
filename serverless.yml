@@ -1,0 +1,90 @@
+service: Oauth
+
+provider:
+    name: aws
+    runtime: provided
+    region: ${opt:region, 'eu-west-2'} # e.g serverless delopy --region eu-west-2 (default = 'eu-west-2')
+    stage: ${opt:stage, 'dev'} # e.g serverless delopy --stage dev (default = 'dev')
+    stackName: Wecari-Oauth-${self:provider.stage}
+    apiName: Wecari-Oauth-${self:provider.stage}
+    environment: # define service wide environment variables here
+        ENV: ${self:provider.stage} # Environment variable
+        BREF_BINARY_RESPONSES: 1 # For bref to return binary responses. Bref will automatically encode responses to base64
+        DB_NAME: 13243546576879_oauth
+        DB_HOST: wecari-prod.czxrcl7gwax1.eu-west-2.rds.amazonaws.com
+        DB_USER: wecari_db_public
+        DB_PASS: h7FHr6x75egTQM65tvEEwTTSey82uwR7
+        STAGE_DB_NAME: 13243546576879_oauth
+        STAGE_DB_HOST: wecari-prod.czxrcl7gwax1.eu-west-2.rds.amazonaws.com
+        STAGE_DB_USER: wecari_db_public
+        STAGE_DB_PASS: h7FHr6x75egTQM65tvEEwTTSey82uwR7
+        BASE_PATH_MAP: oauth
+    apiGateway:
+        binaryMediaTypes:
+            - '*/*'
+    vpc:
+        securityGroupIds:
+            - sg-095c9d58ddb37cca5
+        subnetIds:
+            - subnet-6c499c20
+            - subnet-a9880ed3
+            - subnet-e453298d
+
+plugins:
+    - ./vendor/bref/bref
+
+package:
+    exclude:
+        - composer.json 
+        - composer.lock
+        - .git/**
+        - .htaccess
+        
+functions:
+    Authorize:
+        handler: index.php
+        description: 'Allow user to authorize access to their account'
+        memorySize: 128
+        timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
+        layers:
+            - ${bref:layer.php-73-fpm}
+        events:
+            - http: 'GET /authorize/request'
+            - http: 'POST /authorize/request'
+            - schedule:
+                rate: rate(5 minutes)
+                input:
+                    warmer: true
+    Resources:
+        handler: index.php
+        description: 'Retrieve oauth resources e.g user details with client credentials and access token'
+        memorySize: 128
+        timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
+        layers:
+            - ${bref:layer.php-73-fpm}
+        events:
+            - http: 'GET /resources/getTokenData'
+            - http: 'GET /resources/getUserInfo'
+            - http: 'POST /resources/fetchUsers'
+            - http: 'POST /resources/removeAccess'
+            - http: 'POST /resources/createUser'
+            - http: 'POST /resources/updateUser'
+            - http: 'POST /resources/createClient'
+            - schedule:
+                rate: rate(5 minutes)
+                input:
+                    warmer: true
+    Token:
+        handler: index.php
+        description: 'Generate and verify oauth access tokens'
+        memorySize: 256 # 256 because we are expecting heavy trafic here
+        timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
+        layers:
+            - ${bref:layer.php-73-fpm}
+        events:
+            - http: 'GET /token/get'
+            - http: 'GET /token/verify'
+            - schedule:
+                rate: rate(5 minutes)
+                input:
+                    warmer: true
