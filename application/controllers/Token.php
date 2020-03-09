@@ -16,7 +16,7 @@ class Token extends Server
 
     /**Obtain access token if authorized
      * @api resources/getTokenData
-     * @method GET*/
+     * @method POST*/
     public function get()
     {
         $result = $this->get_oauth_server()->grantAccessToken($this->request,$this->response);
@@ -30,7 +30,7 @@ class Token extends Server
 
     /**Verify Token
      * @api resources/verifyToken
-     * @method GET*/
+     * @method GET|POST*/
     public function verify()
     {
         if ($this->get_oauth_server()->verifyResourceRequest($this->request, $this->response)) {

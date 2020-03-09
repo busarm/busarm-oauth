@@ -14,7 +14,6 @@
         "bshaffer/oauth2-server-php": "dev-develop",
         "phpseclib/phpseclib": "^2.0",
         "phpmailer/phpmailer": "^6.1",
-        "bref/bref": "^0.5.11",
-        "aws/aws-sdk-php": "^3.130"
+        "bref/bref": "^0.5.11"
     }
 }

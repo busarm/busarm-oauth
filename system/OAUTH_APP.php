@@ -36,32 +36,55 @@ class OAUTH_APP {
     }
 
     /**
+     * Get PATH for CDN
+     *
+     * @param string $path
+     * @return void
+     */
+    public static function get_cdn_path($path = ''){
+        if (ENVIRONMENT == ENV_PROD)
+            return "https://cdn.wecari.com/".$path;
+        else  if (ENVIRONMENT == ENV_TEST)
+            return "https://cdn.staging.wecari.com/".$path;
+        else
+            return OAUTH_BASE_SERVER . "/wecari.com/cdn/".$path;
+    }
+
+    /**
      * Initialize app
      */
     public function initialize ()
     {
-        /*Initiate rerouting*/
-        $request_path = getServer('REQUEST_URI');
-        if (empty($request_path)) {
-            $request_path = getServer('PATH_INFO');
+        
+        // Check for CORS access request
+        if (OAUTH_APP_CONFIGS::CHECK_CORS == TRUE) {
+            $this->check_cors();
         }
+        else {
+            // If the request HTTP method is 'OPTIONS', kill the response and send it to the client
+            if (strtolower(getServer("REQUEST_METHOD")) === 'options') {
+                $this->showMessage(200, true, "Preflight Ok", ENVIRONMENT);
+            }
+        }
+
+        /*Initiate rerouting*/
+        $request_path = getServer('PATH_INFO');
         if (empty($request_path)) {
             $request_path = getServer('ORIG_PATH_INFO');
         }
+        if (empty($request_path)) {
+            $request_path = getServer('REQUEST_URI');
+        }
         if (!empty($request_path)) {
-            //Remove base path map from request path if available e.g 'oauth' from staging.wecari.com/oauth
-            if(ENVIRONMENT == ENV_TEST && !empty($base = getServer('BASE_PATH_MAP'))){
-                if(strpos($request_path, $base."/") !== false){
-                    $request_path = str_replace($base."/", "", $request_path);
-                }
+            if(preg_match('/\/ping(\/)?$/',$request_path)){
+                $this->showMessage(200, true, "System Online", ENVIRONMENT);
             }
-            else if(ENVIRONMENT == ENV_DEV){
-                $request_path = str_replace("wecari.com/oauth", "", $request_path);
+            else { 
+                $routes = explode('/', explode('?',$request_path)[0]);
+                $this->reroute($routes);
             }
-            $routes = explode('/', explode('?',$request_path)[0]);
-            $this->reroute($routes);
         } else {
-            $this->showError(404, "Invalid Request", "Invalid Request Path");
+            $this->showMessage(404, false, "Invalid Request", "Invalid Request Path");
         } 
     }
 
@@ -119,16 +142,16 @@ class OAUTH_APP {
                                         array($token, $function)
                                     );
                                 } else {
-                                    $this-> showError(401, "Unknown Method", "Unknown Method - " . $function);
+                                    $this-> showMessage(404, false, "Unknown Method", "Unknown Method - " . $function);
                                 }
                             } else {
-                                $this->showError(404, "Invalid Request", "Invalid request path - " . $controller);
+                                $this->showMessage(404, false, "Invalid Request", "Invalid request path - " . $controller);
                             }
                         } catch (Exception $e) {
-                            $this->showError(500, "Invalid Request", $e->getMessage());
+                            $this->showMessage(500, false, "Invalid Request", $e->getMessage());
                         }
                     } else {
-                        $this->showError(404, "Invalid Request", "Request path not found - " . $controller);
+                        $this->showMessage(404, false, "Invalid Request", "Request path not found - " . $controller);
                     }
                     break; //unnecessary but just in-case...  can't be too sure ;)
                 }
@@ -169,16 +192,25 @@ class OAUTH_APP {
     }
 
 
-    /**Show Error
-     * @param $code string Error Code
-     * @param $title string Error Title
-     * @param $msg string Error Message
+    /**
+	 * Show Message
+     * @param string $code Code
+     * @param bool $status Status
+     * @param string $title itle
+     * @param string $msg Message
      */
-    public function showError($code, $title, $msg)
+    public function showMessage($code, $status, $title, $msg)
     {
         header(PROTOCOL_HEADER . ' ' . $code . ' ' . $title, TRUE, $code);
         header("Content-type: application/json");
-        echo json_encode(['status'=>false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT, 'env' => ENVIRONMENT]);
+        header('Access-Control-Allow-Origin: *', true);
+        header('Access-Control-Allow-Methods: *', true); 
+        if($status){
+            echo json_encode(['status'=>true, 'msg' => $title, 'env' => ENVIRONMENT]);
+        }
+        else {
+            echo json_encode(['status'=>false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT]);
+        }
         exit;
     }
 
@@ -348,4 +380,100 @@ class OAUTH_APP {
         return setcookie("oauth_".$name, "", time() - 3600);
     }
 
+
+
+    /**
+     * Check to see if the API key has access to the controller and methods
+     *
+     * @access protected
+     * @return bool TRUE the API key has access; otherwise, FALSE
+     */
+    protected function _check_access()
+    {
+        // If we don't want to check access, just return TRUE
+        if ($this->config->item('rest_enable_access') === FALSE) {
+            return TRUE;
+        }
+
+        //check if the key has all_access
+        $accessRow = $this->rest->db
+            ->where('key', $this->rest->key)
+            ->get($this->config->item('rest_access_table'))->row_array();
+
+        if (!empty($accessRow) && !empty($accessRow['all_access'])) {
+            return TRUE;
+        }
+
+        // Fetch controller based on path and controller name
+        $controller = implode(
+            '/', [
+            $this->router->directory,
+            $this->router->class
+        ]);
+
+        // Remove any double slashes for safety
+        $controller = str_replace('//', '/', $controller);
+
+        // Query the access table and get the number of results
+        return $this->rest->db
+                ->where('key', $this->rest->key)
+                ->where('controller', $controller)
+                ->get($this->config->item('rest_access_table'))
+                ->num_rows() > 0;
+    }
+
+    /**
+     * Checks allowed domains, and adds appropriate headers for HTTP access control (CORS)
+     * @credits Codeigniter
+     * 
+     * @access protected
+     * @return void
+     */
+    protected function check_cors()
+    {
+        $allowed_cors_headers = OAUTH_APP_CONFIGS::ALLOWED_CORS_HEADERS;
+        $exposed_cors_headers = OAUTH_APP_CONFIGS::EXPOSED_CORS_HEADERS;
+        $allowed_cors_methods = OAUTH_APP_CONFIGS::ALLOWED_CORS_METHODS;
+
+        // Convert the config items into strings
+        $allowed_headers = implode(', ', is_array($allowed_cors_headers) ? $allowed_cors_headers : []);
+        $exposed_cors_headers = implode(', ', is_array($exposed_cors_headers) ? $exposed_cors_headers : []);
+        $allowed_methods = implode(', ', is_array($allowed_cors_methods) ? $allowed_cors_methods : []);
+
+        // If we want to allow any domain to access the API
+        if (OAUTH_APP_CONFIGS::ALLOWED_ANY_CORS_DOMAIN == TRUE) {
+            header(PROTOCOL_HEADER . " 200 OK", TRUE, 200);
+            header('Access-Control-Allow-Origin: *', true);
+            header('Access-Control-Allow-Methods: ' . $allowed_methods, true);
+            header('Access-Control-Allow-Headers: ' . $allowed_headers, true);
+            header('Access-Control-Expose-Headers: ' . $exposed_cors_headers, true);
+        } else {
+
+            // We're going to allow only certain domains access
+            // Store the HTTP Origin header
+            $origin = getServer('HTTP_ORIGIN');
+            if ($origin === NULL) {
+                $origin = getServer('HTTP_REFERER');
+                if ($origin === NULL) {
+                    $origin = '';
+                }
+            }
+
+            $allowed_origins = OAUTH_APP_CONFIGS::ALLOWED_CORS_ORIGINS;
+
+            // If the origin domain is in the allowed_cors_origins list, then add the Access Control headers
+            if (is_array($allowed_origins) && in_array(trim($origin, "/"), $allowed_origins)) {
+                header(PROTOCOL_HEADER . " 200 OK", true, 200);
+                header('Access-Control-Allow-Origin: ' . $origin, true);
+                header('Access-Control-Allow-Methods: ' . $allowed_methods, true);
+                header('Access-Control-Allow-Headers: ' . $allowed_headers, true);
+                header('Access-Control-Expose-Headers: ' . $exposed_cors_headers, true);
+            }
+        }
+
+        // If the request HTTP method is 'OPTIONS', kill the response and send it to the client
+        if (strtolower(getServer("REQUEST_METHOD")) === 'options') {
+            die();
+        }
+    }
 }

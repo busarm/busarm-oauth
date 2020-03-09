@@ -1,14 +1,16 @@
 <?php
 defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
 
-/**
- * Created by PhpStorm.
- * User: Samuel
- */
 
-/**Get Server Variable*/
+/**
+ * Get Server Variable
+ *
+ * @param [type] $name
+ * @param [type] $default
+ * @return void
+ */
 function getServer($name, $default = null){
-    return !empty(@$_SERVER[$name])?@$_SERVER[$name]:$default;
+    return (!empty($data = @getenv($name))?$data:$default);
 }
 
 /**Check if https enabled*/
@@ -157,9 +159,9 @@ define('LOCALHOST', getHostByName(getHostName()));
 * NOTE: If you change these, also change the error_reporting() code below
 */
 
-if (strpos(OAUTH_BASE_URL, "localhost") !== FALSE || strpos(OAUTH_BASE_URL, LOCALHOST) !== FALSE) {
+if ((strpos(OAUTH_BASE_URL, "localhost") !== FALSE || strpos(OAUTH_BASE_URL, LOCALHOST) !== FALSE) && empty(getServer('ENV')) && empty(getServer('STAGE'))) {
     define('ENVIRONMENT', ENV_DEV);
-} else if (strtolower(getServer('ENV') == "dev")) {
+} else if (strtolower(getServer('ENV') == "dev" || strtolower(getServer('STAGE') == "dev"))) {
     define('ENVIRONMENT', ENV_TEST);
 } else {
     define('ENVIRONMENT', ENV_PROD);
@@ -201,4 +203,116 @@ class OAUTH_APP_CONFIGS
     const OAUTH_LIBRARY_PATH =  "application/library/";
     const OAUTH_VIEW_PATH =  "application/views/";
     const OAUTH_MODEL_PATH =  "application/model/";
+    
+    /*
+    |--------------------------------------------------------------------------
+    | CORS Check
+    |--------------------------------------------------------------------------
+    |
+    | Set to TRUE to enable Cross-Origin Resource Sharing (CORS). Useful if you
+    | are hosting your API on a different domain from the application that
+    | will access it through a browser
+    |
+    */
+    const CHECK_CORS = TRUE; 
+
+    /*
+    |--------------------------------------------------------------------------
+    | CORS Allowable Headers
+    |--------------------------------------------------------------------------
+    |
+    | If using CORS checks, set the allowable headers here
+    |
+    */
+    const ALLOWED_CORS_HEADERS = [
+        'Authorization',
+        'Origin',
+        'Referer',
+        'X-Requested-With',
+        'Content-Type',
+        'Accept',
+        'Access-Token',
+        'Session-Token',
+        'X-Session-Token',
+        'X-Access-Token',
+        'X-Encrypted',
+        'X-Integrity',
+        'X-Api-Key',
+    ];
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CORS Exposed Headers
+    |--------------------------------------------------------------------------
+    |
+    | If using CORS checks, set the headers permitted to be sent to client here
+    |
+    */
+    const EXPOSED_CORS_HEADERS = [];
+
+    
+
+    /*
+    |--------------------------------------------------------------------------
+    | CORS Allowable Methods
+    |--------------------------------------------------------------------------
+    |
+    | If using CORS checks, you can set the methods you want to be allowed
+    |
+    */
+    const ALLOWED_CORS_METHODS = [
+        'GET',
+        'POST',
+        'OPTIONS',
+        'PUT',
+        'PATCH',
+        'DELETE'
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | CORS Allow Any Domain
+    |--------------------------------------------------------------------------
+    |
+    | Set to TRUE to enable Cross-Origin Resource Sharing (CORS) from any
+    | source domain
+    |
+    */
+    const ALLOWED_ANY_CORS_DOMAIN = FALSE;
+
+    /*
+    |--------------------------------------------------------------------------
+    | CORS Allowable Domains
+    |--------------------------------------------------------------------------
+    |
+    | Used if $config['check_cors'] is set to TRUE and $config['allow_any_cors_domain']
+    | is set to FALSE. Set all the allowable domains within the array
+    |
+    | e.g. $config['allowed_origins'] = ['http://www.example.com', 'https://spa.example.com']
+    |
+    */
+    const ALLOWED_CORS_ORIGINS = [
+        'https://wecari.com',
+        'https://staging.wecari.com',
+        'https://api.wecari.com',
+        'https://api.staging.wecari.com',
+        'https://partner.wecari.com',
+        'https://partner.staging.wecari.com'
+    ];
+
+
+    static function AWS_SMTP_HOST(){
+        return getServer("AWS_SMTP_HOST", "");
+    }
+    static function AWS_SMTP_PORT(){
+        return getServer("AWS_SMTP_PORT", "");
+    }
+    static function AWS_SMTP_KEY(){
+        return getServer("AWS_SMTP_KEY", "");
+    }
+    static function AWS_SMTP_SECRET(){
+        return getServer("AWS_SMTP_SECRET", "");
+    }
+    
 }

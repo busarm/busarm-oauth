@@ -167,27 +167,27 @@ class OauthPdo  extends OAuth2\Storage\Pdo
             $done = false;
             if (!empty($password)) {
                 $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET password=sha2(CONCAT(:user_id,\':\',:salt,\':\',:password),256), salt=:salt where user_id=:user_id', $this->config['user_table']));
-                $done = $stmt->execute(compact('user_id', 'password', 'salt'));
+                $done = $stmt->execute(compact('user_id', 'password', 'salt')) ? true : $done;
             }
             if (!empty($email)) {
                 $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET email=:email where user_id=:user_id', $this->config['user_table']));
-                $done = $stmt->execute(compact('user_id', 'email'));
+                $done = $stmt->execute(compact('user_id', 'email')) ? true : $done;
             }
             if (!empty($name)) {
                 $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET name=:name where user_id=:user_id', $this->config['user_table']));
-                $done = $stmt->execute(compact('user_id', 'name'));
+                $done = $stmt->execute(compact('user_id', 'name')) ? true : $done;
             }
             if (!empty($phone)) {
                 $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET phone=:phone where user_id=:user_id', $this->config['user_table']));
-                $done = $stmt->execute(compact('user_id', 'phone'));
+                $done = $stmt->execute(compact('user_id', 'phone')) ? true : $done;
             }
             if (!empty($dial_code)) {
                 $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET dial_code=:dial_code where user_id=:user_id', $this->config['user_table']));
-                $done = $stmt->execute(compact('user_id', 'dial_code'));
+                $done = $stmt->execute(compact('user_id', 'dial_code')) ? true : $done;
             }
             if (!empty($scope)) {
                 $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET scope=:scope where user_id=:user_id', $this->config['user_table']));
-                $done = $stmt->execute(compact('user_id', 'scope'));
+                $done = $stmt->execute(compact('user_id', 'scope')) ? true : $done;
             }
 
             return $done;

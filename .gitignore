@@ -1,1 +1,10 @@
 /vendor/
+.Python
+*.pyc
+*.idea/
+*.vscode/
+*__pycache__/
+
+.logs/
+.serverless/
+tmp/

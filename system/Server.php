@@ -133,7 +133,7 @@ class Server
 
 
     /** Validate Client credentials
-     * @param string $scope
+     * @param string|array $scope
      * @return bool
      */
     protected function validateClient($scope = null)
@@ -143,6 +143,7 @@ class Server
             !empty($client_secret = $this->request->headers("client_secret")) ? $client_secret : $client_secret = $this->request->request("client_secret")
         )){
             if (!empty($scope)){
+                $scope = is_array($scope)?$this->implode($scope):$scope;
                 if ($this->get_oauth_storage()->scopeExistsForClient($scope,$client_id)){
                     $this->client_info = $this->get_oauth_storage()->getClientDetails($client_id);
                     return true;
@@ -189,10 +190,10 @@ class Server
                 $mail->isSendmail();
             }
 
-            $mail->Username = $this->get_oauth_storage()->getConfig("aws_smtp_user");
-            $mail->Password = $this->get_oauth_storage()->getConfig("aws_smtp_pass");
-            $mail->Host = $this->get_oauth_storage()->getConfig("aws_smtp_host");
-            $mail->Port = $this->get_oauth_storage()->getConfig("aws_smtp_port");
+            $mail->Username = OAUTH_APP_CONFIGS::AWS_SMTP_KEY();
+            $mail->Password = OAUTH_APP_CONFIGS::AWS_SMTP_SECRET();
+            $mail->Host = OAUTH_APP_CONFIGS::AWS_SMTP_HOST();
+            $mail->Port = OAUTH_APP_CONFIGS::AWS_SMTP_PORT();
             $mail->SMTPAuth = true;
             $mail->SMTPSecure = 'tls';
             $mail->Timeout = $this->smtp_timeout;

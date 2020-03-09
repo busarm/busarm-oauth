@@ -18,7 +18,7 @@ class Resources extends Server
     /**
      * Verify token and obtain info
      * @api resources/getTokenInfo
-     * @method GET*/
+     * @method POST*/
     public function getTokenInfo()
     {
         if ($result = $this->get_oauth_server()->getAccessTokenData($this->request, $this->response)) {
@@ -26,12 +26,17 @@ class Resources extends Server
             if(!empty($user_id = $result["user_id"])){
                 $user = $this->get_oauth_storage()->getSingleUserInfo($user_id);
                 if(!empty($user)){
-                    unset($user["scope"]); //remove scope
+                    unset($user["scope"]); //remove user's scope
                 }
             }
             $result["user"] = $user;
             unset($result["user_id"]); //remove user id
             $this->response->setParameters(array('success' => true, 'data' => $result));
+        }
+        else {
+            if(empty($this->response->getParameters())){
+                $this->response->setParameters(array('success' => false, 'error' => 'invalid_token', 'error_description' => "Authorizetion failed"));
+            }
         }
         $this->response->send();
         die;
@@ -40,7 +45,7 @@ class Resources extends Server
     /**
      * Obtain user info
      * @api resources/getUser
-     * @method GET */
+     * @method POST */
     public function getUser()
     {
         if ($result = $this->get_oauth_server()->getAccessTokenData($this->request, $this->response)) {
@@ -170,10 +175,14 @@ class Resources extends Server
                 $user_id = null;
             }
         } else {
-            $result = $this->get_oauth_server()->getAccessTokenData(
+            if($result = $this->get_oauth_server()->getAccessTokenData(
                 $this->request,
-                $this->response);
-            $user_id = @$result['user_id'];
+                $this->response)){
+                    $user_id = @$result['user_id'];
+                }
+                else {
+                    $user_id = null;
+                }
         }
 
         if (!empty($user_id)) {
@@ -205,11 +214,17 @@ class Resources extends Server
                 //Update User
                 $result = $this->get_oauth_storage()->setUser_custom($user_id,$password,$email,$name,$phone,$dial_code,$this->implode($newScopes));
 
-                $this->response->setParameters(array('success' => $result));
-
+                if($result){
+                    $this->response->setParameters(array('success' => $result));
+                }
+                else {
+                    $this->response->setParameters(array('success' => false, 'error' => 'invalid_user', 'error_description' => "Unable to update user info"));
+                }
             } else {
                 $this->response->setParameters(array('success' => false, 'error' => 'invalid_user', 'error_description' => "User doesn't exist"));
             }
+        } else {
+            $this->response->setParameters(array('success' => false, 'error' => 'invalid_user', 'error_description' => "Invalid User Request", 'data'=>@$result));
         }
         $this->response->send();
         die;
