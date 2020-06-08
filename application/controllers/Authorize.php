@@ -39,8 +39,6 @@ class Authorize extends Server
         $user_id = $this->request->query("user_id");
         $email = $this->request->query("email");
         $scope = $this->request->query("scope");
-        $state = $this->request->query("state");
-        $redirect_uri = $this->request->query("redirect_uri");
 
         if ($userInfo = $this->processLoginRequest()) { //Process Login
             $user_id = $userInfo['user_id'];
@@ -51,93 +49,38 @@ class Authorize extends Server
 
                 $is_authorized = $this->get_oauth_server()->validateAuthorizeRequest($this->request, $this->response);
                 if ($is_authorized) {
-
                     $this->get_oauth_server()->handleAuthorizeRequest($this->request, $this->response, $is_authorized, $user_id);
                     $this->response->send();
                     die();
                 } else {
                     $this->showAuthorizationForm(["msg" => $this->response->getParameter("error_description")]);
-                    die();
                 }
 
             } else {
                 $this->showAuthorizationForm(["msg" => "Scope(s) '$scope' not available for this user"]);
-                die();
             }
         }
         else {
             if (!empty($email)) { //Validate and Send authorization url
-                if ($userInfo = $this->get_oauth_storage()->getUser($email)) {
-
-                    $hash = md5(sprintf("%s/%s/%s", $email, $redirect_uri, $state));
-                    if (OAUTH_APP::getInstance()->get_cookie('request_hash') != $hash) {
-
-                        $user_id = $userInfo['user_id'];
-                        $is_authorized = $this->get_oauth_storage()->scopeExistsForUser($scope, $user_id) &&
-                            $this->get_oauth_server()->validateAuthorizeRequest($this->request, $this->response);
-
-                        if ($is_authorized) {
-                            $this->response = new OAuth2\Response(); //reinitialize response
-                            $this->get_oauth_server()->handleAuthorizeRequest($this->request, $this->response, $is_authorized, $user_id);
-                            $link = $this->response->getHttpHeader("Location");
-                            $message = $this->getEmailAuthView($link);
-                            if ($this->sendMail("Email Authorization", $message, $email)) {
-                                try {
-                                    OAUTH_APP::getInstance()->set_cookie("request_hash", $hash); //Save to cookie to prevent duplicate 
-                                    $this->showEmailSuccess($userInfo);
-                                    die();
-                                }
-                                catch (Exception $e) {
-                                    $this->showEmailFailed([
-                                        "msg"=>"Authorization failed",
-                                        "sub_msg"=>sprintf("Unknown error. Please contact <strong>%s</strong> for assistance",$this->getSupportEmail()),
-                                        ]);
-                                    die();
-                                }
-                            }
-                            else {
-                                $this->showEmailFailed([
-                                    "msg"=>"Authorization failed",
-                                    "sub_msg"=>sprintf("Failed to send mail. Please contact <strong>%s</strong> for assistance",$this->getSupportEmail()),
-                                    ]);
-                                die();
-                            }
-                        }
-                        else {
-                            $msg = $this->response->getParameter("error_description")  OR "Unexpected error encountered";
-                            $this->showEmailFailed([
-                                "msg"=>"Authorization failed",
-                                "sub_msg"=>sprintf("$msg. Please contact <strong>%s</strong> for assistance",$this->getSupportEmail()),
-                            ]);
-                            die();
-                        }
-                    }
-                    else {
-                        $this->showEmailFailed([
-                            "msg"=>"Authorization link already sent to <strong>$email</strong>",
-                            "sub_msg"=>"Change your email or clear browser cookies and retry",
-                        ]);
-                        die();
-                    }
+                $state = $this->request->query("state");
+                $redirect_uri = $this->request->query("redirect_uri");
+                if ($userInfo = $this->processEmailRequest($email,$redirect_uri,$state,$scope)) {
+                    $this->showEmailSuccess($userInfo);
                 }
                 else {
                     $this->showAuthorizationForm();
-                    die();
                 }
             }
             else if (!empty($user_id)) { //validate and Show authorization form for user
                 if ($userInfo = $this->get_oauth_storage()->getUser($user_id)) {
                     $this->showAuthorizationForm($userInfo);
-                    die();
                 }
                 else {
                     $this->showAuthorizationForm(["msg" => $this->response->getParameter("error_description")]);
-                    die();
                 }
             }
             else {
                 $this->showAuthorizationForm(["msg" => $this->response->getParameter("error_description")]);
-                die();
             }
         }
     }
@@ -172,6 +115,77 @@ class Authorize extends Server
         return false;
     }
 
+
+    /**
+     * Process Email Authorization Request
+     *
+     * @param [string] $email
+     * @param [string] $redirect_uri
+     * @param [string] $state
+     * @param [string] $scope
+     * @return boolean|array
+     */
+    private function processEmailRequest($email, $redirect_uri, $state, $scope)
+    {
+        if ($userInfo = $this->get_oauth_storage()->getUser($email)) {
+            $hash = md5(sprintf("%s/%s/%s", $email, $redirect_uri, $state));
+            if (OAUTH_APP::getInstance()->get_cookie('request_hash') != $hash) {
+                $user_id = $userInfo['user_id'];
+                if ($this->get_oauth_storage()->scopeExistsForUser($scope, $user_id)) {
+                    if ($is_authorized = $this->get_oauth_server()->validateAuthorizeRequest($this->request, $this->response)) {
+                        $this->response = new OAuth2\Response(); //reinitialize response
+                        $this->get_oauth_server()->handleAuthorizeRequest($this->request, $this->response, $is_authorized, $user_id);
+                        $link = $this->response->getHttpHeader("Location");
+                        $message = $this->getEmailAuthView($link);
+                        if ($this->sendMail("Email Authorization", $message, $email)) {
+                            try {
+                                OAUTH_APP::getInstance()->set_cookie("request_hash", $hash); //Save to cookie to prevent duplicate 
+                                return $userInfo;
+                            }
+                            catch (Exception $e) {
+                                $this->showEmailFailed([
+                                    "msg"=>"Authorization failedd",
+                                    "sub_msg"=>sprintf("Unknown error. Please contact <strong>%s</strong> for assistance",$this->getSupportEmail()),
+                                    ]);
+                            }
+                        }
+                        else {
+                            $this->showEmailFailed([
+                                "msg"=>"Authorization failedd",
+                                "sub_msg"=>sprintf("Failed to send mail. Please contact <strong>%s</strong> for assistance",$this->getSupportEmail()),
+                                ]);
+                        }
+                    }
+                    else {
+                        $msg = $this->response->getParameter("error_description");  
+                        $msg = !empty($msg) ? $msg:"Unexpected error encountered";
+                        $this->showEmailFailed([
+                            "msg"=>"Authorization failed",
+                            "sub_msg"=>sprintf("$msg. Please contact <strong>%s</strong> for assistance",$this->getSupportEmail()),
+                        ]);
+                    }
+                }
+                else {
+                    $this->showEmailFailed([
+                        "msg"=>"Authorization failed",
+                        "sub_msg"=>sprintf("Requested scope(s) does not exist for the specified user. Please contact <strong>%s</strong> for assistance",$this->getSupportEmail()),
+                    ]);
+                }
+            }
+            else {
+                $this->showEmailFailed([
+                    "msg"=>"Authorization link already sent to <strong>$email</strong>",
+                    "sub_msg"=>"Change your email or clear browser cookies and retry",
+                ]);
+            }
+        }
+        else {
+            $this->showAuthorizationForm();
+        }
+        return false;
+    }
+
+
     /**Show from for use to enter their
      * authorization credentials
      * @param array $vars
@@ -183,8 +197,10 @@ class Authorize extends Server
                 'csrf_token' => OAUTH_APP::getInstance()->generate_csrf_token(),
                 'action' => ""
             ]), true);
+            die;
         } catch (Exception $e) {
             echo $e->getMessage();
+            die;
         }
     }
 
@@ -195,8 +211,10 @@ class Authorize extends Server
     {
         try {
             echo OAUTH_APP::getInstance()->loadView("success", $vars, true);
+            die;
         } catch (Exception $e) {
             echo $e->getMessage();
+            die;
         }
     }
     /**Show Auth Email Failure page
@@ -206,8 +224,10 @@ class Authorize extends Server
     {
         try {
             echo OAUTH_APP::getInstance()->loadView("failed", $vars, true);
+            die;
         } catch (Exception $e) {
             echo $e->getMessage();
+            die;
         }
     }
 

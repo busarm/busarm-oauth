@@ -2,33 +2,36 @@
 # -------
 # Decrease heatbeat rate to 10 minutes for production
 
-service: Oauth
+service: Wecari-Oauth
 
 provider:
     name: aws
     runtime: provided
+    profile: wecari
     region: ${opt:region, 'eu-west-2'} # e.g serverless delopy --region eu-west-2 (default = 'eu-west-2')
-    stage: ${opt:stage, 'dev'} # e.g serverless delopy --stage dev (default = 'dev')
+    stage: ${opt:stage, 'Dev'} # e.g serverless delopy --stage dev (default = 'dev')
     stackName: Wecari-Oauth-${self:provider.stage}
     apiName: Wecari-Oauth-${self:provider.stage}
+    role: ${self:custom.roleName}
     environment: # define service wide environment variables here
         ENV: ${self:provider.stage} # Environment variable
         BREF_BINARY_RESPONSES: 1 # For bref to return binary responses. Bref will automatically encode responses to base64
         # AWS RDS - Production
         DB_NAME: 13243546576879_oauth
-        DB_HOST: wecari-prod.czxrcl7gwax1.eu-west-2.rds.amazonaws.com
-        DB_USER: wecari_db_public
-        DB_PASS: h7FHr6x75egTQM65tvEEwTTSey82uwR7
+        DB_HOST: ${self:custom.dbSecret.host}
+        DB_PORT: ${self:custom.dbSecret.port}
+        DB_USER: ${self:custom.dbSecret.username}
+        DB_PASS: ${self:custom.dbSecret.password}
         # AWS RDS - Staging
-        STAGE_DB_NAME: 13243546576879_oauth
-        STAGE_DB_HOST: wecari-prod.czxrcl7gwax1.eu-west-2.rds.amazonaws.com
-        STAGE_DB_USER: wecari_db_public
-        STAGE_DB_PASS: h7FHr6x75egTQM65tvEEwTTSey82uwR7
+        STAGE_DB_HOST: ${self:custom.dbSecret.host}
+        STAGE_DB_PORT: ${self:custom.dbSecret.port}
+        STAGE_DB_USER: ${self:custom.dbSecret.username}
+        STAGE_DB_PASS: ${self:custom.dbSecret.password}
         # AWS SMTP
-        AWS_SMTP_HOST: 'email-smtp.us-east-1.amazonaws.com'
-        AWS_SMTP_PORT: '587'
-        AWS_SMTP_KEY: AKIAZWJKRYM7P6ZMTNFC
-        AWS_SMTP_SECRET: BO3UTXCy16RB+vx+HSwy0c31GMhBiVlseRiS+7KLG0+B
+        AWS_SMTP_HOST: ${self:custom.smtpSecret.host}
+        AWS_SMTP_PORT: ${self:custom.smtpSecret.port}
+        AWS_SMTP_KEY: ${self:custom.smtpSecret.username}
+        AWS_SMTP_SECRET: ${self:custom.smtpSecret.password}
     apiGateway:
         binaryMediaTypes:
             - '*/*'
@@ -51,18 +54,6 @@ package:
         - .serverless/**
         - .htaccess
        
-custom:
-  corsHeaders: 
-    - Content-Type
-    - Authorization
-    - Access-Token
-    - X-Requested-With
-    - X-Api-Key
-    - X-Access-Token
-    - X-Amz-Date
-    - X-Amz-User-Agent
-    - X-Amz-User-Agent 
-      
 functions:
     Authorize:
         handler: index.php
@@ -84,10 +75,11 @@ functions:
                 rate: rate(10 minutes)
                 input:
                     warmer: true
+                    
     Resources:
         handler: index.php
         description: 'Retrieve oauth resources e.g user details with client credentials and access token'
-        memorySize: 512
+        memorySize: 256
         timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
         layers:
             - ${bref:layer.php-73-fpm}
@@ -104,10 +96,11 @@ functions:
                 rate: rate(10 minutes)
                 input:
                     warmer: true
+                    
     Token:
         handler: index.php
         description: 'Generate and verify oauth access tokens'
-        memorySize: 512
+        memorySize: 256
         timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
         layers:
             - ${bref:layer.php-73-fpm}
@@ -124,3 +117,87 @@ functions:
                 rate: rate(10 minutes)
                 input:
                     warmer: true
+
+custom:
+    dbSecret: ${ssm:/aws/reference/secretsmanager/prod/wecari/db~true}
+    smtpSecret: ${ssm:/aws/reference/secretsmanager/prod/wecari/smtp~true}
+    roleName: WecariOauthLambdaRole${self:provider.stage}
+    corsHeaders: 
+      - Content-Type
+      - Authorization
+      - Access-Token
+      - X-Requested-With
+      - X-Api-Key
+      - X-Access-Token
+      - X-Amz-Date
+      - X-Amz-User-Agent
+      
+ 
+resources:
+  Resources: 
+    WecariOauthLambdaRoleDev:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: WecariOauthLambdaRoleDev
+        Path: /
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: WecariAPILambdaPolicyDev
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow # note that these rights are given in the default policy and are required if you want logs out of your lambda(s)
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                    - ec2:CreateNetworkInterface
+                    - ec2:DeleteNetworkInterface
+                    - ec2:DescribeNetworkInterfaces
+                    - ec2:DescribeSecurityGroups
+                    - ec2:DescribeSubnets
+                    - ec2:DescribeVpcs
+                  Resource: "*" 
+          
+    WecariOauthLambdaRoleProd:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: WecariOauthLambdaRoleProd
+        Path: /
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: WecariAPILambdaPolicyProd
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                    - ec2:CreateNetworkInterface
+                    - ec2:DeleteNetworkInterface
+                    - ec2:DescribeNetworkInterfaces
+                    - ec2:DescribeSecurityGroups
+                    - ec2:DescribeSubnets
+                    - ec2:DescribeVpcs
+                  Resource: "*" 
+          
+  Outputs:
+    RoleName:
+      Value: ${self:custom.roleName}
+      Description: Name of the created Amazon Role.

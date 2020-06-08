@@ -107,7 +107,12 @@ class Resources extends Server
         if (!empty($refresh_token)) {
             $done = $this->get_oauth_storage()->unsetRefreshToken($refresh_token);
         }
-        $this->response->setParameters(array('success' => $done));
+        if ($done){
+            $this->response->setParameters(array('success' => true, 'msg' => 'Successfully cleared access', 'data' => [$access_token,$refresh_token]));
+        }
+        else{
+            $this->response->setParameters(array('success' => $done, 'msg' => 'Failed to clear access', 'data' => [$access_token,$refresh_token]));
+        }
         $this->response->send();
         die;
     }
@@ -275,7 +280,7 @@ class Resources extends Server
                         'data' => [
                             'client_id' => $client_id,
                             'client_secret' => $client_secret,
-                            'keys' => $keys
+                            'public_key' => $keys['publickey']
                         ]));
             }
             else {

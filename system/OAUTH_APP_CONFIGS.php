@@ -161,7 +161,7 @@ define('LOCALHOST', getHostByName(getHostName()));
 
 if ((strpos(OAUTH_BASE_URL, "localhost") !== FALSE || strpos(OAUTH_BASE_URL, LOCALHOST) !== FALSE) && empty(getServer('ENV')) && empty(getServer('STAGE'))) {
     define('ENVIRONMENT', ENV_DEV);
-} else if (strtolower(getServer('ENV') == "dev" || strtolower(getServer('STAGE') == "dev"))) {
+} else if (strtolower(getServer('ENV')) == "dev" || strtolower(getServer('STAGE')) == "dev") {
     define('ENVIRONMENT', ENV_TEST);
 } else {
     define('ENVIRONMENT', ENV_PROD);
@@ -294,13 +294,45 @@ class OAUTH_APP_CONFIGS
     */
     const ALLOWED_CORS_ORIGINS = [
         'https://wecari.com',
+        'https://wecari.com/',
         'https://staging.wecari.com',
+        'https://staging.wecari.com/',
         'https://api.wecari.com',
+        'https://api.wecari.com/',
         'https://api.staging.wecari.com',
+        'https://api.staging.wecari.com/',
         'https://partner.wecari.com',
-        'https://partner.staging.wecari.com'
+        'https://partner.wecari.com/',
+        'https://partner.staging.wecari.com',
+        'https://partner.staging.wecari.com/'
     ];
 
+
+    static function DB_HOST(){
+        return getServer("DB_HOST");
+    }
+    static function DB_PORT(){
+        return getServer("DB_PORT");
+    }
+    static function DB_USER(){
+        return getServer("DB_USER");
+    }
+    static function DB_PASS(){
+        return getServer("DB_PASS");
+    }
+
+    static function STAGE_DB_HOST(){
+        return getServer("STAGE_DB_HOST");
+    }
+    static function STAGE_DB_PORT(){
+        return getServer("STAGE_DB_PORT");
+    }
+    static function STAGE_DB_USER(){
+        return getServer("STAGE_DB_USER");
+    }
+    static function STAGE_DB_PASS(){
+        return getServer("STAGE_DB_PASS");
+    }
 
     static function AWS_SMTP_HOST(){
         return getServer("AWS_SMTP_HOST", "");

@@ -16,7 +16,6 @@ class Server
     private $smtp_timeout = 10;
     private $smtp_charset = 'utf-8';
 
-
     /**@var OAuth2\Storage\Pdo */
     private $oauth_storage;
 
@@ -47,8 +46,10 @@ class Server
     /**
      * Server constructor.
      * @param boolean $validateClient Validate client
+     * @param boolean $useJWT Use JWT Token
+     * @param boolean $useOpenID Use OpenID Connect - issue id tokens
      */
-    protected function __construct($validateClient = false)
+    protected function __construct($validateClient = false, $useJWT = false, $useOpenID = false)
     { 
 
         //Create request & response objects
@@ -61,29 +62,28 @@ class Server
             OAUTH_APP::getInstance()->loadModel("OauthPdo");
 
             //Create storage
-            $dsn = ENVIRONMENT == ENV_DEV ? 'mysql:dbname=13243546576879_oauth;host=localhost' : (ENVIRONMENT == ENV_TEST ? "mysql:dbname=".getServer('STAGE_DB_NAME').";host=".getServer('STAGE_DB_HOST') : "mysql:dbname=".getServer('DB_NAME').";host=".getServer('DB_HOST'));
-            $username = ENVIRONMENT == ENV_DEV ? 'root' : (ENVIRONMENT == ENV_TEST ? getServer('STAGE_DB_USER') : getServer('DB_USER'));
-            $password = ENVIRONMENT == ENV_DEV ? 'root13243546' : (ENVIRONMENT == ENV_TEST ? getServer('STAGE_DB_PASS') : getServer('DB_PASS'));
+            $dsn = ENVIRONMENT == ENV_DEV ? 'mysql:dbname=13243546576879_oauth;host=localhost' : (ENVIRONMENT == ENV_TEST ? "mysql:dbname=13243546576879_oauth;host=".OAUTH_APP_CONFIGS::STAGE_DB_HOST() : "mysql:dbname=13243546576879_oauth;host=".OAUTH_APP_CONFIGS::DB_HOST());
+            $username = ENVIRONMENT == ENV_DEV? "root": (ENVIRONMENT == ENV_TEST? OAUTH_APP_CONFIGS::STAGE_DB_USER():OAUTH_APP_CONFIGS::DB_USER());
+            $password = ENVIRONMENT == ENV_DEV? "root": (ENVIRONMENT == ENV_TEST? OAUTH_APP_CONFIGS::STAGE_DB_PASS():OAUTH_APP_CONFIGS::DB_PASS());
+
+            //Create PDO - MYSQL DB Storage
             $this->oauth_storage = new OauthPdo(array('dsn' => $dsn, 'username' => $username, 'password' => $password));
-
-            /*
-            // create storage
-            $storage = new OAuth2\Storage\Memory(array('keys' => array(
-                'public_key'  => "",
-                'private_key' => "",
-            )));
-            */
-
+                        
             //Create server without implicit
-            $this->oauth_server = new OAuth2\Server([$this->oauth_storage], array(
+            $this->oauth_server = new OAuth2\Server($this->oauth_storage, array(
                 'access_lifetime' => 86400, //1 day
                 'refresh_token_lifetime' => 2419200, //28 days
                 'auth_code_lifetime' => 3600, //1 hour
                 'allow_credentials_in_request_body' => true,
                 'allow_implicit' => false,
-                'use_jwt_access_tokens' => false,
-                'use_openid_connect' => false,
+                'use_jwt_access_tokens' => $useJWT,
+                'use_openid_connect' => $useOpenID,
             ));
+
+            /*Use Memory storage for JWT Tokens since it's reduntant to store and for security*/
+            if($useJWT){
+                $this->oauth_server->addStorage(new OAuth2\Storage\Memory(), 'access_token');
+            }
 
             /*User Credentials grant type*/
             $this->oauth_server->addGrantType(new OAuth2\GrantType\UserCredentials($this->oauth_storage));

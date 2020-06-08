@@ -59,110 +59,19 @@
     "AuthorizeLogGroup": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
-        "LogGroupName": "/aws/lambda/Oauth-dev-Authorize"
+        "LogGroupName": "/aws/lambda/Wecari-Oauth-Dev-Authorize"
       }
     },
     "ResourcesLogGroup": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
-        "LogGroupName": "/aws/lambda/Oauth-dev-Resources"
+        "LogGroupName": "/aws/lambda/Wecari-Oauth-Dev-Resources"
       }
     },
     "TokenLogGroup": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
-        "LogGroupName": "/aws/lambda/Oauth-dev-Token"
-      }
-    },
-    "IamRoleLambdaExecution": {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [
-            {
-              "Effect": "Allow",
-              "Principal": {
-                "Service": [
-                  "lambda.amazonaws.com"
-                ]
-              },
-              "Action": [
-                "sts:AssumeRole"
-              ]
-            }
-          ]
-        },
-        "Policies": [
-          {
-            "PolicyName": {
-              "Fn::Join": [
-                "-",
-                [
-                  "dev",
-                  "Oauth",
-                  "lambda"
-                ]
-              ]
-            },
-            "PolicyDocument": {
-              "Version": "2012-10-17",
-              "Statement": [
-                {
-                  "Effect": "Allow",
-                  "Action": [
-                    "logs:CreateLogStream",
-                    "logs:CreateLogGroup"
-                  ],
-                  "Resource": [
-                    {
-                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/Oauth-dev*:*"
-                    }
-                  ]
-                },
-                {
-                  "Effect": "Allow",
-                  "Action": [
-                    "logs:PutLogEvents"
-                  ],
-                  "Resource": [
-                    {
-                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/Oauth-dev*:*:*"
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        ],
-        "Path": "/",
-        "RoleName": {
-          "Fn::Join": [
-            "-",
-            [
-              "Oauth",
-              "dev",
-              {
-                "Ref": "AWS::Region"
-              },
-              "lambdaRole"
-            ]
-          ]
-        },
-        "ManagedPolicyArns": [
-          {
-            "Fn::Join": [
-              "",
-              [
-                "arn:",
-                {
-                  "Ref": "AWS::Partition"
-                },
-                ":iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
-              ]
-            ]
-          }
-        ]
+        "LogGroupName": "/aws/lambda/Wecari-Oauth-Dev-Token"
       }
     },
     "AuthorizeLambdaFunction": {
@@ -172,14 +81,14 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/Oauth/dev/1583775436137-2020-03-09T17:37:16.137Z/Oauth.zip"
+          "S3Key": "serverless/Wecari-Oauth/Dev/1591601965762-2020-06-08T07:39:25.762Z/Wecari-Oauth.zip"
         },
-        "FunctionName": "Oauth-dev-Authorize",
+        "FunctionName": "Wecari-Oauth-Dev-Authorize",
         "Handler": "index.php",
         "MemorySize": 256,
         "Role": {
           "Fn::GetAtt": [
-            "IamRoleLambdaExecution",
+            "WecariOauthLambdaRoleDev",
             "Arn"
           ]
         },
@@ -188,20 +97,21 @@
         "Description": "Allow user to authorize access to their account",
         "Environment": {
           "Variables": {
-            "ENV": "dev",
+            "ENV": "Dev",
             "BREF_BINARY_RESPONSES": 1,
             "DB_NAME": "13243546576879_oauth",
             "DB_HOST": "wecari-prod.czxrcl7gwax1.eu-west-2.rds.amazonaws.com",
+            "DB_PORT": 3306,
             "DB_USER": "wecari_db_public",
             "DB_PASS": "h7FHr6x75egTQM65tvEEwTTSey82uwR7",
-            "STAGE_DB_NAME": "13243546576879_oauth",
             "STAGE_DB_HOST": "wecari-prod.czxrcl7gwax1.eu-west-2.rds.amazonaws.com",
+            "STAGE_DB_PORT": 3306,
             "STAGE_DB_USER": "wecari_db_public",
             "STAGE_DB_PASS": "h7FHr6x75egTQM65tvEEwTTSey82uwR7",
             "AWS_SMTP_HOST": "email-smtp.us-east-1.amazonaws.com",
             "AWS_SMTP_PORT": "587",
-            "AWS_SMTP_KEY": "AKIAZWJKRYM7P6ZMTNFC",
-            "AWS_SMTP_SECRET": "BO3UTXCy16RB+vx+HSwy0c31GMhBiVlseRiS+7KLG0+B"
+            "AWS_SMTP_KEY": "AKIAZWJKRYM7EVCU5U2R",
+            "AWS_SMTP_SECRET": "BF0UckRMNDywPU+vlgTso9HO6vzWKyR1ajCuKdw4tU6U"
           }
         },
         "VpcConfig": {
@@ -215,22 +125,22 @@
           ]
         },
         "Layers": [
-          "arn:aws:lambda:eu-west-2:209497400698:layer:php-73-fpm:15"
+          "arn:aws:lambda:eu-west-2:209497400698:layer:php-73-fpm:19"
         ]
       },
       "DependsOn": [
         "AuthorizeLogGroup",
-        "IamRoleLambdaExecution"
+        "WecariOauthLambdaRoleDev"
       ]
     },
-    "AuthorizeLambdaVersionrZrPPHxCPQSlWiSfRvSwLpIrGUSsvp6WmmcMkd206Q": {
+    "AuthorizeLambdaVersionuTxaRejNqckRc9QYZM1ImuhsNvBTRvU5s5IYesVIPg": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "AuthorizeLambdaFunction"
         },
-        "CodeSha256": "a+QAVL9g0CTrLKw+ZQBc9x9E7djdOl/rT/Gh3A7hHMg=",
+        "CodeSha256": "SqVztzcchHTiytntrwWIbV/X/0aEBZqNs72fDGdPrdY=",
         "Description": "Allow user to authorize access to their account"
       }
     },
@@ -241,14 +151,14 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/Oauth/dev/1583775436137-2020-03-09T17:37:16.137Z/Oauth.zip"
+          "S3Key": "serverless/Wecari-Oauth/Dev/1591601965762-2020-06-08T07:39:25.762Z/Wecari-Oauth.zip"
         },
-        "FunctionName": "Oauth-dev-Resources",
+        "FunctionName": "Wecari-Oauth-Dev-Resources",
         "Handler": "index.php",
-        "MemorySize": 512,
+        "MemorySize": 256,
         "Role": {
           "Fn::GetAtt": [
-            "IamRoleLambdaExecution",
+            "WecariOauthLambdaRoleDev",
             "Arn"
           ]
         },
@@ -257,20 +167,21 @@
         "Description": "Retrieve oauth resources e.g user details with client credentials and access token",
         "Environment": {
           "Variables": {
-            "ENV": "dev",
+            "ENV": "Dev",
             "BREF_BINARY_RESPONSES": 1,
             "DB_NAME": "13243546576879_oauth",
             "DB_HOST": "wecari-prod.czxrcl7gwax1.eu-west-2.rds.amazonaws.com",
+            "DB_PORT": 3306,
             "DB_USER": "wecari_db_public",
             "DB_PASS": "h7FHr6x75egTQM65tvEEwTTSey82uwR7",
-            "STAGE_DB_NAME": "13243546576879_oauth",
             "STAGE_DB_HOST": "wecari-prod.czxrcl7gwax1.eu-west-2.rds.amazonaws.com",
+            "STAGE_DB_PORT": 3306,
             "STAGE_DB_USER": "wecari_db_public",
             "STAGE_DB_PASS": "h7FHr6x75egTQM65tvEEwTTSey82uwR7",
             "AWS_SMTP_HOST": "email-smtp.us-east-1.amazonaws.com",
             "AWS_SMTP_PORT": "587",
-            "AWS_SMTP_KEY": "AKIAZWJKRYM7P6ZMTNFC",
-            "AWS_SMTP_SECRET": "BO3UTXCy16RB+vx+HSwy0c31GMhBiVlseRiS+7KLG0+B"
+            "AWS_SMTP_KEY": "AKIAZWJKRYM7EVCU5U2R",
+            "AWS_SMTP_SECRET": "BF0UckRMNDywPU+vlgTso9HO6vzWKyR1ajCuKdw4tU6U"
           }
         },
         "VpcConfig": {
@@ -284,22 +195,22 @@
           ]
         },
         "Layers": [
-          "arn:aws:lambda:eu-west-2:209497400698:layer:php-73-fpm:15"
+          "arn:aws:lambda:eu-west-2:209497400698:layer:php-73-fpm:19"
         ]
       },
       "DependsOn": [
         "ResourcesLogGroup",
-        "IamRoleLambdaExecution"
+        "WecariOauthLambdaRoleDev"
       ]
     },
-    "ResourcesLambdaVersionLUegBUFbHZ3g3uuDHEwZgRq5wmddRXPd3x2YOOVSeM": {
+    "ResourcesLambdaVersion3nlUxz4q84wEAcO4cpANUeHzOh0flUiIVZlNMRJ8fSU": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "ResourcesLambdaFunction"
         },
-        "CodeSha256": "a+QAVL9g0CTrLKw+ZQBc9x9E7djdOl/rT/Gh3A7hHMg=",
+        "CodeSha256": "SqVztzcchHTiytntrwWIbV/X/0aEBZqNs72fDGdPrdY=",
         "Description": "Retrieve oauth resources e.g user details with client credentials and access token"
       }
     },
@@ -310,14 +221,14 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/Oauth/dev/1583775436137-2020-03-09T17:37:16.137Z/Oauth.zip"
+          "S3Key": "serverless/Wecari-Oauth/Dev/1591601965762-2020-06-08T07:39:25.762Z/Wecari-Oauth.zip"
         },
-        "FunctionName": "Oauth-dev-Token",
+        "FunctionName": "Wecari-Oauth-Dev-Token",
         "Handler": "index.php",
-        "MemorySize": 512,
+        "MemorySize": 256,
         "Role": {
           "Fn::GetAtt": [
-            "IamRoleLambdaExecution",
+            "WecariOauthLambdaRoleDev",
             "Arn"
           ]
         },
@@ -326,20 +237,21 @@
         "Description": "Generate and verify oauth access tokens",
         "Environment": {
           "Variables": {
-            "ENV": "dev",
+            "ENV": "Dev",
             "BREF_BINARY_RESPONSES": 1,
             "DB_NAME": "13243546576879_oauth",
             "DB_HOST": "wecari-prod.czxrcl7gwax1.eu-west-2.rds.amazonaws.com",
+            "DB_PORT": 3306,
             "DB_USER": "wecari_db_public",
             "DB_PASS": "h7FHr6x75egTQM65tvEEwTTSey82uwR7",
-            "STAGE_DB_NAME": "13243546576879_oauth",
             "STAGE_DB_HOST": "wecari-prod.czxrcl7gwax1.eu-west-2.rds.amazonaws.com",
+            "STAGE_DB_PORT": 3306,
             "STAGE_DB_USER": "wecari_db_public",
             "STAGE_DB_PASS": "h7FHr6x75egTQM65tvEEwTTSey82uwR7",
             "AWS_SMTP_HOST": "email-smtp.us-east-1.amazonaws.com",
             "AWS_SMTP_PORT": "587",
-            "AWS_SMTP_KEY": "AKIAZWJKRYM7P6ZMTNFC",
-            "AWS_SMTP_SECRET": "BO3UTXCy16RB+vx+HSwy0c31GMhBiVlseRiS+7KLG0+B"
+            "AWS_SMTP_KEY": "AKIAZWJKRYM7EVCU5U2R",
+            "AWS_SMTP_SECRET": "BF0UckRMNDywPU+vlgTso9HO6vzWKyR1ajCuKdw4tU6U"
           }
         },
         "VpcConfig": {
@@ -353,22 +265,22 @@
           ]
         },
         "Layers": [
-          "arn:aws:lambda:eu-west-2:209497400698:layer:php-73-fpm:15"
+          "arn:aws:lambda:eu-west-2:209497400698:layer:php-73-fpm:19"
         ]
       },
       "DependsOn": [
         "TokenLogGroup",
-        "IamRoleLambdaExecution"
+        "WecariOauthLambdaRoleDev"
       ]
     },
-    "TokenLambdaVersionHgJVLIE2m3ILkEEX8iAVFUwJEieptIL6xD1Mk": {
+    "TokenLambdaVersionxwlWgwwyP1DdZXdK47brirhGzAywH0ZQ8QfaVYtvM": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "TokenLambdaFunction"
         },
-        "CodeSha256": "a+QAVL9g0CTrLKw+ZQBc9x9E7djdOl/rT/Gh3A7hHMg=",
+        "CodeSha256": "SqVztzcchHTiytntrwWIbV/X/0aEBZqNs72fDGdPrdY=",
         "Description": "Generate and verify oauth access tokens"
       }
     },
@@ -489,7 +401,7 @@
     "ApiGatewayRestApi": {
       "Type": "AWS::ApiGateway::RestApi",
       "Properties": {
-        "Name": "Wecari-Oauth-dev",
+        "Name": "Wecari-Oauth-Dev",
         "BinaryMediaTypes": [
           "*/*"
         ],
@@ -852,13 +764,13 @@
         "MethodResponses": []
       }
     },
-    "ApiGatewayDeployment1583775431292": {
+    "ApiGatewayDeployment1591601960489": {
       "Type": "AWS::ApiGateway::Deployment",
       "Properties": {
         "RestApiId": {
           "Ref": "ApiGatewayRestApi"
         },
-        "StageName": "dev"
+        "StageName": "Dev"
       },
       "DependsOn": [
         "ApiGatewayMethodAuthorizeAnyVarOptions",
@@ -979,6 +891,98 @@
           ]
         }
       }
+    },
+    "WecariOauthLambdaRoleDev": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "WecariOauthLambdaRoleDev",
+        "Path": "/",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "WecariAPILambdaPolicyDev",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents",
+                    "ec2:CreateNetworkInterface",
+                    "ec2:DeleteNetworkInterface",
+                    "ec2:DescribeNetworkInterfaces",
+                    "ec2:DescribeSecurityGroups",
+                    "ec2:DescribeSubnets",
+                    "ec2:DescribeVpcs"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "WecariOauthLambdaRoleProd": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "WecariOauthLambdaRoleProd",
+        "Path": "/",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "WecariAPILambdaPolicyProd",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents",
+                    "ec2:CreateNetworkInterface",
+                    "ec2:DeleteNetworkInterface",
+                    "ec2:DescribeNetworkInterfaces",
+                    "ec2:DescribeSecurityGroups",
+                    "ec2:DescribeSubnets",
+                    "ec2:DescribeVpcs"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      }
     }
   },
   "Outputs": {
@@ -990,19 +994,19 @@
     "AuthorizeLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "AuthorizeLambdaVersionrZrPPHxCPQSlWiSfRvSwLpIrGUSsvp6WmmcMkd206Q"
+        "Ref": "AuthorizeLambdaVersionuTxaRejNqckRc9QYZM1ImuhsNvBTRvU5s5IYesVIPg"
       }
     },
     "ResourcesLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "ResourcesLambdaVersionLUegBUFbHZ3g3uuDHEwZgRq5wmddRXPd3x2YOOVSeM"
+        "Ref": "ResourcesLambdaVersion3nlUxz4q84wEAcO4cpANUeHzOh0flUiIVZlNMRJ8fSU"
       }
     },
     "TokenLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "TokenLambdaVersionHgJVLIE2m3ILkEEX8iAVFUwJEieptIL6xD1Mk"
+        "Ref": "TokenLambdaVersionxwlWgwwyP1DdZXdK47brirhGzAywH0ZQ8QfaVYtvM"
       }
     },
     "ServiceEndpoint": {
@@ -1023,10 +1027,14 @@
             {
               "Ref": "AWS::URLSuffix"
             },
-            "/dev"
+            "/Dev"
           ]
         ]
       }
+    },
+    "RoleName": {
+      "Value": "WecariOauthLambdaRoleDev",
+      "Description": "Name of the created Amazon Role."
     }
   }
 }

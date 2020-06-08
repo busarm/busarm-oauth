@@ -55,17 +55,8 @@ class OAUTH_APP {
      */
     public function initialize ()
     {
-        
-        // Check for CORS access request
-        if (OAUTH_APP_CONFIGS::CHECK_CORS == TRUE) {
-            $this->check_cors();
-        }
-        else {
-            // If the request HTTP method is 'OPTIONS', kill the response and send it to the client
-            if (strtolower(getServer("REQUEST_METHOD")) === 'options') {
-                $this->showMessage(200, true, "Preflight Ok", ENVIRONMENT);
-            }
-        }
+        /*Preflight Checking*/
+        $this->preflight();
 
         /*Initiate rerouting*/
         $request_path = getServer('PATH_INFO');
@@ -87,6 +78,24 @@ class OAUTH_APP {
             $this->showMessage(404, false, "Invalid Request", "Invalid Request Path");
         } 
     }
+
+    /**
+     * Preflight Check
+     *
+     * @return void
+     */
+    private function preflight(){
+        // Check for CORS access request
+        if (OAUTH_APP_CONFIGS::CHECK_CORS == TRUE) {
+            $this->check_cors();
+        } else { 
+            if (strtolower(getServer("REQUEST_METHOD")) === 'options') {
+                // kill the response and send it to the client
+                $this->showMessage(200, true, "Preflight Ok", ENVIRONMENT);
+            }
+        }
+    }
+
 
     /**Re-Routing
      * @param $routes
