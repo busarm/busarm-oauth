@@ -11,7 +11,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
 class Token extends Server
 {
     public function __construct(){
-        parent::__construct();
+        parent::__construct(false, true);
     }
 
     /**Obtain access token if authorized
@@ -30,7 +30,8 @@ class Token extends Server
 
     /**Verify Token
      * @api token/verify
-     * @method GET|POST*/
+     * @method GET|POST
+     * */
     public function verify()
     {
         if ($this->get_oauth_server()->verifyResourceRequest($this->request, $this->response)) {

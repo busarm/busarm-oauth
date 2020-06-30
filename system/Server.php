@@ -36,7 +36,7 @@ class Server
     protected $response;
 
     /**@var array Current oraganization info of client*/
-    private $org_info;
+    // private $org_info;
 
     /**@var array Current client info*/
     private $client_info;
@@ -77,14 +77,10 @@ class Server
                 'allow_credentials_in_request_body' => true,
                 'allow_implicit' => false,
                 'use_jwt_access_tokens' => $useJWT,
+                'store_encrypted_token_string' => !$useJWT,
                 'use_openid_connect' => $useOpenID,
             ));
-
-            /*Use Memory storage for JWT Tokens since it's reduntant to store and for security*/
-            if($useJWT){
-                $this->oauth_server->addStorage(new OAuth2\Storage\Memory(), 'access_token');
-            }
-
+            
             /*User Credentials grant type*/
             $this->oauth_server->addGrantType(new OAuth2\GrantType\UserCredentials($this->oauth_storage));
 
@@ -139,22 +135,24 @@ class Server
     protected function validateClient($scope = null)
     {
         if($this->get_oauth_storage()->checkClientCredentials(
-            !empty($client_id = $this->request->headers("client_id")) ? $client_id : $client_id = $this->request->request("client_id"),
-            !empty($client_secret = $this->request->headers("client_secret")) ? $client_secret : $client_secret = $this->request->request("client_secret")
+            !empty($client_id = $this->request->headers("client_id")) ? $client_id : ($client_id = $this->request->request("client_id")),
+            !empty($client_secret = $this->request->headers("client_secret")) ? $client_secret : ($client_secret = $this->request->request("client_secret"))
         )){
             if (!empty($scope)){
                 $scope = is_array($scope)?$this->implode($scope):$scope;
-                if ($this->get_oauth_storage()->scopeExistsForClient($scope,$client_id)){
-                    $this->client_info = $this->get_oauth_storage()->getClientDetails($client_id);
-                    return true;
-                }
-                else {
-                    $this->response->setParameters(array('success' => false, 'error' => 'invalid_scope', 'error_description' => "Scope($scope) does not exist for client $client_id"));
+                if (!$this->get_oauth_storage()->scopeExistsForClient($scope,$client_id)){
+                    $this->response->setParameters(array('success' => false, 'error' => 'invalid_scope', 'error_description' => "'$scope' scope does not exist for client '$client_id'"));
                     return false;
                 }
             }
-            else {
+
+            $this->client_info = $this->get_oauth_storage()->getClientDetails($client_id);
+            if(!empty($this->client_info)){
                 return true;
+            }
+            else {
+                $this->response->setParameters(array('success' => false, 'error' => 'invalid_client', 'error_description' => "Failed to get client details"));
+                return false;
             }
         }
         else {
@@ -276,5 +274,13 @@ class Server
             }
         }
         return trim($res);
+    }
+
+    /**
+     * Get the value of client_info
+     */ 
+    public function getClient_info()
+    {
+        return $this->client_info;
     }
 }

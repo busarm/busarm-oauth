@@ -16,7 +16,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
 class Authorize extends Server
 {
     public function __construct(){
-        parent::__construct();
+        parent::__construct(false, true);
     }
 
 
@@ -128,7 +128,7 @@ class Authorize extends Server
     private function processEmailRequest($email, $redirect_uri, $state, $scope)
     {
         if ($userInfo = $this->get_oauth_storage()->getUser($email)) {
-            $hash = md5(sprintf("%s/%s/%s", $email, $redirect_uri, $state));
+            $hash = md5(sprintf("%s:/%s:/%s", $email, $redirect_uri, $state));
             if (OAUTH_APP::getInstance()->get_cookie('request_hash') != $hash) {
                 $user_id = $userInfo['user_id'];
                 if ($this->get_oauth_storage()->scopeExistsForUser($scope, $user_id)) {

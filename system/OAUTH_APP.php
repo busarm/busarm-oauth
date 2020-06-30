@@ -105,12 +105,12 @@ class OAUTH_APP {
         $actualPath = "";
         $controller = "";
         $function = "";
-        $params = null;
+        $params = [];
         $param_key = null;
         $param_count = 0;
 
         foreach ($routes as $key => $route) {
-            if (!empty(trim($route, "\n\r'\"\\/&%!@#$*)(|<>{}"))) {
+            if (!empty(trim($route, "\n\r'\"\\/&%!@#$*)(|<>{} "))) {
                 if ($key == 0) { //Route at section 0 = Controller
                     $controller = basename(trim($this->controllerDir . $route));
                     $actualPath .= $controller;
@@ -126,9 +126,6 @@ class OAUTH_APP {
                     }
                 }
                 if ($key == count($routes) - 1){  //Last
-                    if (isset($params)) {
-                        $_GET = $params;
-                    }
                     if ($realPath = $this->fileExists($this->controllerDir . $actualPath, false)) {
 
                         try {
@@ -143,21 +140,22 @@ class OAUTH_APP {
 
                                 /*Load Class*/
                                 /*Create instance of controller*/
-                                $token = new $controller();
+                                $c = new $controller();
 
-                                if (method_exists($token, $function)
-                                    && is_callable(array($token, $function))) {
+                                if (method_exists($c, $function)
+                                    && is_callable(array($c, $function))) {
                                     call_user_func(
-                                        array($token, $function)
+                                        array($c, $function),
+                                        $params
                                     );
                                 } else {
-                                    $this-> showMessage(404, false, "Unknown Method", "Unknown Method - " . $function);
+                                    $this-> showMessage(400, false, "Unknown Method", "Unknown Method - " . $function);
                                 }
                             } else {
-                                $this->showMessage(404, false, "Invalid Request", "Invalid request path - " . $controller);
+                                $this->showMessage(400, false, "Invalid Request", "Invalid request path - " . $controller);
                             }
                         } catch (Exception $e) {
-                            $this->showMessage(500, false, "Invalid Request", $e->getMessage());
+                            $this->showMessage(400, false, "Invalid Request", $e->getMessage());
                         }
                     } else {
                         $this->showMessage(404, false, "Invalid Request", "Request path not found - " . $controller);
@@ -323,12 +321,14 @@ class OAUTH_APP {
     /**Generate CSRF TOKEN
      * @return string
      */
-    public function generate_csrf_token()
+    public function generate_csrf_token($key = null)
     {
+        if(empty($key) && empty($key = $this->get_cookie("csrf_key"))){
+            $key = md5(uniqid(IPADDRESS));
+            $this->set_cookie("csrf_key",$key);
+        }
         $dateObj = new DateTime("now", new DateTimeZone("GMT"));
-        $unique = md5(uniqid(IPADDRESS));
-        $this->set_cookie("csrf_key",$unique);
-        $csrf_token = md5($unique. IPADDRESS. OAUTH_BASE_URL . $dateObj->format('Y-m-d H'));
+        $csrf_token = sha1(sprintf("%s:%s:%s",$key, IPADDRESS, $dateObj->format('Y-m-d H')));
         return $csrf_token;
     }
 
@@ -338,11 +338,8 @@ class OAUTH_APP {
      */
     public function get_csrf_token()
     {
-        if(!empty($unique = $this->get_cookie("csrf_key"))){
-            $dateObj = new DateTime("now", new DateTimeZone("GMT"));
-            $csrf_token = md5($unique. IPADDRESS. OAUTH_BASE_URL . $dateObj->format('Y-m-d H'));
-            $this->delete_cookie("csrf_key");
-            return $csrf_token;
+        if(!empty($key = $this->get_cookie("csrf_key"))){
+            return $this->generate_csrf_token($key);
         }
         return null;
     }
@@ -354,7 +351,11 @@ class OAUTH_APP {
     public function validate_csrf_token($csrf_token)
     {
         if ($csrf_token) {
-            return $csrf_token == $this->get_csrf_token();
+            $done = $csrf_token == $this->get_csrf_token();
+            if($done){
+                $this->delete_cookie("csrf_key");
+            }
+            return $done;
         }
         return false;
     }
@@ -366,6 +367,18 @@ class OAUTH_APP {
     */
     public function get_cookie($name){
         return !empty($_COOKIE["oauth_".$name])? @$_COOKIE["oauth_".$name] : null;
+    }
+
+    /**
+     * Pull cookie - Get and delete cooke
+    * @param String $name
+    * @return void
+    */
+    public function pull_cookie($name){
+        $value = $this->get_cookie($name);
+        if ($value)
+            $this->delete_cookie($name);
+        return $value;
     }
 
     /**

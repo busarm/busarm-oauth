@@ -131,7 +131,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/Wecari-Oauth/Dev/1591601965762-2020-06-08T07:39:25.762Z/Wecari-Oauth.zip"
+                "S3Key": "serverless/Wecari-Oauth/Dev/1593508898942-2020-06-30T09:21:38.942Z/Wecari-Oauth.zip"
               },
               "FunctionName": "Wecari-Oauth-Dev-Authorize",
               "Handler": "index.php",
@@ -173,7 +173,7 @@
                 }
               },
               "Layers": [
-                "arn:aws:lambda:eu-west-2:209497400698:layer:php-73-fpm:19"
+                "arn:aws:lambda:eu-west-2:209497400698:layer:php-74-fpm:11"
               ]
             },
             "DependsOn": [
@@ -181,14 +181,14 @@
               "WecariOauthLambdaRoleDev"
             ]
           },
-          "AuthorizeLambdaVersionuTxaRejNqckRc9QYZM1ImuhsNvBTRvU5s5IYesVIPg": {
+          "AuthorizeLambdaVersionBCqojHVoJLvTMnaOSlRBfJIWF6ZYHniy1xqRPXc0U": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "AuthorizeLambdaFunction"
               },
-              "CodeSha256": "SqVztzcchHTiytntrwWIbV/X/0aEBZqNs72fDGdPrdY=",
+              "CodeSha256": "zNAcPtCtpYAPXaNFwp44CrVFmpM05S65BK68OSnZGCw=",
               "Description": "Allow user to authorize access to their account"
             }
           },
@@ -199,7 +199,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/Wecari-Oauth/Dev/1591601965762-2020-06-08T07:39:25.762Z/Wecari-Oauth.zip"
+                "S3Key": "serverless/Wecari-Oauth/Dev/1593508898942-2020-06-30T09:21:38.942Z/Wecari-Oauth.zip"
               },
               "FunctionName": "Wecari-Oauth-Dev-Resources",
               "Handler": "index.php",
@@ -241,7 +241,7 @@
                 }
               },
               "Layers": [
-                "arn:aws:lambda:eu-west-2:209497400698:layer:php-73-fpm:19"
+                "arn:aws:lambda:eu-west-2:209497400698:layer:php-74-fpm:11"
               ]
             },
             "DependsOn": [
@@ -249,14 +249,14 @@
               "WecariOauthLambdaRoleDev"
             ]
           },
-          "ResourcesLambdaVersion3nlUxz4q84wEAcO4cpANUeHzOh0flUiIVZlNMRJ8fSU": {
+          "ResourcesLambdaVersion7uaWqmD77lXmBqLwCst8nQcJ6tGBm6Bgq2I0gQKk": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "ResourcesLambdaFunction"
               },
-              "CodeSha256": "SqVztzcchHTiytntrwWIbV/X/0aEBZqNs72fDGdPrdY=",
+              "CodeSha256": "zNAcPtCtpYAPXaNFwp44CrVFmpM05S65BK68OSnZGCw=",
               "Description": "Retrieve oauth resources e.g user details with client credentials and access token"
             }
           },
@@ -267,7 +267,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/Wecari-Oauth/Dev/1591601965762-2020-06-08T07:39:25.762Z/Wecari-Oauth.zip"
+                "S3Key": "serverless/Wecari-Oauth/Dev/1593508898942-2020-06-30T09:21:38.942Z/Wecari-Oauth.zip"
               },
               "FunctionName": "Wecari-Oauth-Dev-Token",
               "Handler": "index.php",
@@ -309,7 +309,7 @@
                 }
               },
               "Layers": [
-                "arn:aws:lambda:eu-west-2:209497400698:layer:php-73-fpm:19"
+                "arn:aws:lambda:eu-west-2:209497400698:layer:php-74-fpm:11"
               ]
             },
             "DependsOn": [
@@ -317,14 +317,14 @@
               "WecariOauthLambdaRoleDev"
             ]
           },
-          "TokenLambdaVersionxwlWgwwyP1DdZXdK47brirhGzAywH0ZQ8QfaVYtvM": {
+          "TokenLambdaVersionJSsSHpVrh2KPr6qclJS01Vm0Bq2XPEwSSkuN9Exv4c4": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "TokenLambdaFunction"
               },
-              "CodeSha256": "SqVztzcchHTiytntrwWIbV/X/0aEBZqNs72fDGdPrdY=",
+              "CodeSha256": "zNAcPtCtpYAPXaNFwp44CrVFmpM05S65BK68OSnZGCw=",
               "Description": "Generate and verify oauth access tokens"
             }
           },
@@ -808,7 +808,7 @@
               "MethodResponses": []
             }
           },
-          "ApiGatewayDeployment1591601960489": {
+          "ApiGatewayDeployment1593508892270": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -1038,19 +1038,19 @@
           "AuthorizeLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "AuthorizeLambdaVersionuTxaRejNqckRc9QYZM1ImuhsNvBTRvU5s5IYesVIPg"
+              "Ref": "AuthorizeLambdaVersionBCqojHVoJLvTMnaOSlRBfJIWF6ZYHniy1xqRPXc0U"
             }
           },
           "ResourcesLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "ResourcesLambdaVersion3nlUxz4q84wEAcO4cpANUeHzOh0flUiIVZlNMRJ8fSU"
+              "Ref": "ResourcesLambdaVersion7uaWqmD77lXmBqLwCst8nQcJ6tGBm6Bgq2I0gQKk"
             }
           },
           "TokenLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "TokenLambdaVersionxwlWgwwyP1DdZXdK47brirhGzAywH0ZQ8QfaVYtvM"
+              "Ref": "TokenLambdaVersionJSsSHpVrh2KPr6qclJS01Vm0Bq2XPEwSSkuN9Exv4c4"
             }
           },
           "ServiceEndpoint": {
@@ -1224,7 +1224,7 @@
         "memory": 256,
         "runtime": "provided",
         "vpc": {},
-        "versionLogicalId": "AuthorizeLambdaVersionuTxaRejNqckRc9QYZM1ImuhsNvBTRvU5s5IYesVIPg"
+        "versionLogicalId": "AuthorizeLambdaVersionBCqojHVoJLvTMnaOSlRBfJIWF6ZYHniy1xqRPXc0U"
       },
       "Resources": {
         "handler": "index.php",
@@ -1275,7 +1275,7 @@
         "memory": 256,
         "runtime": "provided",
         "vpc": {},
-        "versionLogicalId": "ResourcesLambdaVersion3nlUxz4q84wEAcO4cpANUeHzOh0flUiIVZlNMRJ8fSU"
+        "versionLogicalId": "ResourcesLambdaVersion7uaWqmD77lXmBqLwCst8nQcJ6tGBm6Bgq2I0gQKk"
       },
       "Token": {
         "handler": "index.php",
@@ -1326,7 +1326,7 @@
         "memory": 256,
         "runtime": "provided",
         "vpc": {},
-        "versionLogicalId": "TokenLambdaVersionxwlWgwwyP1DdZXdK47brirhGzAywH0ZQ8QfaVYtvM"
+        "versionLogicalId": "TokenLambdaVersionJSsSHpVrh2KPr6qclJS01Vm0Bq2XPEwSSkuN9Exv4c4"
       }
     },
     "resources": {
@@ -1434,10 +1434,10 @@
     "serviceFilename": "serverless.yml",
     "layers": {},
     "isDashboardMonitoringPreconfigured": false,
-    "artifact": "/media/samuel/Windows/xampp/htdocs/wecari.com/oauth/.serverless/Wecari-Oauth.zip"
+    "artifact": "/media/samuel/Windows/Projects/wecari.com/oauth/.serverless/Wecari-Oauth.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/Wecari-Oauth/Dev/1591601965762-2020-06-08T07:39:25.762Z",
+    "artifactDirectoryName": "serverless/Wecari-Oauth/Dev/1593508898942-2020-06-30T09:21:38.942Z",
     "artifact": "Wecari-Oauth.zip"
   }
 }
