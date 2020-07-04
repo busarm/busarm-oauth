@@ -11,7 +11,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
 class Token extends Server
 {
     public function __construct(){
-        parent::__construct(false, true);
+        parent::__construct(false, true, true);
     }
 
     /**Obtain access token if authorized

@@ -77,8 +77,9 @@ class Server
                 'allow_credentials_in_request_body' => true,
                 'allow_implicit' => false,
                 'use_jwt_access_tokens' => $useJWT,
-                'store_encrypted_token_string' => !$useJWT,
+                'store_encrypted_token_string' => false,
                 'use_openid_connect' => $useOpenID,
+                'issuer' => OAUTH_BASE_URL
             ));
             
             /*User Credentials grant type*/

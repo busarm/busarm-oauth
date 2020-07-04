@@ -16,7 +16,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
 class Authorize extends Server
 {
     public function __construct(){
-        parent::__construct(false, true);
+        parent::__construct(false, true, true);
     }
 
 
