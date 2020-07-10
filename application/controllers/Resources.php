@@ -254,7 +254,7 @@ class Resources extends Server
         if ($this->get_oauth_server()->verifyResourceRequest(
                 $this->request,
                 $this->response,
-                "$this->admin_scope $this->staff_scope $this->developer_scope")) {
+                "$this->admin_scope $this->staff_scope")) {
 
             $client_id = $this->request->request('client_id');
             $org_id = $this->request->request('org_id');

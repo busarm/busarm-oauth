@@ -1,7 +1,6 @@
 <?php
 defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
 
-
 /**
  * Get Server Variable
  *

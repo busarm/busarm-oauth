@@ -138,7 +138,7 @@ resources:
     WecariOauthLambdaRoleDev:
       Type: AWS::IAM::Role
       Properties:
-        RoleName: WecariOauthLambdaRoleDev
+        RoleName: WecariOauthLambdaRoleDev-${self:provider.region}
         Path: /
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
@@ -169,7 +169,7 @@ resources:
     WecariOauthLambdaRoleProd:
       Type: AWS::IAM::Role
       Properties:
-        RoleName: WecariOauthLambdaRoleProd
+        RoleName: WecariOauthLambdaRoleProd-${self:provider.region}
         Path: /
         AssumeRolePolicyDocument:
           Version: "2012-10-17"

@@ -1,6 +1,8 @@
 <?php
 
-class OauthPdo  extends OAuth2\Storage\Pdo
+use OAuth2\Storage\Pdo;
+
+class OauthPdo  extends Pdo
 {
     public function __construct($connection, $config = array())
     {

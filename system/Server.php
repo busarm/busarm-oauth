@@ -1,15 +1,14 @@
 <?php
+defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
+
+use PHPMailer\PHPMailer\PHPMailer;
+
 /**
  * Created by PhpStorm.
  * User: Samuel
  * Date: 1/12/2018
  * Time: 1:17 AM
  */
-
-defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
-
-use PHPMailer\PHPMailer\PHPMailer;
-
 class Server
 {
     private $smtp_protocol = 'smtp';
@@ -53,8 +52,8 @@ class Server
     { 
 
         //Create request & response objects
-        $this->request = OAuth2\Request::createFromGlobals();
-        $this->response = new OAuth2\Response();
+        $this->request = \OAuth2\Request::createFromGlobals();
+        $this->response = new \OAuth2\Response();
 
         try {
 
@@ -70,7 +69,7 @@ class Server
             $this->oauth_storage = new OauthPdo(array('dsn' => $dsn, 'username' => $username, 'password' => $password));
                         
             //Create server without implicit
-            $this->oauth_server = new OAuth2\Server($this->oauth_storage, array(
+            $this->oauth_server = new \OAuth2\Server($this->oauth_storage, array(
                 'access_lifetime' => 86400, //1 day
                 'refresh_token_lifetime' => 2419200, //28 days
                 'auth_code_lifetime' => 3600, //1 hour
