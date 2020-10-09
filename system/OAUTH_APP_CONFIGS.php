@@ -214,6 +214,17 @@ class OAUTH_APP_CONFIGS
     |
     */
     const CHECK_CORS = TRUE; 
+    
+    /*
+    |--------------------------------------------------------------------------
+    | CORS Max Age
+    |--------------------------------------------------------------------------
+    |
+    | How long in seconds to cache CORS preflight response in browser.
+    | -1 for disabling caching.
+    |
+    */
+    const MAX_CORS_AGE = 3600; 
 
     /*
     |--------------------------------------------------------------------------
@@ -278,7 +289,7 @@ class OAUTH_APP_CONFIGS
     | source domain
     |
     */
-    const ALLOWED_ANY_CORS_DOMAIN = FALSE;
+    const ALLOWED_ANY_CORS_DOMAIN = ENVIRONMENT != ENV_PROD;
 
     /*
     |--------------------------------------------------------------------------
@@ -311,7 +322,7 @@ class OAUTH_APP_CONFIGS
         return getServer("DB_HOST");
     }
     static function DB_PORT(){
-        return getServer("DB_PORT");
+        return intval(getServer("DB_PORT"));
     }
     static function DB_USER(){
         return getServer("DB_USER");
@@ -324,7 +335,7 @@ class OAUTH_APP_CONFIGS
         return getServer("STAGE_DB_HOST");
     }
     static function STAGE_DB_PORT(){
-        return getServer("STAGE_DB_PORT");
+        return intval(getServer("STAGE_DB_PORT"));
     }
     static function STAGE_DB_USER(){
         return getServer("STAGE_DB_USER");
@@ -337,7 +348,7 @@ class OAUTH_APP_CONFIGS
         return getServer("AWS_SMTP_HOST", "");
     }
     static function AWS_SMTP_PORT(){
-        return getServer("AWS_SMTP_PORT", "");
+        return intval(getServer("AWS_SMTP_PORT", ""));
     }
     static function AWS_SMTP_KEY(){
         return getServer("AWS_SMTP_KEY", "");

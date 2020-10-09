@@ -443,7 +443,7 @@ class OAUTH_APP {
                 ->get($this->config->item('rest_access_table'))
                 ->num_rows() > 0;
     }
-
+    
     /**
      * Checks allowed domains, and adds appropriate headers for HTTP access control (CORS)
      * @credits Codeigniter
@@ -456,6 +456,7 @@ class OAUTH_APP {
         $allowed_cors_headers = OAUTH_APP_CONFIGS::ALLOWED_CORS_HEADERS;
         $exposed_cors_headers = OAUTH_APP_CONFIGS::EXPOSED_CORS_HEADERS;
         $allowed_cors_methods = OAUTH_APP_CONFIGS::ALLOWED_CORS_METHODS;
+        $max_cors_age = OAUTH_APP_CONFIGS::MAX_CORS_AGE;
 
         // Convert the config items into strings
         $allowed_headers = implode(', ', is_array($allowed_cors_headers) ? $allowed_cors_headers : []);
@@ -469,6 +470,7 @@ class OAUTH_APP {
             header('Access-Control-Allow-Methods: ' . $allowed_methods, true);
             header('Access-Control-Allow-Headers: ' . $allowed_headers, true);
             header('Access-Control-Expose-Headers: ' . $exposed_cors_headers, true);
+            header('Access-Control-Max-Age: ' . $max_cors_age, true);
         } else {
 
             // We're going to allow only certain domains access
@@ -490,6 +492,7 @@ class OAUTH_APP {
                 header('Access-Control-Allow-Methods: ' . $allowed_methods, true);
                 header('Access-Control-Allow-Headers: ' . $allowed_headers, true);
                 header('Access-Control-Expose-Headers: ' . $exposed_cors_headers, true);
+                header('Access-Control-Max-Age: ' . $max_cors_age, true);
             }
         }
 
