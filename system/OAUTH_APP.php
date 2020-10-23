@@ -213,10 +213,10 @@ class OAUTH_APP {
         header('Access-Control-Allow-Origin: *', true);
         header('Access-Control-Allow-Methods: *', true); 
         if($status){
-            echo json_encode(['status'=>true, 'msg' => $title, 'env' => ENVIRONMENT]);
+            echo json_encode(['status'=>true, 'msg' => $title, 'env' => ENVIRONMENT, 'ip' => IPADDRESS]);
         }
         else {
-            echo json_encode(['status'=>false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT]);
+            echo json_encode(['status'=>false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT, 'ip' => IPADDRESS]);
         }
         exit;
     }
