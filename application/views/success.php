@@ -15,10 +15,10 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <link rel="icon" type="image/png" href="<?=OAUTH_APP::get_cdn_path('public/images/favicon/favicon-16x16.png')?>" sizes="16x16" />
-    <link rel="icon" type="image/png" href="<?=OAUTH_APP::get_cdn_path('public/images/favicon/favicon-32x32.png')?>" sizes="32x32" />
-    <link rel="icon" type="image/png" href="<?=OAUTH_APP::get_cdn_path('public/images/favicon/favicon-64x64.png')?>" sizes="64x64" />
-    <link rel="icon" type="image/png" href="<?=OAUTH_APP::get_cdn_path('public/images/favicon/favicon-96x96.png')?>" sizes="96x96" />
+    <link rel="icon" type="image/png" href="<?=OAUTH_APP::get_cdn_path('public/images/favicon/dark/favicon-16x16.png')?>" sizes="16x16" />
+    <link rel="icon" type="image/png" href="<?=OAUTH_APP::get_cdn_path('public/images/favicon/dark/favicon-32x32.png')?>" sizes="32x32" />
+    <link rel="icon" type="image/png" href="<?=OAUTH_APP::get_cdn_path('public/images/favicon/dark/favicon-64x64.png')?>" sizes="64x64" />
+    <link rel="icon" type="image/png" href="<?=OAUTH_APP::get_cdn_path('public/images/favicon/dark/favicon-96x96.png')?>" sizes="96x96" />
     <title>Login</title>
     <style>
         body{
