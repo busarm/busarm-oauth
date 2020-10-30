@@ -256,7 +256,7 @@ class OauthPdo  extends Pdo
             $found = true;
             $scopes = explode(' ', $scope);
             foreach ($scopes as $sc) {
-                if (strpos(trim(strtolower($result['scope'])), trim(strtolower($sc))) === false) {
+                if (!empty($sc) && strpos(trim(strtolower($result['scope'])), trim(strtolower($sc))) === false) {
                     $found = false;
                 }
             }
