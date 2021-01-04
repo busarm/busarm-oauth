@@ -18,20 +18,20 @@ provider:
         BREF_BINARY_RESPONSES: '1' # For bref to return binary responses. Bref will automatically encode responses to base64
         # AWS RDS - Production
         DB_NAME: 13243546576879_oauth
-        DB_HOST: ${self:custom.dbSecret.host}
-        DB_PORT: ${self:custom.dbSecret.port}
-        DB_USER: ${self:custom.dbSecret.username}
-        DB_PASS: ${self:custom.dbSecret.password}
+        DB_HOST: ${self:custom.secret.db_host}
+        DB_PORT: ${self:custom.secret.db_port}
+        DB_USER: ${self:custom.secret.db_username}
+        DB_PASS: ${self:custom.secret.db_password}
         # AWS RDS - Staging
-        STAGE_DB_HOST: ${self:custom.dbSecret.host}
-        STAGE_DB_PORT: ${self:custom.dbSecret.port}
-        STAGE_DB_USER: ${self:custom.dbSecret.username}
-        STAGE_DB_PASS: ${self:custom.dbSecret.password}
+        STAGE_DB_HOST: ${self:custom.secret.db_host}
+        STAGE_DB_PORT: ${self:custom.secret.db_port}
+        STAGE_DB_USER: ${self:custom.secret.db_username}
+        STAGE_DB_PASS: ${self:custom.secret.db_password}
         # AWS SMTP
-        AWS_SMTP_HOST: ${self:custom.smtpSecret.host}
-        AWS_SMTP_PORT: ${self:custom.smtpSecret.port}
-        AWS_SMTP_KEY: ${self:custom.smtpSecret.username}
-        AWS_SMTP_SECRET: ${self:custom.smtpSecret.password}
+        AWS_SMTP_HOST: ${self:custom.secret.smtp_host}
+        AWS_SMTP_PORT: ${self:custom.secret.smtp_port}
+        AWS_SMTP_KEY: ${self:custom.secret.smtp_username}
+        AWS_SMTP_SECRET: ${self:custom.secret.smtp_password}
     apiGateway:
         binaryMediaTypes:
             - '*/*'
@@ -46,7 +46,6 @@ provider:
 plugins:
   - ./vendor/bref/bref
   - serverless-plugin-log-retention
-
 package:
     exclude:
         - composer.json 
@@ -54,6 +53,7 @@ package:
         - .git/**
         - .serverless/**
         - .htaccess
+        - node_modules/**
        
 functions:
     Authorize:
@@ -124,8 +124,7 @@ functions:
 
 custom:
     logRetentionInDays: 30
-    dbSecret: ${ssm:/aws/reference/secretsmanager/prod/wecari/db~true}
-    smtpSecret: ${ssm:/aws/reference/secretsmanager/prod/wecari/smtp~true}
+    secret: ${ssm:/aws/reference/secretsmanager/prod/wecari~true}
     roleName: WecariOauthLambdaRole${self:provider.stage}
     corsHeaders: 
       - Content-Type

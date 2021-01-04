@@ -7,4 +7,5 @@
 
 .logs/
 .serverless/
+node_modules/
 tmp/
