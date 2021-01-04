@@ -44,7 +44,8 @@ provider:
             - subnet-e453298d
 
 plugins:
-    - ./vendor/bref/bref
+  - ./vendor/bref/bref
+  - serverless-plugin-log-retention
 
 package:
     exclude:
@@ -60,6 +61,7 @@ functions:
         description: 'Allow user to authorize access to their account'
         memorySize: 128
         timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
+        logRetentionInDays: ${self:custom.logRetentionInDays} 
         layers:
             - ${bref:layer.php-74-fpm}
         events:
@@ -81,6 +83,7 @@ functions:
         description: 'Retrieve oauth resources e.g user details with client credentials and access token'
         memorySize: 128
         timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
+        logRetentionInDays: ${self:custom.logRetentionInDays} 
         layers:
             - ${bref:layer.php-74-fpm}
         events:
@@ -102,6 +105,7 @@ functions:
         description: 'Generate and verify oauth access tokens'
         memorySize: 256
         timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
+        logRetentionInDays: ${self:custom.logRetentionInDays} 
         layers:
             - ${bref:layer.php-74-fpm}
         events:
@@ -119,6 +123,7 @@ functions:
                     warmer: true
 
 custom:
+    logRetentionInDays: 30
     dbSecret: ${ssm:/aws/reference/secretsmanager/prod/wecari/db~true}
     smtpSecret: ${ssm:/aws/reference/secretsmanager/prod/wecari/smtp~true}
     roleName: WecariOauthLambdaRole${self:provider.stage}

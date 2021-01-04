@@ -15,10 +15,10 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <link rel="icon" type="image/png" href="<?=OAUTH_APP::get_cdn_path('public/images/favicon/dark/favicon-16x16.png')?>" sizes="16x16" />
-    <link rel="icon" type="image/png" href="<?=OAUTH_APP::get_cdn_path('public/images/favicon/dark/favicon-32x32.png')?>" sizes="32x32" />
-    <link rel="icon" type="image/png" href="<?=OAUTH_APP::get_cdn_path('public/images/favicon/dark/favicon-64x64.png')?>" sizes="64x64" />
-    <link rel="icon" type="image/png" href="<?=OAUTH_APP::get_cdn_path('public/images/favicon/dark/favicon-96x96.png')?>" sizes="96x96" />
+    <link rel="icon" type="image/png" href="<?=App::get_cdn_path('public/images/favicon/dark/favicon-16x16.png')?>" sizes="16x16" />
+    <link rel="icon" type="image/png" href="<?=App::get_cdn_path('public/images/favicon/dark/favicon-32x32.png')?>" sizes="32x32" />
+    <link rel="icon" type="image/png" href="<?=App::get_cdn_path('public/images/favicon/dark/favicon-64x64.png')?>" sizes="64x64" />
+    <link rel="icon" type="image/png" href="<?=App::get_cdn_path('public/images/favicon/dark/favicon-96x96.png')?>" sizes="96x96" />
     <title>Login</title>
     <style>
         body{
@@ -163,10 +163,10 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
     <div class="login-page">
         <div class="form">
             <div>
-                <img class="logo logo_icon" src="<?=OAUTH_APP::get_cdn_path('public/images/logo/dark/logo_128px.png')?>">
+                <img class="logo logo_icon" src="<?=App::get_cdn_path('public/images/logo/dark/logo_128px.png')?>">
             </div>
             <div>
-                <img class="logo logo_txt" src="<?=OAUTH_APP::get_cdn_path('public/images/logo/dark/logo_txt_256px.png')?>">
+                <img class="logo logo_txt" src="<?=App::get_cdn_path('public/images/logo/dark/logo_txt_256px.png')?>">
             </div>
             <br>
             <form class="login-form" method="post" action="<?=$action?>">
@@ -176,7 +176,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
                     <h3> Authorize access to this account</h3>
                     <br>
                     <div>
-                        <img class="icon" src="<?=OAUTH_APP::get_cdn_path('public/images/icons/Name_104px.png')?>">
+                        <img class="icon" src="<?=App::get_cdn_path('public/images/icons/Name_104px.png')?>">
                         <div>
                             <?= $email ?>
                         </div>

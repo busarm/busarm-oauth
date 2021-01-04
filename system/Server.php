@@ -30,6 +30,7 @@ class Server
     public $tester_scope = 'tester';
     public $developer_scope = 'developer';
     public $staff_scope = 'staff';
+    public $openid_scope = 'openid';
 
     protected $request;
     protected $response;
@@ -58,12 +59,12 @@ class Server
         try {
 
             //Load custom model
-            OAUTH_APP::getInstance()->loadModel("OauthPdo");
+            App::getInstance()->loadModel("OauthPdo");
 
             //Create storage
-            $dsn = ENVIRONMENT == ENV_DEV ? 'mysql:dbname=13243546576879_oauth;host=localhost' : (ENVIRONMENT == ENV_TEST ? "mysql:dbname=13243546576879_oauth;host=".OAUTH_APP_CONFIGS::STAGE_DB_HOST() : "mysql:dbname=13243546576879_oauth;host=".OAUTH_APP_CONFIGS::DB_HOST());
-            $username = ENVIRONMENT == ENV_DEV? "root": (ENVIRONMENT == ENV_TEST? OAUTH_APP_CONFIGS::STAGE_DB_USER():OAUTH_APP_CONFIGS::DB_USER());
-            $password = ENVIRONMENT == ENV_DEV? "root": (ENVIRONMENT == ENV_TEST? OAUTH_APP_CONFIGS::STAGE_DB_PASS():OAUTH_APP_CONFIGS::DB_PASS());
+            $dsn = ENVIRONMENT == ENV_DEV ? 'mysql:dbname=13243546576879_oauth;host=mysql' : (ENVIRONMENT == ENV_TEST ? "mysql:dbname=13243546576879_oauth;host=".Configs::STAGE_DB_HOST() : "mysql:dbname=13243546576879_oauth;host=".Configs::DB_HOST());
+            $username = ENVIRONMENT == ENV_DEV? "root": (ENVIRONMENT == ENV_TEST? Configs::STAGE_DB_USER():Configs::DB_USER());
+            $password = ENVIRONMENT == ENV_DEV? "root": (ENVIRONMENT == ENV_TEST? Configs::STAGE_DB_PASS():Configs::DB_PASS());
 
             //Create PDO - MYSQL DB Storage
             $this->oauth_storage = new OauthPdo(array('dsn' => $dsn, 'username' => $username, 'password' => $password));
@@ -188,10 +189,10 @@ class Server
                 $mail->isSendmail();
             }
 
-            $mail->Username = OAUTH_APP_CONFIGS::AWS_SMTP_KEY();
-            $mail->Password = OAUTH_APP_CONFIGS::AWS_SMTP_SECRET();
-            $mail->Host = OAUTH_APP_CONFIGS::AWS_SMTP_HOST();
-            $mail->Port = OAUTH_APP_CONFIGS::AWS_SMTP_PORT();
+            $mail->Username = Configs::AWS_SMTP_KEY();
+            $mail->Password = Configs::AWS_SMTP_SECRET();
+            $mail->Host = Configs::AWS_SMTP_HOST();
+            $mail->Port = Configs::AWS_SMTP_PORT();
             $mail->SMTPAuth = true;
             $mail->SMTPSecure = 'tls';
             $mail->Timeout = $this->smtp_timeout;

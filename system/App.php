@@ -1,6 +1,6 @@
 <?php
 defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
-require_once "OAUTH_APP_CONFIGS.php";
+require_once "Configs.php";
 
 /**
  * Created by PhpStorm.
@@ -13,12 +13,12 @@ require_once "OAUTH_APP_CONFIGS.php";
  * @copyright wecari.com
  */
 
-class OAUTH_APP {
+class App {
 
-    private $controllerDir = OAUTH_APP_CONFIGS::OAUTH_CONTROLLER_PATH;
-    private $viewDir = OAUTH_APP_CONFIGS::OAUTH_VIEW_PATH;
-    private $modelDir = OAUTH_APP_CONFIGS::OAUTH_MODEL_PATH;
-    private $libraryDir = OAUTH_APP_CONFIGS::OAUTH_LIBRARY_PATH;
+    private $controllerDir = Configs::OAUTH_CONTROLLER_PATH;
+    private $viewDir = Configs::OAUTH_VIEW_PATH;
+    private $modelDir = Configs::OAUTH_MODEL_PATH;
+    private $libraryDir = Configs::OAUTH_LIBRARY_PATH;
 
     private static $instance;
 
@@ -29,7 +29,7 @@ class OAUTH_APP {
     /**
      * Get App Instance
      *
-     * @return OAUTH_APP
+     * @return App
      */
     public static function getInstance(){
         return self::$instance;
@@ -47,35 +47,50 @@ class OAUTH_APP {
         else  if (ENVIRONMENT == ENV_TEST)
             return "https://cdn.staging.wecari.com/".$path;
         else
-            return OAUTH_BASE_SERVER . "/wecari.com/cdn/".$path;
+            return "https://cdn.staging.wecari.com/".$path;
     }
 
     /**
      * Initialize app
      */
-    public function initialize ()
+    public function initialize ($controller = null, $function = null, $params = [])
     {
         /*Preflight Checking*/
-        $this->preflight();
+        if(!is_cli()){
+            $this->preflight();
+        }
 
         /*Initiate rerouting*/
-        $request_path = getServer('PATH_INFO');
-        if (empty($request_path)) {
-            $request_path = getServer('ORIG_PATH_INFO');
+        if($controller && $function) {
+            $this->processRoute($controller, $function, $params);
         }
-        if (empty($request_path)) {
-            $request_path = getServer('REQUEST_URI');
-        }
-        if (!empty($request_path)) {
-            if(preg_match('/\/ping(\/)?$/',$request_path)){
-                $this->showMessage(200, true, "System Online", ENVIRONMENT);
+        else {
+               
+            $request_path = getServer('PATH_INFO');
+            if (empty($request_path)) {
+                $request_path = getServer('ORIG_PATH_INFO');
             }
-            else { 
-                $routes = explode('/', explode('?',$request_path)[0]);
-                $this->reroute($routes);
+            if (empty($request_path)) {
+                $request_path = getServer('REQUEST_URI');
             }
-        } else {
-            $this->showMessage(404, false, "Invalid Request", "Invalid Request Path");
+            
+            if (!empty($request_path)) {
+                if(preg_match('/\/ping(\/)?$/',$request_path)){
+                    $this->showMessage(200, true, "System Online", ENVIRONMENT);
+                }
+                else { 
+                    $routes = explode('/', explode('?',$request_path)[0]);
+                    if(!empty($routes)){
+                        $this->reroute($routes);
+                    }
+                    else {
+                        $this->showMessage(404, false, "Invalid Request", "Invalid Request Path");
+                    }
+                }
+            }
+            else {
+                $this->showMessage(404, false, "Invalid Request", "Invalid Request Path");
+            }
         } 
     }
 
@@ -86,7 +101,7 @@ class OAUTH_APP {
      */
     private function preflight(){
         // Check for CORS access request
-        if (OAUTH_APP_CONFIGS::CHECK_CORS == TRUE) {
+        if (Configs::CHECK_CORS == TRUE) {
             $this->check_cors();
         } else { 
             if (strtolower(getServer("REQUEST_METHOD")) === 'options') {
@@ -102,74 +117,75 @@ class OAUTH_APP {
      */
     private function reroute ($routes)
     {
-        $actualPath = "";
         $controller = "";
         $function = "";
         $params = [];
-        $param_key = null;
-        $param_count = 0;
-
         foreach ($routes as $key => $route) {
             if (!empty(trim($route, "\n\r'\"\\/&%!@#$*)(|<>{} "))) {
                 if ($key == 0) { //Route at section 0 = Controller
                     $controller = basename(trim($this->controllerDir . $route));
-                    $actualPath .= $controller;
-                    $actualPath .= ".php";
                 } else if ($key == 1){ //Route at section 1 = Function
                     $function = $route;
                 } else { //Every other section. = Url params
-                    $param_count++;
-                    if ($param_count % 2 == 0) {
-                        $params[$param_key] = $route;
-                    } else {
-                        $param_key = $route;
-                    }
-                }
-                if ($key == count($routes) - 1){  //Last
-                    if ($realPath = $this->fileExists($this->controllerDir . $actualPath, false)) {
-
-                        try {
-
-                            /*
-                            * Let's Go...
-                            */
-                            require_once OAUTH_BASE_PATH . 'Server.php';
-                            require_once $realPath;
-
-                            if (class_exists(ucfirst($controller))) {
-
-                                /*Load Class*/
-                                /*Create instance of controller*/
-                                $c = new $controller();
-
-                                if (method_exists($c, $function)
-                                    && is_callable(array($c, $function))) {
-                                    call_user_func(
-                                        array($c, $function),
-                                        $params
-                                    );
-                                } else {
-                                    $this-> showMessage(400, false, "Unknown Method", "Unknown Method - " . $function);
-                                }
-                            } else {
-                                $this->showMessage(400, false, "Invalid Request", "Invalid request path - " . $controller);
-                            }
-                        } catch (Exception $e) {
-                            $this->showMessage(400, false, "Invalid Request", $e->getMessage());
-                        }
-                    } else {
-                        $this->showMessage(404, false, "Invalid Request", "Request path not found - " . $controller);
-                    }
-                    break; //unnecessary but just in-case...  can't be too sure ;)
+                    $params[] = $route;
                 }
             } else {
                 unset($routes[$key]);
                 $routes = array_values($routes);
-                $this->reroute($routes);
-                break;
+                return $this->reroute($routes);
             }
         }
+        
+        if ($controller && $function ){  //Last
+            $this->processRoute($controller, $function, $params);
+        }
+        else {
+            $this->showMessage(404, false, "Invalid Request", "Invalid Request Path");
+        }
+    }
 
+    /**
+     * Process Route
+     *
+     * @param string $controller
+     * @param string $function
+     * @param string $params
+     * @return void
+     */
+    private function processRoute($controller, $function, $params = []){
+        $path = $controller.".php";
+        if ($realPath = $this->fileExists($this->controllerDir . $path, false)) {
+            try {
+                /*
+                * Let's Go...
+                */
+                require_once OAUTH_BASE_PATH . 'Server.php';
+                require_once $realPath;
+
+                if (class_exists(ucfirst($controller))) {
+
+                    /*Load Class*/
+                    /*Create instance of class*/
+                    $object = new $controller();
+
+                    if (method_exists($object, $function)
+                        && is_callable(array($object, $function))) {
+                        call_user_func_array(
+                            array($object, $function),
+                            $params
+                        );
+                    } else {
+                        $this->showMessage(400, false, "Unknown Method", "Unknown Method - " . $function);
+                    }
+                } else {
+                    $this->showMessage(400, false, "Invalid Request", "Invalid request path - " . $controller);
+                }
+            } catch (Exception $e) {
+                $this->showMessage(400, false, "Invalid Request", $e->getMessage());
+            }
+        } else {
+            $this->showMessage(404, false, "Invalid Request", "Request path not found - " . $controller);
+        }
     }
 
 
@@ -208,10 +224,12 @@ class OAUTH_APP {
      */
     public function showMessage($code, $status, $title, $msg)
     {
-        header(PROTOCOL_HEADER . ' ' . $code . ' ' . $title, TRUE, $code);
-        header("Content-type: application/json");
-        header('Access-Control-Allow-Origin: *', true);
-        header('Access-Control-Allow-Methods: *', true); 
+        if(!is_cli() && !headers_sent()){
+            header(PROTOCOL_HEADER . ' ' . $code . ' ' . $title, TRUE, $code);
+            header("Content-type: application/json");
+            header('Access-Control-Allow-Origin: *', true);
+            header('Access-Control-Allow-Methods: *', true); 
+        }
         if($status){
             echo json_encode(['status'=>true, 'msg' => $title, 'env' => ENVIRONMENT, 'ip' => IPADDRESS]);
         }
@@ -268,7 +286,6 @@ class OAUTH_APP {
             include $filePath;
             $content = ob_get_contents();
             ob_end_clean();
-            ob_flush();
 
             if ($return) {
                 return $content;
@@ -453,10 +470,10 @@ class OAUTH_APP {
      */
     protected function check_cors()
     {
-        $allowed_cors_headers = OAUTH_APP_CONFIGS::ALLOWED_CORS_HEADERS;
-        $exposed_cors_headers = OAUTH_APP_CONFIGS::EXPOSED_CORS_HEADERS;
-        $allowed_cors_methods = OAUTH_APP_CONFIGS::ALLOWED_CORS_METHODS;
-        $max_cors_age = OAUTH_APP_CONFIGS::MAX_CORS_AGE;
+        $allowed_cors_headers = Configs::ALLOWED_CORS_HEADERS;
+        $exposed_cors_headers = Configs::EXPOSED_CORS_HEADERS;
+        $allowed_cors_methods = Configs::ALLOWED_CORS_METHODS;
+        $max_cors_age = Configs::MAX_CORS_AGE;
 
         // Convert the config items into strings
         $allowed_headers = implode(', ', is_array($allowed_cors_headers) ? $allowed_cors_headers : []);
@@ -464,7 +481,7 @@ class OAUTH_APP {
         $allowed_methods = implode(', ', is_array($allowed_cors_methods) ? $allowed_cors_methods : []);
 
         // If we want to allow any domain to access the API
-        if (OAUTH_APP_CONFIGS::ALLOWED_ANY_CORS_DOMAIN == TRUE) {
+        if (Configs::ALLOWED_ANY_CORS_DOMAIN == TRUE) {
             header(PROTOCOL_HEADER . " 200 OK", TRUE, 200);
             header('Access-Control-Allow-Origin: *', true);
             header('Access-Control-Allow-Methods: ' . $allowed_methods, true);
@@ -483,7 +500,7 @@ class OAUTH_APP {
                 }
             }
 
-            $allowed_origins = OAUTH_APP_CONFIGS::ALLOWED_CORS_ORIGINS;
+            $allowed_origins = Configs::ALLOWED_CORS_ORIGINS;
 
             // If the origin domain is in the allowed_cors_origins list, then add the Access Control headers
             if (is_array($allowed_origins) && in_array(trim($origin, "/"), $allowed_origins)) {

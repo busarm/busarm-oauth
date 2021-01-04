@@ -151,7 +151,7 @@ class Resources extends Server
                 $this->response->setParameters(array('success' => false, 'error' => 'duplicate_user', 'error_description' => sprintf("User with email %s already exists", $email)));
             } else {
                 //Insert User
-                $result = $this->get_oauth_storage()->setUser_custom($user_id,$password,$email,$name,$phone,$dial_code,$scope);
+                $result = $this->get_oauth_storage()->setUserCustom($user_id,$password,$email,$name,$phone,$dial_code,$scope);
                 if ($result){
                     $this->response->setParameters(array('success' => true, 'data' => ['user_id'=>$user_id]));
                 }
@@ -221,7 +221,7 @@ class Resources extends Server
                 $newScopes = array_diff($mergedScopes, $this->explode($remove_scope));
 
                 //Update User
-                $result = $this->get_oauth_storage()->setUser_custom($user_id,$password,$email,$name,$phone,$dial_code,$this->implode($newScopes));
+                $result = $this->get_oauth_storage()->setUserCustom($user_id,$password,$email,$name,$phone,$dial_code,$this->implode($newScopes));
 
                 if($result){
                     $this->response->setParameters(array('success' => $result));
@@ -273,7 +273,7 @@ class Resources extends Server
             $scopes = $this->get_oauth_storage()->scopeExists($scope) ? $scope : $this->get_oauth_storage()->getDefaultScope();
 
             //Insert Client
-            $result = $this->get_oauth_storage()->setClientDetails($client_id, $client_secret, $org_id, $redirect_uri, $grant_types, $scopes, $user_id);
+            $result = $this->get_oauth_storage()->setClientDetailsCustom($org_id, $client_id, $client_secret, $redirect_uri, $grant_types, $scopes, $user_id);
 
             //Insert jwt public keys for client
             if($result){

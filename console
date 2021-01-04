@@ -1,0 +1,16 @@
+<?php
+if($argv && ($function = $argv[1]??null)){        
+    $params = [];
+    for($i = 2; $i < count($argv); $i++){
+        $params[] = trim($argv[$i]);
+    }
+
+    if (defined('STDIN')) {chdir(dirname(__FILE__));} // Set the current directory correctly for CLI requests
+    define("OAUTH_BASE", __DIR__.DIRECTORY_SEPARATOR, true);
+    define("OAUTH_BASE_PATH",'system/',true); //define System path
+    require_once 'vendor/autoload.php'; /* Initialize composer autoloader*/
+    require_once OAUTH_BASE_PATH."App.php";   
+    (new App)->initialize("Console", $function, $params);
+}
+else exit ("Invalid command\n");
+

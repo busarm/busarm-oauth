@@ -159,7 +159,7 @@ class OauthPdo  extends Pdo
      * @param string $scope
      * @return bool
      */
-    public function setUser_custom($user_id, $password, $email, $name, $phone, $dial_code, $scope)
+    public function setUserCustom($user_id, $password, $email, $name, $phone, $dial_code, $scope)
     {
         //Create unique Salt string
         $salt = sha1(uniqid($user_id));
@@ -198,29 +198,74 @@ class OauthPdo  extends Pdo
             return $stmt->execute(compact('user_id', 'password', 'salt', 'email', 'name', 'phone', 'dial_code', 'scope'));
         }
     }
-
     
     /**
      * @param string $client_id
+     * @return array|mixed
+     */
+    public function getClientDetailsCustom($client_id, $org_id = null)
+    {
+        if($org_id){
+            $stmt = $this->db->prepare(sprintf('SELECT * from %s where client_id = :client_id and org_id = :org_id', $this->config['client_table']));
+            $stmt->execute(compact('client_id', 'org_id'));
+        }
+        else {
+            $stmt = $this->db->prepare(sprintf('SELECT * from %s where client_id = :client_id', $this->config['client_table']));
+            $stmt->execute(compact('client_id'));
+        }
+
+        return $stmt->fetch(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * @param string $client_id
      * @param null|string $client_secret
-     * @param null|string $org_id
      * @param null|string $redirect_uri
      * @param null|array  $grant_types
      * @param null|string $scope
      * @param null|string $user_id
-     * @param bool $issue_jwt
      * @return bool
      */
-    public function setClientDetails_custom($client_id, $client_secret = null, $org_id = null, $redirect_uri = null, $grant_types = null, $scope = null, $user_id = null, $issue_jwt = false)
+    public function setClientDetailsCustom($org_id, $client_id, $client_secret = null, $redirect_uri = null, $grant_types = null, $scope = null, $user_id = null, $issue_jwt = true)
     {
         // if it exists, update it.
-        if ($this->getClientDetails($client_id)) {
-            $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET client_secret=:client_secret, org_id=:org_id, redirect_uri=:redirect_uri, grant_types=:grant_types, scope=:scope, user_id=:user_id , issue_jwt=:issue_jwt where client_id=:client_id', $this->config['client_table']));
+        if ($this->getClientDetailsCustom($client_id, $org_id)) {
+            $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET client_secret=:client_secret, redirect_uri=:redirect_uri, grant_types=:grant_types, scope=:scope, user_id=:user_id, issue_jwt=:issue_jwt where client_id=:client_id', $this->config['client_table']));
+            return $stmt->execute(compact('client_id', 'client_secret', 'redirect_uri', 'grant_types', 'scope', 'user_id', 'issue_jwt'));
         } else {
-            $stmt = $this->db->prepare(sprintf('INSERT INTO %s (client_id, client_secret, org_id, redirect_uri, grant_types, scope, user_id, issue_jwt) VALUES (:client_id, :client_secret, :org_id, :redirect_uri, :grant_types, :scope, :user_id, :issue_jwt)', $this->config['client_table']));
+            $stmt = $this->db->prepare(sprintf('INSERT INTO %s (org_id, client_id, client_secret, redirect_uri, grant_types, scope, user_id, issue_jwt) VALUES (:org_id, :client_id, :client_secret, :redirect_uri, :grant_types, :scope, :user_id, :issue_jwt)', $this->config['client_table']));
+            return $stmt->execute(compact('org_id', 'client_id', 'client_secret', 'redirect_uri', 'grant_types', 'scope', 'user_id', 'issue_jwt'));
         }
+    }
 
-        return $stmt->execute(compact('client_id', 'client_secret', 'org_id', 'redirect_uri', 'grant_types', 'scope', 'user_id', 'issue_jwt'));
+    /**
+     * @param string $org_id
+     * @return array|mixed
+     */
+    public function getOrganizationDetails($org_id)
+    {
+        $stmt = $this->db->prepare(sprintf('SELECT * from %s where org_id = :org_id', $this->config['orgs_table']));
+        $stmt->execute(compact('org_id'));
+
+        return $stmt->fetch(\PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * @param string $org_name
+     * @param null|string $org_logo
+     * @param null|array  $org_id 
+     * @return bool|int
+     */
+    public function setOrganizationDetails($org_name, $logo = null, $org_id = null)
+    {
+        // if it exists, update it.
+        if ($org_id && $this->getOrganizationDetails($org_id)) {
+            $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET org_name=:org_name, logo=:logo where org_id=:org_id', $this->config['orgs_table']));
+            return $stmt->execute(compact('org_id', 'org_name', 'logo'));
+        } else {
+            $stmt = $this->db->prepare(sprintf('INSERT INTO %s (org_name, logo) VALUES (:org_name, :logo)', $this->config['orgs_table']));
+            return $stmt->execute(compact('org_name', 'logo')) ? $this->db->lastInsertId() : false;
+        }
     }
 
 
@@ -237,7 +282,6 @@ class OauthPdo  extends Pdo
         if ($result = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             return $result['count'] == count($scope);
         }
-
         return false;
     }
 

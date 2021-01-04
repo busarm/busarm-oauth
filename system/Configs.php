@@ -1,6 +1,21 @@
 <?php
 defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
 
+if (!function_exists('is_cli'))
+{
+	/**
+	 * Is CLI?
+	 *
+	 * Test to see if a request was made from the command line.
+	 *
+	 * @return 	bool
+	 */
+	function is_cli()
+	{
+		return (PHP_SAPI === 'cli' OR defined('STDIN'));
+	}
+}
+
 /**
  * Get Server Variable
  *
@@ -158,12 +173,14 @@ define('LOCALHOST', getHostByName(getHostName()));
 * NOTE: If you change these, also change the error_reporting() code below
 */
 
-if ((strpos(OAUTH_BASE_URL, "localhost") !== FALSE || strpos(OAUTH_BASE_URL, LOCALHOST) !== FALSE) && empty(getServer('ENV')) && empty(getServer('STAGE'))) {
-    define('ENVIRONMENT', ENV_DEV);
-} else if (strtolower(getServer('ENV')) == "dev" || strtolower(getServer('STAGE')) == "dev") {
-    define('ENVIRONMENT', ENV_TEST);
-} else {
+if (strtolower(getServer('ENV')) == "prod" || strtolower(getServer('STAGE')) == "prod") {
     define('ENVIRONMENT', ENV_PROD);
+}
+else if (strtolower(getServer('ENV')) == "dev" || strtolower(getServer('STAGE')) == "dev") {
+    define('ENVIRONMENT', ENV_TEST);
+} 
+else {
+    define('ENVIRONMENT', ENV_DEV);
 }
 
 
@@ -196,7 +213,7 @@ switch (ENVIRONMENT) {
         exit(1); // EXIT_ERROR
 }
 
-class OAUTH_APP_CONFIGS
+class Configs
 { 
     const OAUTH_CONTROLLER_PATH =  "application/controllers/";
     const OAUTH_LIBRARY_PATH =  "application/library/";

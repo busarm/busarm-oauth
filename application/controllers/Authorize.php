@@ -91,7 +91,7 @@ class Authorize extends Server
     private function processLoginRequest()
     {
         if ($data = $this->loginRequestAvailable()) {
-            if (OAUTH_APP::getInstance()->validate_csrf_token(@$data['csrf_token'])) {
+            if (App::getInstance()->validate_csrf_token(@$data['csrf_token'])) {
                 if ($userInfo = ($this->get_oauth_storage()->checkUserCredentials(@$data['username'], @$data['password']))) {
                     if (!empty($userInfo[@'user_id'])) {
                         return $userInfo;
@@ -129,7 +129,7 @@ class Authorize extends Server
     {
         if ($userInfo = $this->get_oauth_storage()->getUser($email)) {
             $hash = md5(sprintf("%s:/%s:/%s", $email, $redirect_uri, $state));
-            if (OAUTH_APP::getInstance()->get_cookie('request_hash') != $hash) {
+            if (App::getInstance()->get_cookie('request_hash') != $hash) {
                 $user_id = $userInfo['user_id'];
                 if ($this->get_oauth_storage()->scopeExistsForUser($scope, $user_id)) {
                     if ($is_authorized = $this->get_oauth_server()->validateAuthorizeRequest($this->request, $this->response)) {
@@ -139,7 +139,7 @@ class Authorize extends Server
                         $message = $this->getEmailAuthView($link);
                         if ($this->sendMail("Email Authorization", $message, $email)) {
                             try {
-                                OAUTH_APP::getInstance()->set_cookie("request_hash", $hash); //Save to cookie to prevent duplicate 
+                                App::getInstance()->set_cookie("request_hash", $hash); //Save to cookie to prevent duplicate 
                                 return $userInfo;
                             }
                             catch (Exception $e) {
@@ -193,8 +193,8 @@ class Authorize extends Server
     private function showAuthorizationForm($vars = array())
     {
         try {
-            echo OAUTH_APP::getInstance()->loadView("login", array_merge($vars, [
-                'csrf_token' => OAUTH_APP::getInstance()->generate_csrf_token(),
+            echo App::getInstance()->loadView("login", array_merge($vars, [
+                'csrf_token' => App::getInstance()->generate_csrf_token(),
                 'action' => ""
             ]), true);
             die;
@@ -210,7 +210,7 @@ class Authorize extends Server
     private function showEmailSuccess($vars = array())
     {
         try {
-            echo OAUTH_APP::getInstance()->loadView("success", $vars, true);
+            echo App::getInstance()->loadView("success", $vars, true);
             die;
         } catch (Exception $e) {
             echo $e->getMessage();
@@ -223,7 +223,7 @@ class Authorize extends Server
     private function showEmailFailed($vars = array())
     {
         try {
-            echo OAUTH_APP::getInstance()->loadView("failed", $vars, true);
+            echo App::getInstance()->loadView("failed", $vars, true);
             die;
         } catch (Exception $e) {
             echo $e->getMessage();
@@ -256,7 +256,7 @@ class Authorize extends Server
                       </tr>
                     </table>";
         try {
-            return OAUTH_APP::getInstance()->loadView("simple_mail", ["content" => $content], true);
+            return App::getInstance()->loadView("simple_mail", ["content" => $content], true);
         } catch (Exception $e) {
             return $content;
         }
