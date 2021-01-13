@@ -78,18 +78,43 @@ class Console extends Server
         }
     }
 
+    /**
+     * Update Client Keys
+     *
+     * @return void
+     */
+    public function update_client_key($client_id)
+    {
+        if(!empty($client_id)){
+            $algo = 'sha256';
+            $rsa = new phpseclib\Crypt\RSA();
+            $rsa->setHash($algo);
+            $keys = $rsa->createKey(2048);
+            if(!empty($keys) && $this->get_oauth_storage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")){
+                echo "Successfully Updated Client Keys".PHP_EOL;
+                echo "Client Public Key = ".$keys['publickey'].PHP_EOL;
+                echo "Client Public Key ALGO = $algo".PHP_EOL; 
+            }
+            else {
+                exit ("Failed to update client keys");
+            }
+        }
+        else {
+            exit ("Invalid Client");
+        }
+    }
     
     /**
      * Create Admin User
      *
      * @return void
      */
-    public function create_user($name, $email)
+    public function create_user($name, $email, $pass = null)
     {
         //Create user id
         $prefix = !empty($email)?$email:(!empty($phone)?$phone:"");
         $user_id = sha1(uniqid($prefix));
-        $password = bin2hex(random_bytes(5));
+        $password = $pass ?? bin2hex(random_bytes(5));
         $scopes = "$this->openid_scope $this->admin_scope $this->staff_scope $this->developer_scope $this->tester_scope $this->user_scope";
 
         //Insert User
@@ -99,7 +124,9 @@ class Console extends Server
             echo "User ID = $user_id".PHP_EOL;
             echo "User Name = $name".PHP_EOL;
             echo "User Email = $email".PHP_EOL;
-            echo "User Password = $password".PHP_EOL;
+            if(!$pass){
+                echo "User Password = $password".PHP_EOL;
+            }
             echo "User Scopes = $scopes".PHP_EOL;
         }
         else {

@@ -65,17 +65,10 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
         }
 
         oauth-login footer .copyright li {
-            border-left: solid 1px #dddddd;
             display: inline-block;
             list-style: none;
             margin: 5px;
             padding:5px;
-        }
-
-        oauth-login footer .copyright li:first-child {
-            border-left: 0;
-            margin-left: 0;
-            padding-left: 0;
         }
 
         oauth-login .login-page {
@@ -209,6 +202,10 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
     <footer>
         <ul class="copyright">
             <li>&copy; Wecari All rights reserved.</li>
+        </ul>
+        <ul class="copyright">
+            <li style="min-width: 100px;"><a href="<?=App::get_app_path('privacy')?>" target="_blank">Privacy Policy</a></li>
+            <li style="min-width: 100px;"><a href="<?=App::get_app_path('terms')?>" target="_blank">Terms & Conditions</a></li>
         </ul>
     </footer>
 </oauth-login>

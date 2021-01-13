@@ -36,6 +36,21 @@ class App {
     }
 
     /**
+     * Get PATH for APP
+     *
+     * @param string $path
+     * @return void
+     */
+    public static function get_app_path($path = ''){
+        if (ENVIRONMENT == ENV_PROD)
+            return "https://wecari.com/".$path;
+        else  if (ENVIRONMENT == ENV_TEST)
+            return "https://staging.wecari.com/".$path;
+        else
+            return "http://localhost/".$path;
+    }
+
+    /**
      * Get PATH for CDN
      *
      * @param string $path
