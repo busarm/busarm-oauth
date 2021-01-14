@@ -11,6 +11,7 @@ if($argv && ($function = $argv[1]??null)){
     require_once 'vendor/autoload.php'; /* Initialize composer autoloader*/
     require_once OAUTH_BASE_PATH."App.php";   
     (new App)->initialize("Console", $function, $params);
+    die();
 }
-else exit ("Invalid command\n");
+else die ("Invalid command\n");
 
