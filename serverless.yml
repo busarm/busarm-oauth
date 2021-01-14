@@ -16,6 +16,8 @@ provider:
     environment: # define service wide environment variables here
         ENV: ${self:provider.stage} # Environment variable
         BREF_BINARY_RESPONSES: '1' # For bref to return binary responses. Bref will automatically encode responses to base64
+        # Data
+        BUGSNAG_KEY: ${self:custom.secret.bugsnag_key} 
         # AWS RDS - Production
         DB_NAME: 13243546576879_oauth
         DB_HOST: ${self:custom.secret.db_host}
@@ -59,7 +61,7 @@ functions:
     Authorize:
         handler: index.php
         description: 'Allow user to authorize access to their account'
-        memorySize: 128
+        memorySize: ${self:custom.lowMem.${self:provider.stage}}
         timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
         logRetentionInDays: ${self:custom.logRetentionInDays} 
         layers:
@@ -73,15 +75,11 @@ functions:
                     headers: ${self:custom.corsHeaders} 
                     allowCredentials: false
                     cacheControl: 'max-age=600, s-maxage=600, proxy-revalidate' 
-            - schedule:
-                rate: rate(10 minutes)
-                input:
-                    warmer: true
                     
     Resources:
         handler: index.php
         description: 'Retrieve oauth resources e.g user details with client credentials and access token'
-        memorySize: 128
+        memorySize: ${self:custom.avgMem.${self:provider.stage}}
         timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
         logRetentionInDays: ${self:custom.logRetentionInDays} 
         layers:
@@ -96,14 +94,14 @@ functions:
                     allowCredentials: false
                     cacheControl: 'max-age=600, s-maxage=600, proxy-revalidate' 
             - schedule:
-                rate: rate(10 minutes)
+                rate: rate(5 minutes)
                 input:
                     warmer: true
                     
     Token:
         handler: index.php
         description: 'Generate and verify oauth access tokens'
-        memorySize: 256
+        memorySize: ${self:custom.highMem.${self:provider.stage}}
         timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
         logRetentionInDays: ${self:custom.logRetentionInDays} 
         layers:
@@ -118,11 +116,20 @@ functions:
                     allowCredentials: false
                     cacheControl: 'max-age=600, s-maxage=600, proxy-revalidate' 
             - schedule:
-                rate: rate(10 minutes)
+                rate: rate(5 minutes)
                 input:
                     warmer: true
 
 custom:
+    highMem:
+        Dev: 512
+        Prod: 1024
+    avgMem:
+        Dev: 256
+        Prod: 512
+    lowMem:
+        Dev: 128
+        Prod: 256
     logRetentionInDays: 30
     secret: ${ssm:/aws/reference/secretsmanager/prod/wecari~true}
     roleName: WecariOauthLambdaRole${self:provider.stage}

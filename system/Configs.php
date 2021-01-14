@@ -374,4 +374,7 @@ class Configs
         return getServer("AWS_SMTP_SECRET", "");
     }
     
+    static function BUGSNAG_KEY(){
+        return getServer("BUGSNAG_KEY", "");
+    }
 }

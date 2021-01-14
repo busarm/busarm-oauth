@@ -15,6 +15,7 @@
         "phpseclib/phpseclib": "^2.0",
         "phpmailer/phpmailer": "^6.1",
         "bref/bref": "^0.5.11",
-        "aws/aws-sdk-php": "^3.133"
+        "aws/aws-sdk-php": "^3.133",
+        "bugsnag/bugsnag": "^3.0"
     }
 }

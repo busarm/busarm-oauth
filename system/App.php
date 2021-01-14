@@ -21,9 +21,15 @@ class App {
     private $libraryDir = Configs::OAUTH_LIBRARY_PATH;
 
     private static $instance;
+    
+    public $bugsnag;
 
     public function __construct(){
         self::$instance = $this;
+        if($key = Configs::BUGSNAG_KEY()){
+            $this->bugsnag = Bugsnag\Client::make($key);
+            Bugsnag\Handler::register($this->bugsnag);
+        }
     }
 
     /**
@@ -195,7 +201,10 @@ class App {
                 } else {
                     $this->showMessage(400, false, "Invalid Request", "Invalid request path - " . $controller);
                 }
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
+                if($this->bugsnag){
+                    $this->bugsnag->notifyException($e);
+                }
                 $this->showMessage(400, false, "Invalid Request", $e->getMessage());
             }
         } else {
