@@ -22,12 +22,15 @@ class App {
 
     private static $instance;
     
+    /** @var \Bugsnag\Client */
     public $bugsnag;
 
     public function __construct(){
         self::$instance = $this;
         if($key = Configs::BUGSNAG_KEY()){
             $this->bugsnag = Bugsnag\Client::make($key);
+            $this->bugsnag->setReleaseStage(ENVIRONMENT);
+            $this->bugsnag->setAppType(is_cli() ? "Console" : "HTTP");
             Bugsnag\Handler::register($this->bugsnag);
         }
     }
@@ -277,7 +280,6 @@ class App {
             $fullPath = $dl_file;
 
             if (file_exists($fullPath)) {
-
                 try {
                     $fd = @fopen($fullPath, "r");
                 } finally {
