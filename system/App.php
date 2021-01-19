@@ -33,6 +33,26 @@ class App {
             $this->bugsnag->setAppType(is_cli() ? "Console" : "HTTP");
             Bugsnag\Handler::register($this->bugsnag);
         }
+        set_error_handler(function($errno , $errstr , $errfile = null, $errline = null){
+            if($this->bugsnag){
+                $this->bugsnag->notifyError("unexpected_error", $errstr);
+            }
+            $this->showMessage(500, false, "unexpected_error", $errstr, $errfile, $errline);
+        });
+        set_exception_handler(function($e){
+            if($this->bugsnag){
+                $this->bugsnag->notifyException($e);
+            }
+            $trace = array_map(function($instance){
+                return [
+                    'file' => $instance['file']??null,
+                    'line' => $instance['line']??null,
+                    'class' => $instance['class']??null,
+                    'function' => $instance['function']??null,
+                ];
+            }, $e->getTrace());
+            $this->showMessage(500, false, "unexpected_exception", $e->getMessage(), $e->getLine(), $e->getFile(), $trace);
+        });
     }
 
     /**
@@ -177,42 +197,28 @@ class App {
      * @return void
      */
     private function processRoute($controller, $function, $params = []){
-        $path = $controller.".php";
-        if ($realPath = $this->fileExists($this->controllerDir . $path, false)) {
-            try {
-                /*
-                * Let's Go...
-                */
-                require_once OAUTH_BASE_PATH . 'Server.php';
-                require_once $realPath;
-
-                if (class_exists(ucfirst($controller))) {
-
-                    /*Load Class*/
-                    /*Create instance of class*/
-                    $object = new $controller();
-
-                    if (method_exists($object, $function)
-                        && is_callable(array($object, $function))) {
-                        call_user_func_array(
-                            array($object, $function),
-                            $params
-                        );
-                    } else {
-                        $this->showMessage(400, false, "Unknown Method", "Unknown Method - " . $function);
-                    }
-                } else {
-                    $this->showMessage(400, false, "Invalid Request", "Invalid request path - " . $controller);
+        if ($realPath = $this->fileExists($this->controllerDir.$controller.".php", false)) {
+            /*
+            * Let's Go...
+            */
+            require_once OAUTH_BASE_PATH . 'Server.php';
+            require_once $realPath;
+            if (class_exists(ucfirst($controller))) {
+                /*Load Class*/
+                /*Create instance of class*/
+                $object = new $controller();
+                if (method_exists($object, $function)
+                    && is_callable(array($object, $function))) {
+                    call_user_func_array(
+                        array($object, $function),
+                        $params
+                    );
                 }
-            } catch (Throwable $e) {
-                if($this->bugsnag){
-                    $this->bugsnag->notifyException($e);
-                }
-                $this->showMessage(400, false, "Invalid Request", $e->getMessage());
+                return  $this->showMessage(400, false, "unknown_method", "Unknown Method - " . $function);
             }
-        } else {
-            $this->showMessage(404, false, "Invalid Request", "Request path not found - " . $controller);
+            return $this->showMessage(400, false, "invalid_request", "Invalid request path - " . $controller);
         }
+        return $this->showMessage(404, false, "invalid_request", "Request path not found - " . $controller);
     }
 
 
@@ -249,8 +255,7 @@ class App {
      * @param string $title itle
      * @param string $msg Message
      */
-    public function showMessage($code, $status, $title, $msg)
-    {
+    public function showMessage($code, $status, $title, $msg, $errorLine = null, $errorFile = null, $errorContext = []){
         if(!is_cli() && !headers_sent()){
             header(PROTOCOL_HEADER . ' ' . $code . ' ' . $title, TRUE, $code);
             header("Content-type: application/json");
@@ -261,7 +266,12 @@ class App {
             echo json_encode(['status'=>true, 'msg' => $title, 'env' => ENVIRONMENT, 'ip' => IPADDRESS]);
         }
         else {
-            echo json_encode(['status'=>false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT, 'ip' => IPADDRESS]);
+            if(ENVIRONMENT != ENV_PROD){
+                echo json_encode(['status'=>false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT, 'ip' => IPADDRESS,  'line' =>  $errorLine,  'file_path' =>  $errorFile,  'backtrace' =>  $errorContext]);
+            }
+            else {
+                echo json_encode(['status'=>false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT, 'ip' => IPADDRESS]);
+            }
         }
         exit;
     }
