@@ -20,6 +20,17 @@ class Console extends Server
     }
     
     /**
+     * Print to console
+     *
+     * @param mixed $msg
+     * @return void
+     */
+    private function print($msg){
+        print_r($msg);
+        print_r(PHP_EOL);
+    }
+    
+    /**
      * Create Admin Client
      *
      * @return void
@@ -28,8 +39,8 @@ class Console extends Server
     {
         $result = $this->get_oauth_storage()->setOrganizationDetails($org_name);
         if($result){
-            echo "Successfully Added Organization".PHP_EOL;
-            echo "Organizatoin ID = $result".PHP_EOL;
+            $this->print("Successfully Added Organization");
+            $this->print("Organizatoin ID = $result");
         }
         die;
     }
@@ -56,20 +67,20 @@ class Console extends Server
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
             if(!empty($keys) && $this->get_oauth_storage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")){
-                echo "Successfully Created Client".PHP_EOL;
-                echo "Client ID = $client_id".PHP_EOL;
-                echo "Client Secret = $client_secret".PHP_EOL;
-                echo "Client Grant_types = $grant_types".PHP_EOL;
-                echo "Client Scopes = $scopes".PHP_EOL;
-                echo "Client Public Key = ".$keys['publickey'].PHP_EOL;
-                echo "Client Public Key ALGO = $algo".PHP_EOL; 
+                $this->print("Successfully Created Client");
+                $this->print("Client ID = $client_id");
+                $this->print("Client Secret = $client_secret");
+                $this->print("Client Grant_types = $grant_types");
+                $this->print("Client Scopes = $scopes");
+                $this->print("Client Public Key = ".$keys['publickey']);
+                $this->print("Client Public Key ALGO = $algo"); 
             }
             else {
-                echo "Successfully Created Client".PHP_EOL;
-                echo "Client ID = $client_id".PHP_EOL;
-                echo "Client Secret = $client_secret".PHP_EOL;
-                echo "Client Grant_types = $grant_types".PHP_EOL;
-                echo "Client Scopes = $scopes".PHP_EOL;
+                $this->print("Successfully Created Client");
+                $this->print("Client ID = $client_id");
+                $this->print("Client Secret = $client_secret");
+                $this->print("Client Grant_types = $grant_types");
+                $this->print("Client Scopes = $scopes");
             }
             die;
         }
@@ -91,9 +102,9 @@ class Console extends Server
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
             if(!empty($keys) && $this->get_oauth_storage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")){
-                echo "Successfully Updated Client Keys".PHP_EOL;
-                echo "Client Public Key = ".$keys['publickey'].PHP_EOL;
-                echo "Client Public Key ALGO = $algo".PHP_EOL; 
+                $this->print("Successfully Updated Client Keys");
+                $this->print("Client Public Key = ".$keys['publickey']);
+                $this->print("Client Public Key ALGO = $algo"); 
             }
             else {
                 exit ("Failed to update client keys");
@@ -120,14 +131,14 @@ class Console extends Server
         //Insert User
         $result = $this->get_oauth_storage()->setUserCustom($user_id, $password, $email, $name, null, null, $scopes);
         if($result){
-            echo "Successfully Created User".PHP_EOL;
-            echo "User ID = $user_id".PHP_EOL;
-            echo "User Name = $name".PHP_EOL;
-            echo "User Email = $email".PHP_EOL;
+            $this->print("Successfully Created User");
+            $this->print("User ID = $user_id");
+            $this->print("User Name = $name");
+            $this->print("User Email = $email");
             if(!$pass){
-                echo "User Password = $password".PHP_EOL;
+                $this->print("User Password = $password");
             }
-            echo "User Scopes = $scopes".PHP_EOL;
+            $this->print("User Scopes = $scopes");
         }
         else {
             exit ("Failed to create user");
