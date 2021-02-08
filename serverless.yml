@@ -132,7 +132,7 @@ custom:
         Prod: 256
     logRetentionInDays: 30
     secret: ${ssm:/aws/reference/secretsmanager/prod/wecari~true}
-    roleName: WecariOauthLambdaRole${self:provider.stage}
+    roleName: WecariOauthLambdaRole
     corsHeaders: 
       - Content-Type
       - Authorization
@@ -145,11 +145,11 @@ custom:
       
  
 resources:
-  Resources: 
-    WecariOauthLambdaRoleDev:
+  Resources:  
+    WecariOauthLambdaRole:
       Type: AWS::IAM::Role
       Properties:
-        RoleName: WecariOauthLambdaRoleDev-${self:provider.region}
+        RoleName: WecariOauthLambdaRole${self:provider.stage}-${self:provider.region}
         Path: /
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
@@ -160,7 +160,7 @@ resources:
                   - lambda.amazonaws.com
               Action: sts:AssumeRole
         Policies:
-          - PolicyName: WecariAPILambdaPolicyDev
+          - PolicyName: WecariOauthLambdaPolicy${self:provider.stage}
             PolicyDocument:
               Version: "2012-10-17"
               Statement:
@@ -176,38 +176,7 @@ resources:
                     - ec2:DescribeSubnets
                     - ec2:DescribeVpcs
                   Resource: "*" 
-          
-    WecariOauthLambdaRoleProd:
-      Type: AWS::IAM::Role
-      Properties:
-        RoleName: WecariOauthLambdaRoleProd-${self:provider.region}
-        Path: /
-        AssumeRolePolicyDocument:
-          Version: "2012-10-17"
-          Statement:
-            - Effect: Allow
-              Principal:
-                Service:
-                  - lambda.amazonaws.com
-              Action: sts:AssumeRole
-        Policies:
-          - PolicyName: WecariAPILambdaPolicyProd
-            PolicyDocument:
-              Version: "2012-10-17"
-              Statement:
-                - Effect: Allow
-                  Action:
-                    - logs:CreateLogGroup
-                    - logs:CreateLogStream
-                    - logs:PutLogEvents
-                    - ec2:CreateNetworkInterface
-                    - ec2:DeleteNetworkInterface
-                    - ec2:DescribeNetworkInterfaces
-                    - ec2:DescribeSecurityGroups
-                    - ec2:DescribeSubnets
-                    - ec2:DescribeVpcs
-                  Resource: "*" 
-          
+        
   Outputs:
     RoleName:
       Value: ${self:custom.roleName}

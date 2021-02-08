@@ -19,9 +19,9 @@ if (!function_exists('is_cli'))
 /**
  * Get Server Variable
  *
- * @param [type] $name
- * @param [type] $default
- * @return void
+ * @param string $name
+ * @param string $default
+ * @return string
  */
 function getServer($name, $default = null){
     return (!empty($data = @getenv($name))?$data:$default);
