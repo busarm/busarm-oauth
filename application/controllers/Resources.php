@@ -136,6 +136,7 @@ class Resources extends Server
             $dial_code = $this->request->request('dial_code');
             $password = $this->request->request('password');
             $scope = $this->request->request('scope');
+            $force = $this->request->request('force');
             $scopes = $this->implode($scope);
 
             //Create user id
@@ -146,14 +147,35 @@ class Resources extends Server
             $scopes = $this->get_oauth_storage()->scopeExists($scopes) ? $scopes : $this->get_oauth_storage()->getDefaultScope();
 
             //Check if user exists
-            $userInfo = $this->get_oauth_storage()->getUser(!empty($user_id) ? $user_id : $email);
-            if ($userInfo) {
-                $this->response->setParameters(array('success' => false, 'error' => 'duplicate_user', 'error_description' => sprintf("User with email %s already exists", $email)));
-            } else {
+            if ($email && ($user = $this->get_oauth_storage()->getUser($email))) {
+                if($force){
+                    $this->response->setParameters(array('success' => false, 'error' => 'duplicate_user', 'error_description' => sprintf("User with email %s already exists", $email)));
+                }
+                else {
+                    $this->response->setParameters(array('success' => true, 'data' => ['user_id'=>$user['user_id'], 'existing' => true]));
+                }
+            } 
+            else if ($phone && ($user = $this->get_oauth_storage()->getUser($phone))) {
+                if($force){
+                    $this->response->setParameters(array('success' => false, 'error' => 'duplicate_user', 'error_description' => sprintf("User with phone number %s already exists", $phone)));
+                }
+                else {
+                    $this->response->setParameters(array('success' => true, 'data' => ['user_id'=>$user['user_id'], 'existing' => true]));
+                }
+            } 
+            else if ($user = $this->get_oauth_storage()->getUser($user_id)) {
+                if($force){
+                    $this->response->setParameters(array('success' => false, 'error' => 'duplicate_user', 'error_description' => "User already exists"));
+                }
+                else {
+                    $this->response->setParameters(array('success' => true, 'data' => ['user_id'=>$user['user_id'], 'existing' => true]));
+                }
+            } 
+            else {
                 //Insert User
-                $result = $this->get_oauth_storage()->setUserCustom($user_id,$password,$email,$name,$phone,$dial_code,$scope);
+                $result = $this->get_oauth_storage()->setUserCustom($user_id, $password, $email, $name, $phone, $dial_code, $scope);
                 if ($result){
-                    $this->response->setParameters(array('success' => true, 'data' => ['user_id'=>$user_id]));
+                    $this->response->setParameters(array('success' => true, 'data' => ['user_id'=>$user_id, 'existing' => false]));
                 }
                 else {
                     $this->response->setParameters(array('success' => false, 'error' => 'internal_error', 'error_description' => 'Failed to create user'));
