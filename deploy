@@ -1,0 +1,67 @@
+<?php
+
+// Get Command Args
+$commandArgs = [];
+if(!empty($argv)){
+    unset($argv[0]);
+    foreach ($argv as $arg) {
+        $e=explode("=",$arg);
+        if(count($e)==2)
+            $commandArgs[$e[0]]=$e[1];
+        else   
+            $commandArgs[$e[0]]=0;
+    }
+}
+
+echo PHP_EOL;
+echo "---------------------------------";
+echo PHP_EOL;
+echo "Wecari PHP Serverless Deployment";
+echo PHP_EOL;
+echo "---------------------------------";
+echo PHP_EOL;
+
+
+// Help
+if(isset($commandArgs['--help'])){
+    echo "php deploy [options]";
+    echo PHP_EOL;
+    echo PHP_EOL;
+    echo "Options";
+    echo PHP_EOL;
+    echo "-------";
+    echo PHP_EOL;
+    echo "--dev             =     Deployment to Development ENV";
+    echo PHP_EOL;
+    echo "--prod            =     Deployment to Production ENV";
+    echo PHP_EOL;
+    echo "--all             =     Deployment to All ENV - Development and Production";
+    echo PHP_EOL;
+    exit(0);
+}
+else {
+        
+    $allEnv = false;
+    $env = 'Dev';
+
+    // Environment
+    if(isset($commandArgs['--dev'])){
+        $env = 'Dev';
+    }
+    else if(isset($commandArgs['--prod'])){
+        $env = 'Prod';
+    }
+    else if(isset($commandArgs['--all'])){
+        $allEnv = true;
+    }
+
+    // Process
+    if($allEnv){
+        passthru("sls deploy --stage=Dev && sls deploy --stage=Prod");
+    }
+    else {
+        passthru("sls deploy --stage=$env");
+    }
+    exit(0);
+}
+
