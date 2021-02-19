@@ -201,11 +201,11 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
     <!-- Footer -->
     <footer>
         <ul class="copyright">
-            <li>&copy; Wecari All rights reserved.</li>
-        </ul>
-        <ul class="copyright">
             <li style="min-width: 100px;"><a href="<?=App::get_app_path('privacy')?>" target="_blank">Privacy Policy</a></li>
             <li style="min-width: 100px;"><a href="<?=App::get_app_path('terms')?>" target="_blank">Terms & Conditions</a></li>
+        </ul>
+        <ul class="copyright">
+            <li>&copy; Wecari All rights reserved.</li>
         </ul>
     </footer>
 </oauth-login>
