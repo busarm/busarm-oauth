@@ -150,6 +150,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             text-decoration: none;
         }
     </style>
+    <script src="https://www.google.com/recaptcha/api.js?render=6LdAuWcaAAAAAPkWNCS34dpmqgefQxUIlDl4vvwL"></script>
 </head>
 <body>
 <oauth-login>
