@@ -107,11 +107,10 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             height: auto;
             font-family: "", sans-serif;
             background: #fff;
-            max-width: 360px;
-            padding: 45px;
+            max-width: 500px;
+            padding: 20px;
             text-align: center;
             border-radius: 3px;
-            box-shadow:  0 2px 5px 0 rgba(77, 80, 79, 0.6)
         }
         oauth-login .login-page .form input {
             font-family: "", sans-serif;
@@ -150,7 +149,12 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             text-decoration: none;
         }
     </style>
-    <script src="https://www.google.com/recaptcha/api.js?render=6LdAuWcaAAAAAPkWNCS34dpmqgefQxUIlDl4vvwL"></script>
+    <script src="https://www.google.com/recaptcha/api.js"></script>
+    <script>        
+        function onSubmit(token) {
+            document.getElementById("login-form").submit();
+        }
+    </script>
 </head>
 <body>
 <oauth-login>
@@ -163,7 +167,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
                 <img class="logo logo_txt" src="<?=App::get_cdn_path('public/images/logo/dark/logo_txt_256px.png')?>">
             </div>
             <br>
-            <form class="login-form" method="post" action="<?=$action?>">
+            <form id="login-form" class="form" method="post" action="<?=$action?>">
                 <?php
                 if (!empty($email)){
                     ?>
@@ -176,10 +180,10 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
                         </div>
                     </div>
                     <br>
-                    <input type="hidden" required="required" name="username" value="<?= $email ?>"/>
+                    <input id="username" type="hidden" required="required" name="username" value="<?= $email ?>"/>
                     <?php
                 }
-                else{
+                else {
                     ?>
                     <h2> Login </h2>
                     <input type="text" required="required" name="username" placeholder="Username/Email"/>
@@ -188,14 +192,13 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
                 ?>
                 <input type="password" required="required" name="password" placeholder="Password"/>
                 <input type="hidden" required="required" name="csrf_token" value="<?=$csrf_token?>"/>
-                <button>Proceed</button>
-                <?php
-                if (isset($msg)){
-                    ?>
+                <button class="g-recaptcha" 
+                    data-sitekey="6LdAuWcaAAAAAPkWNCS34dpmqgefQxUIlDl4vvwL" 
+                    data-callback='onSubmit' 
+                    data-action='submit'>Proceed</button>
+                <?php if (isset($msg)): ?>
                     <div class="message"><?=$msg?></div>
-                    <?php
-                }
-                ?>
+                <?php endif ?>
             </form>
         </div>
     </div>

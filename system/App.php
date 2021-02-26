@@ -8,7 +8,7 @@ require_once "Configs.php";
  * Date: 10/14/2018
  * Time: 12:34 AM
  *
- * Manage Content Delivery for Wecari
+ * Mini Framework for Wecari
  *
  * @copyright wecari.com
  */
@@ -453,48 +453,6 @@ class App {
      */
     public function delete_cookie($name){
         return setcookie("oauth_".$name, "", time() - 3600);
-    }
-
-
-
-    /**
-     * Check to see if the API key has access to the controller and methods
-     *
-     * @access protected
-     * @return bool TRUE the API key has access; otherwise, FALSE
-     */
-    protected function _check_access()
-    {
-        // If we don't want to check access, just return TRUE
-        if ($this->config->item('rest_enable_access') === FALSE) {
-            return TRUE;
-        }
-
-        //check if the key has all_access
-        $accessRow = $this->rest->db
-            ->where('key', $this->rest->key)
-            ->get($this->config->item('rest_access_table'))->row_array();
-
-        if (!empty($accessRow) && !empty($accessRow['all_access'])) {
-            return TRUE;
-        }
-
-        // Fetch controller based on path and controller name
-        $controller = implode(
-            '/', [
-            $this->router->directory,
-            $this->router->class
-        ]);
-
-        // Remove any double slashes for safety
-        $controller = str_replace('//', '/', $controller);
-
-        // Query the access table and get the number of results
-        return $this->rest->db
-                ->where('key', $this->rest->key)
-                ->where('controller', $controller)
-                ->get($this->config->item('rest_access_table'))
-                ->num_rows() > 0;
     }
     
     /**
