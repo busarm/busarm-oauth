@@ -92,25 +92,41 @@ class Authorize extends Server
     {
         if ($data = $this->loginRequestAvailable()) {
             if (App::getInstance()->validate_csrf_token(@$data['csrf_token'])) {
-                if ($userInfo = ($this->get_oauth_storage()->checkUserCredentials(@$data['username'], @$data['password']))) {
-                    if (!empty($userInfo[@'user_id'])) {
-                        return $userInfo;
-                    } else
+                $max_count = 5;
+                $count = App::getInstance()->get_cookie('request_count') ?? 0;
+                if($count < $max_count){ // Max request count
+                    $count+=1;
+                    App::getInstance()->set_cookie('request_count', $count, 60);
+                    if ($userInfo = ($this->get_oauth_storage()->checkUserCredentials(@$data['username'], @$data['password']))) {
+                        if (!empty($userInfo[@'user_id'])) {
+                            return $userInfo;
+                        } else {
+                            $remaining_count = $max_count - $count;
+                            $this->response->setParameters(array(
+                                'success' => false,
+                                'error' => 'invalid_user',
+                                'error_description' => "Invalid Username or Password. $remaining_count tries left"));
+                        }
+                    } else {
+                        $remaining_count = $max_count - $count;
                         $this->response->setParameters(array(
                             'success' => false,
                             'error' => 'invalid_user',
-                            'error_description' => "Invalid Username or Password"));
-                } else {
+                            'error_description' => "Invalid Username or Password. $remaining_count tries left"));
+                    }
+                }
+                else {
                     $this->response->setParameters(array(
                         'success' => false,
-                        'error' => 'invalid_user',
-                        'error_description' => "Invalid Username or Password"));
+                        'error' => 'max_request',
+                        'error_description' => "Maximum attempt reached. Please try again in a minute"));
                 }
-            } else
+            } else {
                 $this->response->setParameters(array(
                     'success' => false,
                     'error' => 'validation_error',
-                    'error_description' => "CSRF Validation failed"));
+                    'error_description' => "Session validation failed. Please try again"));
+            }
         }
         return false;
     }
@@ -128,18 +144,22 @@ class Authorize extends Server
     private function processEmailRequest($email, $redirect_uri, $state, $scope)
     {
         if ($userInfo = $this->get_oauth_storage()->getUser($email)) {
+
             $hash = md5(sprintf("%s:/%s:/%s", $email, $redirect_uri, $state));
             if (App::getInstance()->get_cookie('request_hash') != $hash) {
+
                 $user_id = $userInfo['user_id'];
                 if ($this->get_oauth_storage()->scopeExistsForUser($scope, $user_id)) {
+
                     if ($is_authorized = $this->get_oauth_server()->validateAuthorizeRequest($this->request, $this->response)) {
+                        
                         $this->response = new OAuth2\Response(); //reinitialize response
                         $this->get_oauth_server()->handleAuthorizeRequest($this->request, $this->response, $is_authorized, $user_id);
                         $link = $this->response->getHttpHeader("Location");
                         $message = $this->getEmailAuthView($link);
                         if ($this->sendMail("Email Authorization", $message, $email)) {
                             try {
-                                App::getInstance()->set_cookie("request_hash", $hash); //Save to cookie to prevent duplicate 
+                                App::getInstance()->set_cookie("request_hash", $hash, 600); //Save to cookie to prevent duplicate 
                                 return $userInfo;
                             }
                             catch (Exception $e) {
@@ -175,7 +195,7 @@ class Authorize extends Server
             else {
                 $this->showEmailFailed([
                     "msg"=>"Authorization link already sent to <strong>$email</strong>",
-                    "sub_msg"=>"Change your email or clear browser cookies and retry",
+                    "sub_msg"=>"Try again in 10 minutes or clear browser cookies and retry",
                 ]);
             }
         }
@@ -237,7 +257,7 @@ class Authorize extends Server
      */
     private function getEmailAuthView($link)
     {
-        $content = "<table border='0'>
+        $content = "<table style='max-width:500px;' border='0'>
                       <tr width='350'>
                         <td align='center'><h2>Click the url below to access your account</h2></td>
                       </tr>

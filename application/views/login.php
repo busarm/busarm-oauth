@@ -152,7 +152,25 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
     <script src="https://www.google.com/recaptcha/api.js"></script>
     <script>        
         function onSubmit(token) {
-            document.getElementById("login-form").submit();
+            let auth_type = document.getElementById('auth_type');
+            let username = document.getElementById('username');
+            let password = document.getElementById('password');
+            let csrf_token = document.getElementById('csrf_token');
+            let form = document.getElementById("login-form");
+            if(auth_type.value == "user"){
+                if(username.value == null || username.value == ''){
+                    return alert('Username or Email is required')
+                }
+            }
+            else if(auth_type.value == "login"){
+                if(username.value == null || username.value == ''){
+                    return alert('Username or Email is required')
+                }
+                else if(password.value == null || password.value == ''){
+                    return alert('Password is required')
+                }
+            }
+            form.submit();
         }
     </script>
 </head>
@@ -181,17 +199,19 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
                     </div>
                     <br>
                     <input id="username" type="hidden" required="required" name="username" value="<?= $email ?>"/>
+                    <input id="auth_type" type="hidden" required="required" name="auth_type" value="user"/>
                     <?php
                 }
                 else {
                     ?>
                     <h2> Login </h2>
-                    <input type="text" required="required" name="username" placeholder="Username/Email"/>
+                    <input id="username" type="text" required="required" name="username" placeholder="Username/Email"/>
+                    <input id="auth_type" type="hidden" required="required" name="auth_type" value="login"/>
                     <?php
                 }
                 ?>
-                <input type="password" required="required" name="password" placeholder="Password"/>
-                <input type="hidden" required="required" name="csrf_token" value="<?=$csrf_token?>"/>
+                <input id="password" type="password" required="required" name="password" placeholder="Password"/>
+                <input id="csrf_token" type="hidden" required="required" name="csrf_token" value="<?=$csrf_token?>"/>
                 <button class="g-recaptcha" 
                     data-sitekey="6LdAuWcaAAAAAPkWNCS34dpmqgefQxUIlDl4vvwL" 
                     data-callback='onSubmit' 
