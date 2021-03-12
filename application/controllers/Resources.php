@@ -18,7 +18,7 @@ class Resources extends Server
     /**
      * Verify token and obtain info
      * @api resources/getTokenInfo
-     * @method POST*/
+     * @method POST */
     public function getTokenInfo()
     {
         if ($result = $this->get_oauth_server()->getAccessTokenData($this->request, $this->response)) {
@@ -65,7 +65,8 @@ class Resources extends Server
      * Get Bulk users info
      * @api resources/fetchUsers
      * @method POST
-     * @param user_ids Array Required */
+     * @param user_ids Array Required 
+     * */
     public function fetchUsers()
     {
         if ($this->get_oauth_server()->verifyResourceRequest($this->request, $this->response, $this->admin_scope)) {
@@ -126,7 +127,9 @@ class Resources extends Server
      * @param user_id String Required
      * @param email String Required
      * @param password String Required
-     * @param scope Array Required */
+     * @param scope Array Required 
+     * @param force Boolean Optional
+     *  */
     public function createUser()
     {
         if ($this->get_oauth_server()->verifyResourceRequest($this->request, $this->response)) {
@@ -310,8 +313,9 @@ class Resources extends Server
                             'data' => [
                                 'client_id' => $client_id,
                                 'client_secret' => $client_secret,
-                                'public_key' => $keys['publickey'],
-                                'algorithm' => $algo
+                                'public_key' => base64_encode($keys['publickey']),
+                                'algorithm' => $algo,
+                                'encode' => 'base64'
                             ]));
                 }
                 else {
