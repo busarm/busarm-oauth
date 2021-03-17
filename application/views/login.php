@@ -156,6 +156,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             let username = document.getElementById('username');
             let password = document.getElementById('password');
             let csrf_token = document.getElementById('csrf_token');
+            let recaptcha_token = document.getElementById('recaptcha_token');
             let form = document.getElementById("login-form");
             if(auth_type.value == "user"){
                 if(username.value == null || username.value == ''){
@@ -170,6 +171,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
                     return alert('Password is required')
                 }
             }
+            recaptcha_token.value = token;
             form.submit();
         }
     </script>
@@ -212,8 +214,9 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
                 ?>
                 <input id="password" type="password" required="required" name="password" placeholder="Password"/>
                 <input id="csrf_token" type="hidden" required="required" name="csrf_token" value="<?=$csrf_token?>"/>
+                <input id="recaptcha_token" type="hidden" required="required" name="recaptcha_token"/>
                 <button class="g-recaptcha" 
-                    data-sitekey="6LdAuWcaAAAAAPkWNCS34dpmqgefQxUIlDl4vvwL" 
+                    data-sitekey="<?= Configs::RECAPTCHA_CLIENT_KEY() ?>" 
                     data-callback='onSubmit' 
                     data-action='submit'>Proceed</button>
                 <?php if (isset($msg)): ?>

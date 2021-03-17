@@ -15,7 +15,7 @@ services:
   oauth:
     image: webdevops/php-nginx:7.4-alpine
     volumes:
-      - .:/var/www:ro
+      - .:/var/www:rw
       - ./nginx/app.conf:/opt/docker/etc/nginx/conf.d/app.conf
     ports: 
       - 8000:80

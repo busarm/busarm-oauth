@@ -1,5 +1,6 @@
 <?php
 
+use GuzzleHttp\RequestOptions;
 use OAuth2\Controller\TokenController;
 
 defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
@@ -91,7 +92,7 @@ class Authorize extends Server
     private function processLoginRequest()
     {
         if ($data = $this->loginRequestAvailable()) {
-            if (App::getInstance()->validate_csrf_token(@$data['csrf_token'])) {
+            if ($this->validateRecaptcha(@$data['recaptcha_token']) && App::getInstance()->validate_csrf_token(@$data['csrf_token'])) {
                 $max_count = 5;
                 $count = App::getInstance()->get_cookie('request_count') ?? 0;
                 if($count < $max_count){ // Max request count
@@ -289,12 +290,39 @@ class Authorize extends Server
     {
         if (!empty($username = $this->request->request('username')) &&
             !empty($password = $this->request->request('password')) &&
-            !empty($csrf_token = $this->request->request('csrf_token'))) {
+            !empty($csrf_token = $this->request->request('csrf_token')) &&
+            !empty($recaptcha_token = $this->request->request('recaptcha_token'))) {
             return [
                 'username' => $username,
                 'password' => $password,
                 'csrf_token' => $csrf_token,
+                'recaptcha_token' => $recaptcha_token,
             ];
+        }
+        return false;
+    }
+
+    
+    /** Validate Recaptcha
+     * @return boolean
+     */
+    private function validateRecaptcha($token)
+    {
+        if (!empty($token)) {
+            $client = new GuzzleHttp\Client();
+            $res = $client->post('https://www.google.com/recaptcha/api/siteverify', [
+                RequestOptions::FORM_PARAMS => [
+                    'secret' => Configs::RECAPTCHA_SECRET_KEY(),
+                    'response' => $token,
+                    'remoteip' => IPADDRESS,
+                ]
+            ]);
+            if($res->getStatusCode() == 200){
+                $data = json_decode($res->getBody()->getContents(), true);
+                if($data && @$data['success']){
+                    return true;
+                }
+            }
         }
         return false;
     }

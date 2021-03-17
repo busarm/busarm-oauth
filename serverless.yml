@@ -34,6 +34,9 @@ provider:
         AWS_SMTP_PORT: ${self:custom.secret.smtp_port}
         AWS_SMTP_KEY: ${self:custom.secret.smtp_username}
         AWS_SMTP_SECRET: ${self:custom.secret.smtp_password}
+        # Google
+        RECAPTCHA_SECRET_KEY: ${self:custom.secret.recaptcha_secret_key}
+        RECAPTCHA_CLIENT_KEY: ${self:custom.secret.recaptcha_client_key}
     apiGateway:
         binaryMediaTypes:
             - '*/*'

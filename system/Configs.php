@@ -377,4 +377,11 @@ class Configs
     static function BUGSNAG_KEY(){
         return getServer("BUGSNAG_KEY", "");
     }
+
+    static function RECAPTCHA_SECRET_KEY(){
+        return getServer("RECAPTCHA_SECRET_KEY", "");
+    }
+    static function RECAPTCHA_CLIENT_KEY(){
+        return getServer("RECAPTCHA_CLIENT_KEY", "");
+    }
 }
