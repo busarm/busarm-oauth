@@ -116,7 +116,7 @@ class OauthPdo  extends Pdo
      */
     public function getSingleUserInfo($unique)
     {
-        $stmt = $this->db->prepare($sql = sprintf('SELECT user_id, email, name, phone, dial_code, scope  FROM %s WHERE (user_id=:unique OR email=:unique OR phone=:unique) LIMIT 1', $this->config['user_table']));
+        $stmt = $this->db->prepare($sql = sprintf('SELECT user_id, email, name, phone, dial_code, scope, cred_updated_at  FROM %s WHERE (user_id=:unique OR email=:unique OR phone=:unique) LIMIT 1', $this->config['user_table']));
         $stmt->execute(array('unique' => $unique));
 
         if (!$userInfo = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -137,7 +137,7 @@ class OauthPdo  extends Pdo
         $users = [];
         if (!empty($uniques)) {
             $whereInUserIds = implode(',', array_fill(0, is_array($uniques) ? count($uniques) : 0, '?'));
-            $stmt = $this->db->prepare(sprintf('SELECT user_id, email, name, phone, dial_code, scope FROM %s WHERE user_id IN (%s) OR email IN (%s) OR phone IN (%s);', $this->config['user_table'], $whereInUserIds, $whereInUserIds, $whereInUserIds));
+            $stmt = $this->db->prepare(sprintf('SELECT user_id, email, name, phone, dial_code, scope, cred_updated_at FROM %s WHERE user_id IN (%s) OR email IN (%s) OR phone IN (%s);', $this->config['user_table'], $whereInUserIds, $whereInUserIds, $whereInUserIds));
             $stmt->execute(array_merge($uniques, $uniques, $uniques));
             if ($result = $stmt->fetchAll(\PDO::FETCH_ASSOC)) {
                 $users = (array_merge($users, $result));
@@ -168,7 +168,7 @@ class OauthPdo  extends Pdo
         if ($this->getUser($user_id)) {
             $done = false;
             if (!empty($password)) {
-                $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET password=sha2(CONCAT(:user_id,\':\',:salt,\':\',:password),256), salt=:salt where user_id=:user_id', $this->config['user_table']));
+                $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET password=sha2(CONCAT(:user_id,\':\',:salt,\':\',:password),256), salt=:salt cred_updated_at=NOW() where user_id=:user_id', $this->config['user_table']));
                 $done = $stmt->execute(compact('user_id', 'password', 'salt')) ? true : $done;
             }
             if (!empty($email)) {

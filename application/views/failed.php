@@ -94,13 +94,13 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             border: 0;
             background: transparent;
         }
-        oauth-failed .failed-page .logo.logo_icon{
+        oauth-failed .failed-page .logo.logo_icon {
             height:80px !important;
         }
-        oauth-failed .failed-page .logo.icon{
+        oauth-failed .failed-page .logo.icon {
             height:100px !important;
         }
-        oauth-failed .failed-page .logo.logo_txt{
+        oauth-failed .failed-page .logo.logo_txt {
             height:25px !important;
         }
 
@@ -125,7 +125,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             box-sizing: border-box;
             font-size: 14px;
         }
-        oauth-failed .failed-page .form button,a {
+        oauth-failed .failed-page .form button {
             outline: 0;
             background: #3F5F44;
             width: 100%;

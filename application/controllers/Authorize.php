@@ -94,10 +94,11 @@ class Authorize extends Server
         if ($data = $this->loginRequestAvailable()) {
             if ($this->validateRecaptcha(@$data['recaptcha_token']) && App::getInstance()->validate_csrf_token(@$data['csrf_token'])) {
                 $max_count = 5;
+                $timeout = 60;
                 $count = App::getInstance()->get_cookie('request_count') ?? 0;
                 if($count < $max_count){ // Max request count
                     $count+=1;
-                    App::getInstance()->set_cookie('request_count', $count, 60);
+                    App::getInstance()->set_cookie('request_count', $count, $timeout);
                     if ($userInfo = ($this->get_oauth_storage()->checkUserCredentials(@$data['username'], @$data['password']))) {
                         if (!empty($userInfo[@'user_id'])) {
                             return $userInfo;
@@ -117,10 +118,11 @@ class Authorize extends Server
                     }
                 }
                 else {
+                    $min = intval($timeout/60);
                     $this->response->setParameters(array(
                         'success' => false,
                         'error' => 'max_request',
-                        'error_description' => "Maximum attempt reached. Please try again in a minute"));
+                        'error_description' => "Maximum attempt reached. Please try again in $min minute(s)"));
                 }
             } else {
                 $this->response->setParameters(array(
@@ -146,6 +148,7 @@ class Authorize extends Server
     {
         if ($userInfo = $this->get_oauth_storage()->getUser($email)) {
 
+            $timeout = 600;
             $hash = md5(sprintf("%s:/%s:/%s", $email, $redirect_uri, $state));
             if (App::getInstance()->get_cookie('request_hash') != $hash) {
 
@@ -160,20 +163,20 @@ class Authorize extends Server
                         $message = $this->getEmailAuthView($link);
                         if ($this->sendMail("Email Authorization", $message, $email)) {
                             try {
-                                App::getInstance()->set_cookie("request_hash", $hash, 600); //Save to cookie to prevent duplicate 
+                                App::getInstance()->set_cookie("request_hash", $hash, $timeout); //Save to cookie to prevent duplicate 
                                 return $userInfo;
                             }
                             catch (Exception $e) {
                                 $this->showEmailFailed([
-                                    "msg"=>"Authorization failedd",
-                                    "sub_msg"=>sprintf("Unknown error. Please contact <strong>%s</strong> for assistance",$this->getSupportEmail()),
+                                    "msg"=>"Authorization failed",
+                                    "sub_msg"=>sprintf("Unknown error. Please contact <strong>%s</strong> for assistance", $this->getSupportEmail()),
                                     ]);
                             }
                         }
                         else {
                             $this->showEmailFailed([
-                                "msg"=>"Authorization failedd",
-                                "sub_msg"=>sprintf("Failed to send mail. Please contact <strong>%s</strong> for assistance",$this->getSupportEmail()),
+                                "msg"=>"Authorization failed",
+                                "sub_msg"=>sprintf("Failed to send mail. Please contact <strong>%s</strong> for assistance", $this->getSupportEmail()),
                                 ]);
                         }
                     }
@@ -182,21 +185,22 @@ class Authorize extends Server
                         $msg = !empty($msg) ? $msg:"Unexpected error encountered";
                         $this->showEmailFailed([
                             "msg"=>"Authorization failed",
-                            "sub_msg"=>sprintf("$msg. Please contact <strong>%s</strong> for assistance",$this->getSupportEmail()),
+                            "sub_msg"=>sprintf("<span style='color:red'>$msg</span>. Please contact <strong>%s</strong> for assistance", $this->getSupportEmail()),
                         ]);
                     }
                 }
                 else {
                     $this->showEmailFailed([
                         "msg"=>"Authorization failed",
-                        "sub_msg"=>sprintf("Requested scope(s) does not exist for the specified user. Please contact <strong>%s</strong> for assistance",$this->getSupportEmail()),
+                        "sub_msg"=>sprintf("Requested scope(s) does not exist for the specified user. Please contact <strong>%s</strong> for assistance", $this->getSupportEmail()),
                     ]);
                 }
             }
             else {
+                $min = intval($timeout/60);
                 $this->showEmailFailed([
                     "msg"=>"Authorization link already sent to <strong>$email</strong>",
-                    "sub_msg"=>"Try again in 10 minutes or clear browser cookies and retry",
+                    "sub_msg"=>"Try again in $min minutes or clear browser cookies and retry",
                 ]);
             }
         }
