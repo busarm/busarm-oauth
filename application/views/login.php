@@ -181,10 +181,10 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
     <div class="login-page">
         <div class="form">
             <div>
-                <img class="logo logo_icon" src="<?=App::get_cdn_path('public/images/logo/dark/logo_128px.png')?>">
+                <img class="logo logo_icon" src="<?=App::get_cdn_path('public/images/logo/dark/logo_256px.png')?>">
             </div>
             <div>
-                <img class="logo logo_txt" src="<?=App::get_cdn_path('public/images/logo/dark/logo_txt_256px.png')?>">
+                <img class="logo logo_txt" src="<?=App::get_cdn_path('public/images/logo/dark/logo_txt_512px.png')?>">
             </div>
             <br>
             <form id="login-form" class="form" method="post" action="<?=$action?>">
