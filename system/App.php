@@ -562,7 +562,7 @@ class App {
 	{
 		if ( ! preg_match('#^(\w+:)?//#i', $uri))
 		{
-			$uri = OAUTH_BASE_URL.$uri;
+			$uri = trim(OAUTH_BASE_URL, '/').'/'.$uri;
 		}
 
 		// IIS environment likely? Use 'refresh' for better compatibility
