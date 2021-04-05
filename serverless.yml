@@ -16,6 +16,8 @@ provider:
     environment: # define service wide environment variables here
         ENV: ${self:provider.stage} # Environment variable
         BREF_BINARY_RESPONSES: '1' # For bref to return binary responses. Bref will automatically encode responses to base64
+        # Data and Session encryption key
+        ENCRYPTION_KEY: ${self:custom.secret.oauth_encryption_key} 
         # Data
         BUGSNAG_KEY: ${self:custom.secret.oauth_bugsnag_key} 
         # AWS RDS - Production

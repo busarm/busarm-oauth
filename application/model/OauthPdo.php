@@ -168,7 +168,7 @@ class OauthPdo  extends Pdo
         if ($this->getUser($user_id)) {
             $done = false;
             if (!empty($password)) {
-                $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET password=sha2(CONCAT(:user_id,\':\',:salt,\':\',:password),256), salt=:salt cred_updated_at=NOW() where user_id=:user_id', $this->config['user_table']));
+                $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET password=sha2(CONCAT(:user_id,\':\',:salt,\':\',:password),256), salt=:salt, cred_updated_at=NOW() where user_id=:user_id', $this->config['user_table']));
                 $done = $stmt->execute(compact('user_id', 'password', 'salt')) ? true : $done;
             }
             if (!empty($email)) {
@@ -218,23 +218,24 @@ class OauthPdo  extends Pdo
     }
 
     /**
+     * @param string $org_id
      * @param string $client_id
-     * @param null|string $client_secret
+     * @param string $client_name
      * @param null|string $redirect_uri
      * @param null|array  $grant_types
      * @param null|string $scope
      * @param null|string $user_id
      * @return bool
      */
-    public function setClientDetailsCustom($org_id, $client_id, $client_secret = null, $redirect_uri = null, $grant_types = null, $scope = null, $user_id = null, $issue_jwt = true)
+    public function setClientDetailsCustom($org_id, $client_id, $client_name, $client_secret = null, $redirect_uri = null, $grant_types = null, $scope = null, $user_id = null, $issue_jwt = true)
     {
         // if it exists, update it.
         if ($this->getClientDetailsCustom($client_id, $org_id)) {
-            $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET client_secret=:client_secret, redirect_uri=:redirect_uri, grant_types=:grant_types, scope=:scope, user_id=:user_id, issue_jwt=:issue_jwt where client_id=:client_id', $this->config['client_table']));
-            return $stmt->execute(compact('client_id', 'client_secret', 'redirect_uri', 'grant_types', 'scope', 'user_id', 'issue_jwt'));
+            $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET client_secret=:client_secret, client_name=:client_name, redirect_uri=:redirect_uri, grant_types=:grant_types, scope=:scope, user_id=:user_id, issue_jwt=:issue_jwt where client_id=:client_id', $this->config['client_table']));
+            return $stmt->execute(compact('client_id', 'client_name', 'client_secret', 'redirect_uri', 'grant_types', 'scope', 'user_id', 'issue_jwt'));
         } else {
-            $stmt = $this->db->prepare(sprintf('INSERT INTO %s (org_id, client_id, client_secret, redirect_uri, grant_types, scope, user_id, issue_jwt) VALUES (:org_id, :client_id, :client_secret, :redirect_uri, :grant_types, :scope, :user_id, :issue_jwt)', $this->config['client_table']));
-            return $stmt->execute(compact('org_id', 'client_id', 'client_secret', 'redirect_uri', 'grant_types', 'scope', 'user_id', 'issue_jwt'));
+            $stmt = $this->db->prepare(sprintf('INSERT INTO %s (org_id, client_id, client_name, client_secret, redirect_uri, grant_types, scope, user_id, issue_jwt) VALUES (:org_id, :client_id, :client_secret, :redirect_uri, :grant_types, :scope, :user_id, :issue_jwt)', $this->config['client_table']));
+            return $stmt->execute(compact('org_id', 'client_id', 'client_name', 'client_secret', 'redirect_uri', 'grant_types', 'scope', 'user_id', 'issue_jwt'));
         }
     }
 

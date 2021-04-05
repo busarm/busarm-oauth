@@ -50,14 +50,14 @@ class Console extends Server
      *
      * @return void
      */
-    public function create_client($org_id, $client_id, $redirect_uri)
+    public function create_client($org_id, $client_id, $client_name, $redirect_uri)
     {
         $client_secret = md5(uniqid($client_id));
         $grant_types = "password client_credentials authorization_code refresh_code";
         $scopes = "$this->openid_scope $this->system_scope $this->admin_scope $this->staff_scope $this->developer_scope $this->tester_scope $this->user_scope $this->agent_scope $this->partner_scope $this->public_scope";
 
         //Insert Client
-        $result = $this->get_oauth_storage()->setClientDetailsCustom($org_id, $client_id, $client_secret, $redirect_uri, $grant_types, $scopes);
+        $result = $this->get_oauth_storage()->setClientDetailsCustom($org_id, $client_id, $client_name, $client_secret, $redirect_uri, $grant_types, $scopes);
 
         //Insert jwt public keys for client
         if($result){

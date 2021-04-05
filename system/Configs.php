@@ -333,7 +333,10 @@ class Configs
         'https://partner.staging.wecari.com',
         'https://partner.staging.wecari.com/'
     ];
-
+    
+    static function ENCRYPTION_KEY($default = null){
+        return getServer("ENCRYPTION_KEY", $default);
+    }
 
     static function DB_HOST(){
         return getServer("DB_HOST");

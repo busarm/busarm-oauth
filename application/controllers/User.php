@@ -4,10 +4,10 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
 /**
  * Created by VSCode.
  * User: Samuel
- * Date: 12/03/2021
- * Time: 12:40 AM
+ * Date: 05/04/2021
+ * Time: 1:00 PM
  **/
-class User extends Server
+class Login extends Server
 {
 
     public function __construct()

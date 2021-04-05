@@ -2,10 +2,12 @@
 defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
 
 /**
- * @var string $msg
- * @var string $csrf_token
+ * @var string $client_name
+ * @var string $org_name
+ * @var string $user_name
+ * @var string $user_email
+ * @var array $claims
  * @var string $action
- * @var string $redirect_url
  */ 
 ?>
 
@@ -26,52 +28,52 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             user-select: none;
             background: #335038 !important;
         }
-        oauth-login h1,h2,h3,h4,h5,p,div,input,button,textarea {
+        oauth-authorize h1,h2,h3,h4,h5,p,div,input,button,textarea {
             font-family: "Palatino Linotype", sans-serif !important;
         }
 
-        oauth-login h1{
+        oauth-authorize h1{
             font-size: 26px;
             font-weight: bold;
         }
-        oauth-login h2{
+        oauth-authorize h2{
             font-size: 24px;
             font-weight: bold;
         }
-        oauth-login h3{
+        oauth-authorize h3{
             font-size: 20px;
             font-weight: bold;
         }
-        oauth-login h4{
+        oauth-authorize h4{
             font-size: 16px;
             font-weight: bold;
         }
 
-        oauth-login footer {
+        oauth-authorize footer {
             height: auto;
             background: transparent;
             padding: 10px;
             text-align: center;
         }
-        oauth-login footer .copyright {
+        oauth-authorize footer .copyright {
             color: #fff;
             font-size: 0.9em;
             padding: 0;
             text-align: center;
         }
 
-        oauth-login footer .copyright a {
+        oauth-authorize footer .copyright a {
             color: inherit;
         }
 
-        oauth-login footer .copyright li {
+        oauth-authorize footer .copyright li {
             display: inline-block;
             list-style: none;
             margin: 5px;
             padding:5px;
         }
 
-        oauth-login .login-page {
+        oauth-authorize .auth-page {
             display: flex;
             align-self: center;
             justify-content: center;
@@ -83,7 +85,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             -moz-osx-font-smoothing: grayscale;
         }
 
-        oauth-login .login-page .logo.icon{
+        oauth-authorize .auth-page .logo.icon{
             margin: auto;
             height: 100%;
             padding: 0;
@@ -93,26 +95,27 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             border: 0;
             background: transparent;
         }
-        oauth-login .login-page .logo.logo_icon{
+        oauth-authorize .auth-page .logo.logo_icon{
             height:80px;
         }
-        oauth-login .login-page .icon{
+        oauth-authorize .auth-page .icon{
             height:40px;
         }
-        oauth-login .login-page .logo.logo_txt{
+        oauth-authorize .auth-page .logo.logo_txt{
             height:25px;
         }
 
-        oauth-login .login-page .form {
+        oauth-authorize .auth-page .form {
             height: auto;
             font-family: "", sans-serif;
             background: #fff;
+            min-width: 60%;
             max-width: 500px;
             padding: 20px;
             text-align: center;
             border-radius: 3px;
         }
-        oauth-login .login-page .form input {
+        oauth-authorize .auth-page .form input {
             font-family: "", sans-serif;
             outline: 0;
             background: #f2f2f2;
@@ -123,7 +126,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             box-sizing: border-box;
             font-size: 14px;
         }
-        oauth-login .login-page .form button {
+        oauth-authorize .auth-page .form .auth-buttons .auth-button {
             outline: 0;
             background: #3F5F44;
             width: 100%;
@@ -135,50 +138,31 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             transition: all 0.3s ease;
             cursor: pointer;
         }
-        oauth-login .login-page .form button:hover,.form button:active,.form button:focus {
+        oauth-authorize .auth-page .form .auth-buttons .auth-button.ok {
+            background-color: seagreen;
+        }
+        oauth-authorize .auth-page .form .auth-buttons .auth-button.cancel {
+            background-color: #DF632D;
+        }
+
+        oauth-authorize .auth-page .form button:hover,.form button:active,.form button:focus {
             opacity: .8;
         }
 
-        oauth-login .login-page .form .message {
+        oauth-authorize .auth-page .form .message {
             margin: 15px 0 0;
             color: #DF632D;
             font-size: 12px;
         }
-        oauth-login .login-page .form .message a {
+        oauth-authorize .auth-page .form .message a {
             color: #3F5F44;
             text-decoration: none;
         }
     </style>
-    <script src="https://www.google.com/recaptcha/api.js"></script>
-    <script>        
-        function onSubmit(token) {
-            let auth_type = document.getElementById('auth_type');
-            let username = document.getElementById('username');
-            let password = document.getElementById('password');
-            let csrf_token = document.getElementById('csrf_token');
-            let recaptcha_token = document.getElementById('recaptcha_token');
-            let form = document.getElementById("login-form");
-            if(auth_type.value == "user"){
-                if(username.value == null || username.value == ''){
-                    return alert('Username or Email is required')
-                }
-            }
-            else if(auth_type.value == "login"){
-                if(username.value == null || username.value == ''){
-                    return alert('Username or Email is required')
-                }
-                else if(password.value == null || password.value == ''){
-                    return alert('Password is required')
-                }
-            }
-            recaptcha_token.value = token;
-            form.submit();
-        }
-    </script>
 </head>
 <body>
-<oauth-login>
-    <div class="login-page">
+<oauth-authorize>
+    <div class="auth-page">
         <div class="form">
             <div>
                 <img class="logo logo_icon" src="<?=App::get_cdn_path('public/images/logo/dark/logo_256px.png')?>">
@@ -187,21 +171,31 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
                 <img class="logo logo_txt" src="<?=App::get_cdn_path('public/images/logo/dark/logo_txt_512px.png')?>">
             </div>
             <br>
+
             <form id="login-form" class="form" method="post" action="<?=$action??null?>">
-                <h2> Login </h2>
-                <input id="username" type="text" required="required" name="username" placeholder="Username/Email"/>
-                <input id="auth_type" type="hidden" required="required" name="auth_type" value="login"/>
-                <input id="password" type="password" required="required" name="password" placeholder="Password"/>
-                <input id="recaptcha_token" type="hidden" required="required" name="recaptcha_token"/>
-                <input id="csrf_token" type="hidden" required="required" name="csrf_token" value="<?=$csrf_token?>"/>
-                <input id="redirect_url" type="hidden" required="required" name="redirect_url" value="<?=$redirect_url?>"/>
-                <button class="g-recaptcha" 
-                    data-sitekey="<?= Configs::RECAPTCHA_CLIENT_KEY() ?>" 
-                    data-callback='onSubmit' 
-                    data-action='submit'>Proceed</button>
-                <?php if (isset($msg)): ?>
-                    <div class="message"><?=$msg?></div>
+                <h3> <i><?=ucfirst($client_name??$org_name)?></i> is requesting access to your account</h3>
+                <?php if (!empty($user_name) || !empty($user_email)): ?>
+                <div>
+                    <img class="icon" src="<?=App::get_cdn_path('public/images/icons/Name_104px.png')?>">
+                    <div>
+                    <?php if ($user_name): ?>
+                    <strong><?= $user_name ?> </strong>
+                    <div><?= $user_email ?> </div>
+                    <?php else: ?>
+                    <strong><?= $user_email ?> </strong>
+                    <?php endif ?>
+                    </div>
+                </div>
+                <br>
                 <?php endif ?>
+                <div class="auth-buttons">
+                    <div style="padding: 5px;">
+                        <button id="approve" class="auth-button ok" name="approve" value="1" type="submit">Approve</button>
+                    </div>
+                    <div style="padding: 5px;">
+                        <button id="decline" class="auth-button cancel" name="decline" value="1" type="submit">Decline</button>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
@@ -215,6 +209,6 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             <li>&copy; Wecari All rights reserved.</li>
         </ul>
     </footer>
-</oauth-login>
+</oauth-authorize>
 </body>
 </html>

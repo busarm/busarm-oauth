@@ -108,6 +108,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             height: auto;
             font-family: "", sans-serif;
             background: #fff;
+            min-width: 60%;
             max-width: 360px;
             padding: 45px;
             text-align: center;

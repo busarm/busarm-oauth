@@ -209,14 +209,12 @@ class Resources extends Server
                 $user_id = null;
             }
         } else {
-            if($result = $this->get_oauth_server()->getAccessTokenData(
-                $this->request,
-                $this->response)){
-                    $user_id = @$result['user_id'];
-                }
-                else {
-                    $user_id = null;
-                }
+            if($result = $this->get_oauth_server()->getAccessTokenData($this->request, $this->response)){
+                $user_id = @$result['user_id'];
+            }
+            else {
+                $user_id = null;
+            }
         }
 
         if (!empty($user_id)) {
@@ -246,7 +244,7 @@ class Resources extends Server
                 $newScopes = array_diff($mergedScopes, $this->explode($remove_scope));
 
                 //Update User
-                $result = $this->get_oauth_storage()->setUserCustom($user_id,$password,$email,$name,$phone,$dial_code,$this->implode($newScopes));
+                $result = $this->get_oauth_storage()->setUserCustom($user_id, $password, $email, $name, $phone, $dial_code, $this->implode($newScopes));
 
                 if($result){
                     $this->response->setParameters(array('success' => $result));
@@ -282,6 +280,7 @@ class Resources extends Server
                 "$this->admin_scope $this->staff_scope")) {
 
             $client_id = $this->request->request('client_id');
+            $client_name = $this->request->request('client_name');
             $org_id = $this->request->request('org_id');
             $redirect_uri = $this->request->request('redirect_url');
             $grant_types = $this->request->request('grant_types');
@@ -298,7 +297,7 @@ class Resources extends Server
             $scopes = $this->get_oauth_storage()->scopeExists($scope) ? $scope : $this->get_oauth_storage()->getDefaultScope();
 
             //Insert Client
-            $result = $this->get_oauth_storage()->setClientDetailsCustom($org_id, $client_id, $client_secret, $redirect_uri, $grant_types, $scopes, $user_id);
+            $result = $this->get_oauth_storage()->setClientDetailsCustom($org_id, $client_id, $client_name, $client_secret, $redirect_uri, $grant_types, $scopes, $user_id);
 
             //Insert jwt public keys for client
             if($result){
