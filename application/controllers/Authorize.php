@@ -41,10 +41,11 @@ class Authorize extends Server
         $redirect_uri = $this->request->query("redirect_uri");
         $state = $this->request->query("state");
         $scope = $this->request->query("scope");
+        $response_type = $this->request->query("response_type");
         
         //If Logged in
         if ($user_id = App::getInstance()->getLoginUser()) {
-            if($this->processAuthRequest($user_id, $client_id, $redirect_uri, $state, $scope)){
+            if($this->processAuthRequest($user_id, $client_id, $redirect_uri, $state, $scope, $response_type)){
                 $this->response = $this->get_oauth_server()->handleAuthorizeRequest($this->request, $this->response, true, $user_id);
                 $this->response->send();
                 die();
@@ -85,7 +86,7 @@ class Authorize extends Server
         $redirect_url = $this->request->request("redirect_url", $this->request->query("redirect_url"));
         if(!empty($redirect_url)){
             if ($userInfo = $this->processLoginRequest()) { //Process Login
-                App::getInstance()->startLoginSession($userInfo['user_id']);
+                App::getInstance()->startLoginSession($userInfo['user_id'], 86400);
                 App::getInstance()->redirect($redirect_url);
             }
             else {
@@ -95,6 +96,26 @@ class Authorize extends Server
                     "msg" => $this->response->getParameter("error_description")
                 ]);
             }
+        }
+        else {
+            $this->showError([
+                "msg"=>"Login failed",
+                "sub_msg"=> "A Redirect Url is required",
+            ]);
+        }
+    }
+
+    /**
+     * Login 
+     *
+     * @return void
+     */
+    public function logout(){
+        $redirect_url = $this->request->request("redirect_url", $this->request->query("redirect_url"));
+        if(!empty($redirect_url)){
+            App::getInstance()->clearLoginSession();
+            App::getInstance()->delete_cookie("request_token");
+            App::getInstance()->redirect('authorize/login?redirect_url='.urlencode($redirect_url));
         }
         else {
             $this->showError([
@@ -233,9 +254,10 @@ class Authorize extends Server
      * @param string $redirect_uri
      * @param string $state
      * @param string $scope
+     * @param string $response_type
      * @return boolean|array
      */
-    private function processAuthRequest($user_id, $client_id, $redirect_uri, $state, $scope)
+    private function processAuthRequest($user_id, $client_id, $redirect_uri, $state, $scope, $response_type)
     {
         $token = sha1(sprintf("%s:%s:/%s:/%s", $user_id, $client_id, $redirect_uri, $state, $scope));
         if (App::getInstance()->get_cookie('request_token') === $token) {
@@ -291,7 +313,8 @@ class Authorize extends Server
                         'org_name' => $org ? $org['org_name'] : null,
                         'user_name' => $user ? $user['name'] : null,
                         'user_email' => $user ? $user['email'] : null,
-                        'claims' => $this->explode($scope)
+                        'claims' => $this->explode($scope),
+                        'action' => OAUTH_CURRENT_URL
                     ]);
                 }
             }
@@ -306,7 +329,8 @@ class Authorize extends Server
                     'org_name' => $org ? $org['org_name'] : null,
                     'user_name' => $user ? $user['name'] : null,
                     'user_email' => $user ? $user['email'] : null,
-                    'claims' => $this->explode($scope)
+                    'claims' => $this->explode($scope),
+                    'action' => OAUTH_CURRENT_URL,
                 ]);
             }
         }

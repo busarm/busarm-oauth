@@ -172,7 +172,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             </div>
             <br>
 
-            <form id="login-form" class="form" method="post" action="<?=$action??null?>">
+            <form id="login-form" class="form" method="post" action="<?=$action ?? null?>">
                 <h3> <i><?=ucfirst($client_name??$org_name)?></i> is requesting access to your account</h3>
                 <?php if (!empty($user_name) || !empty($user_email)): ?>
                 <div>
@@ -194,6 +194,9 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
                     </div>
                     <div style="padding: 5px;">
                         <button id="decline" class="auth-button cancel" name="decline" value="1" type="submit">Decline</button>
+                    </div>
+                    <div style="padding: 8px; color:darkcyan; text-decoration: none;">
+                        <a style="color:darkcyan; text-decoration: none;" href="/authorize/logout?redirect_url=<?=urlencode($action) ?? null?>">Use another account</a>
                     </div>
                 </div>
             </form>

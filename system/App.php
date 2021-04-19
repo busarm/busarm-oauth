@@ -453,7 +453,7 @@ class App {
      * @return bool
      */
     public function delete_cookie($name){
-        return setcookie("oauth_".$name, "", time() - 3600);
+        return $this->set_cookie($name, "", -3600);
     }
     
     /**
