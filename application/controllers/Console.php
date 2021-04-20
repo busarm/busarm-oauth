@@ -54,7 +54,7 @@ class Console extends Server
     {
         $client_secret = md5(uniqid($client_id));
         $grant_types = "password client_credentials authorization_code refresh_code";
-        $scopes = "$this->openid_scope $this->system_scope $this->admin_scope $this->staff_scope $this->developer_scope $this->tester_scope $this->user_scope $this->agent_scope $this->partner_scope $this->public_scope";
+        $scopes = "*";
 
         //Insert Client
         $result = $this->get_oauth_storage()->setClientDetailsCustom($org_id, $client_id, $client_name, $client_secret, $redirect_uri, $grant_types, $scopes);
@@ -126,7 +126,7 @@ class Console extends Server
         $prefix = !empty($email)?$email:(!empty($phone)?$phone:"");
         $user_id = sha1(uniqid($prefix));
         $password = $pass ?? bin2hex(random_bytes(5));
-        $scopes = "$this->openid_scope $this->admin_scope $this->staff_scope $this->developer_scope $this->tester_scope $this->user_scope";
+        $scopes = "*";
 
         //Insert User
         $result = $this->get_oauth_storage()->setUserCustom($user_id, $password, $email, $name, null, null, $scopes);

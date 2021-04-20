@@ -69,7 +69,7 @@ class Resources extends Server
      * */
     public function fetchUsers()
     {
-        if ($this->get_oauth_server()->verifyResourceRequest($this->request, $this->response, $this->admin_scope)) {
+        if ($this->get_oauth_server()->verifyResourceRequest($this->request, $this->response)) {
             if (!empty($user_ids = $this->request->request('user_ids'))) {
                 $users = $this->get_oauth_storage()->getMultipleUserInfo(
                     $this->explode($user_ids)
@@ -205,7 +205,7 @@ class Resources extends Server
     public function updateUser()
     {
         if (!empty($user_id = $this->request->request('user_id'))) { //If User Id Provided, verify admin scope
-            if (!$this->get_oauth_server()->verifyResourceRequest($this->request, $this->response, $this->admin_scope)) {
+            if (!$this->get_oauth_server()->verifyResourceRequest($this->request, $this->response)) {
                 $user_id = null;
             }
         } else {
@@ -274,10 +274,7 @@ class Resources extends Server
      * */
     public function createClient()
     {
-        if ($this->get_oauth_server()->verifyResourceRequest(
-                $this->request,
-                $this->response,
-                "$this->admin_scope $this->staff_scope")) {
+        if ($this->get_oauth_server()->verifyResourceRequest($this->request, $this->response)) {
 
             $client_id = $this->request->request('client_id');
             $client_name = $this->request->request('client_name');

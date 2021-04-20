@@ -28,7 +28,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             user-select: none;
             background: #335038 !important;
         }
-        oauth-authorize h1,h2,h3,h4,h5,p,div,input,button,textarea {
+        oauth-authorize body,h1,h2,h3,h4,h5,p,div,input,button,textarea,li {
             font-family: "Palatino Linotype", sans-serif !important;
         }
 
@@ -171,9 +171,8 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
                 <img class="logo logo_txt" src="<?=App::get_cdn_path('public/images/logo/dark/logo_txt_512px.png')?>">
             </div>
             <br>
-
             <form id="login-form" class="form" method="post" action="<?=$action ?? null?>">
-                <h3> <i><?=ucfirst($client_name??$org_name)?></i> is requesting access to your account</h3>
+                <h3> <span style="color:#DF632D"><?=ucfirst($client_name??$org_name)?></span> is requesting access to your account</h3>
                 <?php if (!empty($user_name) || !empty($user_email)): ?>
                 <div>
                     <img class="icon" src="<?=App::get_cdn_path('public/images/icons/Name_104px.png')?>">
@@ -186,7 +185,14 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
                     <?php endif ?>
                     </div>
                 </div>
-                <br>
+                <?php if (!empty($claims)): ?>
+                    <h4>Grant permission to do the following: </h3>
+                    <ul>
+                        <?php foreach($claims as $claim): ?>
+                        <li style="font-size: 14px; text-align: left;"><?= $claim ?></li>
+                        <?php endforeach ?>
+                    </ul>
+                <?php endif ?>
                 <?php endif ?>
                 <div class="auth-buttons">
                     <div style="padding: 5px;">

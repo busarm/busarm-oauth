@@ -26,7 +26,7 @@ services:
         APP_NAME: 'Wecari Oauth'
         COMPANY_NAME: 'Wecari'
         ENV: development # Environment variable 
-        ENCRYPTION_KEY: "$P6xpRQ#MWxP6MNdDs2#g*eQzuDHx?rN"
+        ENCRYPTION_KEY: "P6xpRQ#MWxP6MNdDs2#g*eQzuDHx?rN"
         # Custom Paths
         APP_CACHE_PATH: '/tmp/cache'
         APP_UPLOAD_PATH: '/tmp/uploads'

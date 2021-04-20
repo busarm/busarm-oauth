@@ -269,71 +269,87 @@ class OauthPdo  extends Pdo
         }
     }
 
+    /**
+     * @return null|array
+     */
+    public function getAllScopes()
+    {
+        $stmt = $this->db->prepare(sprintf('SELECT * FROM %s', $this->config['scope_table']));
+        $stmt->execute();
+        if ($result = $stmt->fetchAll(\PDO::FETCH_ASSOC)) {
+            return $result;
+        }
+        return null;
+    }
 
     /**
-     * @param string $scope
-     * @return bool
+     * @param $scope
+     * @return bool|array Bool or Array of scopes
      */
     public function scopeExists($scope)
     {
-        $scope = explode(' ', $scope);
-        $whereIn = implode(',', array_fill(0, count($scope), '?'));
-        $stmt = $this->db->prepare(sprintf('SELECT count(scope) as count FROM %s WHERE scope IN (%s)', $this->config['scope_table'], $whereIn));
-        $stmt->execute($scope);
-        if ($result = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-            return $result['count'] == count($scope);
+        $scopes = !is_array($scope) ? explode(' ', $scope) : $scope;
+        $whereIn = implode(',', array_fill(0, count($scopes), '?'));
+        $stmt = $this->db->prepare(sprintf('SELECT * FROM %s WHERE scope IN (%s)', $this->config['scope_table'], $whereIn));
+        $stmt->execute($scopes);
+        if ($result = $stmt->fetchAll(\PDO::FETCH_ASSOC)) {
+            return count($result) == count($scopes) ? $result : false;
         }
         return false;
     }
-
 
     /**
      * Check if User has the requested scope
      * @param $scope
      * @param $user_id
-     * @return bool
+     * @return bool|array Bool or Array of scopes
      */
     public function scopeExistsForUser($scope, $user_id)
     {
+        $found = [];     
         $stmt = $this->db->prepare(sprintf('SELECT scope FROM %s WHERE user_id = ? LIMIT 1', $this->config['user_table']));
         $stmt->execute([$user_id]);
-        if ($result = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-            $found = true;
-            $scopes = explode(' ', $scope);
-            foreach ($scopes as $sc) {
-                if (!empty($sc) && strpos(trim(strtolower($result['scope'])), trim(strtolower($sc))) === false) {
-                    $found = false;
+        if ($result = $stmt->fetch(\PDO::FETCH_ASSOC)) {            
+            $user_scopes = array_map('strtolower', explode(' ', $result['scope']));     
+            $scopes = !is_array($scope) ? explode(' ', $scope) : $scope;
+            foreach ($scopes as $scope) {
+                if(in_array(strtolower($scope), $user_scopes) || in_array('*', $user_scopes)){
+                    $found[] = $scope;
+                }
+                else {
+                    return false; // All must exist
                 }
             }
-            return $found;
         }
-        return false;
+        return !empty($found) ? $found : false;
     }
-
 
     /**
      * Check if Client has the requested scope
      * @param $scope
      * @param $client_id
-     * @return bool
+     * @param $return
+     * @return bool|array Bool or Array of scopes
      */
     public function scopeExistsForClient($scope, $client_id)
     {
+        $found = [];     
         $stmt = $this->db->prepare(sprintf('SELECT scope FROM %s WHERE client_id = ? LIMIT 1', $this->config['client_table']));
         $stmt->execute([$client_id]);
         if ($result = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-            $found = true;
-            $scopes = explode(' ', $scope);
-            foreach ($scopes as $sc) {
-                if (strpos(trim(strtolower($result['scope'])), trim(strtolower($sc))) === false) {
-                    $found = false;
+            $client_scopes = array_map('strtolower', explode(' ', $result['scope']));     
+            $scopes = !is_array($scope) ? explode(' ', $scope) : $scope;
+            foreach ($scopes as $scope) {
+                if(in_array(strtolower($scope), $client_scopes) || in_array('*', $client_scopes)){
+                    $found[] = $scope;
+                }
+                else {
+                    return false; // All must exist
                 }
             }
-            return $found;
         }
-        return false;
+        return !empty($found) ? $found : false;
     }
-
 
     /**
      * @param mixed $client_id
@@ -352,4 +368,11 @@ class OauthPdo  extends Pdo
         }
         return $stmt->execute(compact('client_id', 'private_key', 'public_key', 'encryption_algorithm'));
     }
+
+    
+    /**In array case-insensitive */
+    public function in_arrayi($needle, $haystack) {
+        return in_array(strtolower($needle), array_map('strtolower', $haystack));
+    }
+
 }

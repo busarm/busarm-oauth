@@ -259,7 +259,9 @@ class Authorize extends Server
      */
     private function processAuthRequest($user_id, $client_id, $redirect_uri, $state, $scope, $response_type)
     {
-        $token = sha1(sprintf("%s:%s:/%s:/%s", $user_id, $client_id, $redirect_uri, $state, $scope));
+        $token = sha1(sprintf("%s:%s:%s:%s:%s", $user_id, $client_id, $redirect_uri, $state, $scope, $response_type));
+        
+        // Valid auth request session
         if (App::getInstance()->get_cookie('request_token') === $token) {
 
             $approve = $this->request->request("approve");
@@ -269,22 +271,36 @@ class Authorize extends Server
             if($approve){
 
                 $scope = !empty($scope) ? $scope : $this->get_oauth_storage()->getDefaultScope();
-                $is_authorized = $this->get_oauth_storage()->scopeExistsForUser($scope, $user_id);
 
-                if ($is_authorized) {
+                if ($this->get_oauth_storage()->scopeExistsForUser($scope, $user_id)) {
                     if ($this->get_oauth_server()->validateAuthorizeRequest($this->request, $this->response)) {
                         return true;
                     } else {
-                        $this->showError([
-                            "msg"=>"Authorization failed",
-                            "sub_msg"=> $this->response->getParameter("error_description"),
-                        ]);
+                        if(!empty($redirect_uri)){
+                            App::getInstance()->redirect(App::parseUrl($redirect_uri, $this->response->getParameters()));
+                        }
+                        else {
+                            $this->showError([
+                                "msg"=>"Authorization failed",
+                                "sub_msg"=> $this->response->getParameter("error_description"),
+                            ]);
+                        }
+                        return false;
                     }
                 } else {
-                    $this->showError([
-                        "msg"=>"Authorization failed",
-                        "sub_msg"=> "Scope(s) '$scope' not available for this user",
-                    ]);
+                    if(!empty($redirect_uri)){
+                        App::getInstance()->redirect(App::parseUrl($redirect_uri,[
+                            "error" => "invalid_scope", 
+                            "error_description"=> "Scope(s) '$scope' not available for this user"
+                        ]));
+                    }
+                    else {
+                        $this->showError([
+                            "msg"=>"Authorization failed",
+                            "sub_msg"=> "Scope(s) '$scope' not available for this user",
+                        ]);
+                    }
+                    return false;
                 }
             }
 
@@ -302,38 +318,27 @@ class Authorize extends Server
                         "sub_msg"=> "Access declined by user",
                     ]);
                 }
+                return false;
             }
-            else {
-                if(!empty($client = $this->get_oauth_storage()->getClientDetails($client_id))){
-                    App::getInstance()->set_cookie("request_token", $token, 300);
-                    $org = $this->get_oauth_storage()->getOrganizationDetails($client['org_id']);
-                    $user = $this->get_oauth_storage()->getUser($user_id);
-                    $this->showAuthorize([
-                        'client_name' => $client['client_name'],
-                        'org_name' => $org ? $org['org_name'] : null,
-                        'user_name' => $user ? $user['name'] : null,
-                        'user_email' => $user ? $user['email'] : null,
-                        'claims' => $this->explode($scope),
-                        'action' => OAUTH_CURRENT_URL
-                    ]);
-                }
-            }
+        } 
+        
+        // Client Id available
+        if(!empty($client = $this->get_oauth_storage()->getClientDetails($client_id))){
+
+            App::getInstance()->set_cookie("request_token", $token, 300);
+            $org = $this->get_oauth_storage()->getOrganizationDetails($client['org_id']);
+            $user = $this->get_oauth_storage()->getUser($user_id);
+            $scopes = $this->get_oauth_storage()->scopeExists($scope);
+            $this->showAuthorize([
+                'client_name' => $client['client_name'],
+                'org_name' => $org ? $org['org_name'] : null,
+                'user_name' => $user ? $user['name'] : null,
+                'user_email' => $user ? $user['email'] : null,
+                'claims' => $scopes ? array_map(function ($row) { return $row['description']; }, $scopes) : [],
+                'action' => OAUTH_CURRENT_URL,
+            ]);
         }
-        else {
-            if(!empty($client = $this->get_oauth_storage()->getClientDetails($client_id))){
-                App::getInstance()->set_cookie("request_token", $token, 300);
-                $org = $this->get_oauth_storage()->getOrganizationDetails($client['org_id']);
-                $user = $this->get_oauth_storage()->getUser($user_id);
-                $this->showAuthorize([
-                    'client_name' => $client['client_name'],
-                    'org_name' => $org ? $org['org_name'] : null,
-                    'user_name' => $user ? $user['name'] : null,
-                    'user_email' => $user ? $user['email'] : null,
-                    'claims' => $this->explode($scope),
-                    'action' => OAUTH_CURRENT_URL,
-                ]);
-            }
-        }
+
         return false;
     }
 

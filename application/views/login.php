@@ -26,7 +26,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             user-select: none;
             background: #335038 !important;
         }
-        oauth-login h1,h2,h3,h4,h5,p,div,input,button,textarea {
+        oauth-login body,h1,h2,h3,h4,h5,p,div,input,button,textarea,li  {
             font-family: "Palatino Linotype", sans-serif !important;
         }
 

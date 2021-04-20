@@ -11,6 +11,9 @@ use PHPMailer\PHPMailer\PHPMailer;
  */
 class Server
 {
+    const SCOPE_SYSTEM = 'system';
+    const SCOPE_ADMIN = 'admin';
+
     private $smtp_protocol = 'smtp';
     private $smtp_timeout = 10;
     private $smtp_charset = 'utf-8';
@@ -21,22 +24,11 @@ class Server
     /**@var OAuth2\Server */
     private $oauth_server;
 
-    public $public_scope = 'public';
-    public $system_scope = 'system';
-    public $user_scope = 'user';
-    public $admin_scope = 'admin';
-    public $agent_scope = 'agent';
-    public $partner_scope = 'partner';
-    public $tester_scope = 'tester';
-    public $developer_scope = 'developer';
-    public $staff_scope = 'staff';
-    public $openid_scope = 'openid';
-
+    /** @var \OAuth2\Request */
     protected $request;
+    
+    /** @var \OAuth2\Response */
     protected $response;
-
-    /**@var array Current oraganization info of client*/
-    // private $org_info;
 
     /**@var array Current client info*/
     private $client_info;
@@ -98,7 +90,7 @@ class Server
 
             /**Check if client is valid*/
             if($validateClient){
-                if (!$this->validateClient($this->system_scope)) {
+                if (!$this->validateClient(self::SCOPE_SYSTEM)) {
                     $this->response->send();
                     die;
                 }
@@ -140,8 +132,8 @@ class Server
             !empty($client_secret = $this->request->headers("client_secret")) ? $client_secret : ($client_secret = $this->request->request("client_secret"))
         )){
             if (!empty($scope)){
-                $scope = is_array($scope)?$this->implode($scope):$scope;
-                if (!$this->get_oauth_storage()->scopeExistsForClient($scope,$client_id)){
+                $scope = is_array($scope) ? $this->implode($scope) : $scope;
+                if (!$this->get_oauth_storage()->scopeExistsForClient($scope, $client_id)){
                     $this->response->setParameters(array('success' => false, 'error' => 'invalid_scope', 'error_description' => "'$scope' scope does not exist for client '$client_id'"));
                     return false;
                 }
