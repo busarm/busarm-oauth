@@ -43,7 +43,7 @@ function is_https(){
 $server_protocol = (!empty(getServer('SERVER_PROTOCOL')) && in_array(getServer('SERVER_PROTOCOL'), array('HTTP/1.0', 'HTTP/1.1', 'HTTP/2'), TRUE))
     ? getServer('SERVER_PROTOCOL') : 'HTTP/1.1';
 
-define("PROTOCOL_HEADER", $server_protocol, true); //Server Protocol header
+define("PROTOCOL_HEADER", $server_protocol); //Server Protocol header
 
 $base_url = (is_https() ? "https" : "http") . "://";
 define("OAUTH_BASE_SCHEME", $base_url);
@@ -54,9 +54,9 @@ $config['base_url'] = $base_url;
 define("OAUTH_BASE_URL", $base_url);
 define("OAUTH_CURRENT_URL", OAUTH_BASE_SERVER . getServer('REQUEST_URI'));
 
-define("ENV_DEV", "development", true);
-define("ENV_PROD", "production", true);
-define("ENV_TEST", "testing", true);
+define("ENV_DEV", "development");
+define("ENV_PROD", "production");
+define("ENV_TEST", "testing");
 
 // fix cross site to option request error
 if (getServer('REQUEST_METHOD') == 'OPTIONS') {

@@ -1,7 +1,7 @@
 <?php
 if (defined('STDIN')) {chdir(dirname(__FILE__));} // Set the current directory correctly for CLI requests
 define("OAUTH_BASE", __DIR__.DIRECTORY_SEPARATOR, true);
-define("OAUTH_BASE_PATH",'system/',true); //define System path
+define("OAUTH_BASE_PATH",'system/'); //define System path
 require_once 'vendor/autoload.php'; /* Initialize composer autoloader*/
 require_once OAUTH_BASE_PATH."App.php";   
 (new App)->initialize();

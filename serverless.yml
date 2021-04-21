@@ -6,7 +6,7 @@ service: Wecari-Oauth
 
 provider:
     name: aws
-    runtime: provided
+    runtime: provided.al2
     profile: wecari
     region: ${opt:region, 'eu-west-2'} # e.g serverless delopy --region eu-west-2 (default = 'eu-west-2')
     stage: ${opt:stage, 'Dev'} # e.g serverless delopy --stage dev (default = 'dev')
@@ -66,11 +66,11 @@ functions:
     Authorize:
         handler: index.php
         description: 'Allow user to authorize access to their account'
-        memorySize: ${self:custom.lowMem.${self:provider.stage}}
+        memorySize: ${self:custom.avgMem.${self:provider.stage}}
         timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
         logRetentionInDays: ${self:custom.logRetentionInDays} 
         layers:
-            - ${bref:layer.php-74-fpm}
+            - ${bref:layer.php-80-fpm}
         events:
             - http:  
                 path: '/authorize/{any+}'
@@ -88,7 +88,7 @@ functions:
         timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
         logRetentionInDays: ${self:custom.logRetentionInDays} 
         layers:
-            - ${bref:layer.php-74-fpm}
+            - ${bref:layer.php-80-fpm}
         events:
             - http:  
                 path: '/resources/{any+}'
@@ -110,7 +110,7 @@ functions:
         timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
         logRetentionInDays: ${self:custom.logRetentionInDays} 
         layers:
-            - ${bref:layer.php-74-fpm}
+            - ${bref:layer.php-80-fpm}
         events:
             - http:  
                 path: '/token/{any+}'
