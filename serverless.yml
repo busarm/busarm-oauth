@@ -126,6 +126,9 @@ functions:
                     warmer: true
 
 custom:
+    superMem:
+        Dev: 1024
+        Prod: 2048
     highMem:
         Dev: 512
         Prod: 1024

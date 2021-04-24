@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f5cd8c1cd9bb0a7c820047b19eb47da7",
+    "content-hash": "af78ff7c0ea562484ad4d71bbe660f3c",
     "packages": [
         {
             "name": "async-aws/core",
@@ -280,6 +280,53 @@
                 }
             ],
             "time": "2021-03-22T09:52:20+00:00"
+        },
+        {
+            "name": "bref/extra-php-extensions",
+            "version": "0.10.10",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/brefphp/extra-php-extensions.git",
+                "reference": "953dd2cd1283f2698a7f54a113599451c7f0f5ab"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/brefphp/extra-php-extensions/zipball/953dd2cd1283f2698a7f54a113599451c7f0f5ab",
+                "reference": "953dd2cd1283f2698a7f54a113599451c7f0f5ab",
+                "shasum": ""
+            },
+            "conflict": {
+                "bref/bref": "<1.1.4"
+            },
+            "require-dev": {
+                "async-aws/core": "^1.7",
+                "async-aws/lambda": "^1.1",
+                "bref/logger": "^1.0",
+                "mnapoli/silly": "^1.7",
+                "mnapoli/silly-php-di": "^1.2",
+                "symfony/finder": "^5.2",
+                "symfony/http-client": "^5.2",
+                "symfony/process": "^5.0"
+            },
+            "type": "library",
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Tobias Nyholm",
+                    "email": "tobias.nyholm@gmail.com"
+                }
+            ],
+            "description": "Extra PHP extensions for your lambda application.",
+            "funding": [
+                {
+                    "url": "https://github.com/Nyholm",
+                    "type": "github"
+                }
+            ],
+            "time": "2021-04-20T06:31:12+00:00"
         },
         {
             "name": "bshaffer/oauth2-server-php",
