@@ -225,6 +225,7 @@ class OauthPdo  extends Pdo
      * @param null|array  $grant_types
      * @param null|string $scope
      * @param null|string $user_id
+     * @param bool $issue_jwt
      * @return bool
      */
     public function setClientDetailsCustom($org_id, $client_id, $client_name, $client_secret = null, $redirect_uri = null, $grant_types = null, $scope = null, $user_id = null, $issue_jwt = true)

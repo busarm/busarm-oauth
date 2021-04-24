@@ -51,10 +51,7 @@ class Authorize extends Server
                 die();
             }
             else {
-                $this->showError([
-                    "msg"=>"Authorization failed",
-                    "sub_msg"=> $this->response->getParameter("error_description") ?? "Invalid request",
-                ]);
+                $this->showError("authorization_failed", $this->response->getParameter("error_description") ?? "Invalid request", $redirect_uri);
             }
         }
 
@@ -64,10 +61,7 @@ class Authorize extends Server
                 $this->showEmailSuccess($userInfo);
             }
             else {
-                $this->showError([
-                    "msg"=>"Authorization failed",
-                    "sub_msg"=> $this->response->getParameter("error_description") ?? "Invalid request",
-                ]);
+                $this->showError("authorization_failed", $this->response->getParameter("error_description") ?? "Invalid request", $redirect_uri);
             }
         }
 
@@ -98,10 +92,7 @@ class Authorize extends Server
             }
         }
         else {
-            $this->showError([
-                "msg"=>"Login failed",
-                "sub_msg"=> "A Redirect Url is required",
-            ]);
+            $this->showError("login_failed", "A Redirect Url is required");
         }
     }
 
@@ -114,14 +105,11 @@ class Authorize extends Server
         $redirect_url = $this->request->request("redirect_url", $this->request->query("redirect_url"));
         if(!empty($redirect_url)){
             App::getInstance()->clearLoginSession();
-            App::getInstance()->delete_cookie("request_token");
+            App::getInstance()->delete_cookie("auth_request_token");
             App::getInstance()->redirect('authorize/login?redirect_url='.urlencode($redirect_url));
         }
         else {
-            $this->showError([
-                "msg"=>"Login failed",
-                "sub_msg"=> "A Redirect Url is required",
-            ]);
+            $this->showError("login_failed", "A Redirect Url is required");
         }
     }
 
@@ -187,8 +175,8 @@ class Authorize extends Server
         if ($userInfo = $this->get_oauth_storage()->getUser($email)) {
 
             $timeout = 600;
-            $hash = sha1(sprintf("%s:/%s:/%s:/%s", $email, $redirect_uri, $state, $scope));
-            if (App::getInstance()->get_cookie('request_token') != $hash) {
+            $token = sha1(sprintf("%s:%s:%s:%s", $email, $redirect_uri, $state, $scope));
+            if (App::getInstance()->get_cookie('email_request_token') != $token) {
 
                 $user_id = $userInfo['user_id'];
                 if ($this->get_oauth_storage()->scopeExistsForUser($scope, $user_id)) {
@@ -202,45 +190,30 @@ class Authorize extends Server
                         
                         if ($this->sendMail("Email Authorization", $message, $email)) {
                             try {
-                                App::getInstance()->set_cookie("request_token", $hash, $timeout); //Save to cookie to prevent duplicate 
+                                App::getInstance()->set_cookie("email_request_token", $token, $timeout); //Save to cookie to prevent duplicate 
                                 return $userInfo;
                             }
                             catch (Exception $e) {
-                                $this->showError([
-                                    "msg"=>"Authorization failed",
-                                    "sub_msg"=>sprintf("Unknown error. Please contact <a href='%s' target='_blank'>support</a> for assistance", App::get_app_path('support')),
-                                ]);
+                                $this->showError("authorization_failed", sprintf("Unknown error. Please contact <a href='%s' target='_blank'>support</a> for assistance", App::get_app_path('support')), $redirect_uri);
                             }
                         }
                         else {
-                            $this->showError([
-                                "msg"=>"Authorization failed",
-                                "sub_msg"=>sprintf("Failed to send mail. Please contact <a href='%s' target='_blank'>support</a> for assistance", App::get_app_path('support')),
-                            ]);
+                            $this->showError("authorization_failed", sprintf("Failed to send mail. Please contact <a href='%s' target='_blank'>support</a> for assistance", App::get_app_path('support')), $redirect_uri);
                         }
                     }
                     else {
                         $msg = $this->response->getParameter("error_description");  
                         $msg = !empty($msg) ? $msg:"Unexpected error encountered";
-                        $this->showError([
-                            "msg"=>"Authorization failed",
-                            "sub_msg"=>sprintf("<span style='color:red'>$msg</span>. Please contact <a href='%s' target='_blank'>support</a> for assistance", App::get_app_path('support')),
-                        ]);
+                        $this->showError("authorization_failed", sprintf("<span style='color:red'>$msg</span>. Please contact <a href='%s' target='_blank'>support</a> for assistance", App::get_app_path('support')), $redirect_uri);
                     }
                 }
                 else {
-                    $this->showError([
-                        "msg"=>"Authorization failed",
-                        "sub_msg"=>sprintf("Requested scope(s) does not exist for the specified user. Please contact <strong>%s</strong> for assistance", $this->getSupportEmail()),
-                    ]);
+                    $this->showError("authorization_failed", sprintf("Requested scope(s) does not exist for the specified user. Please contact <strong>%s</strong> for assistance", $this->getSupportEmail()), $redirect_uri);
                 }
             }
             else {
                 $min = intval($timeout/60);
-                $this->showError([
-                    "msg"=>"Authorization link already sent to <strong>$email</strong>",
-                    "sub_msg"=>"Try again in $min minutes or clear browser cookies and retry",
-                ]);
+                $this->showError("duplicate_authorization", "Authorization link already sent to <strong>$email</strong>. Try again in $min minutes or clear browser cookies and retry", $redirect_uri);
             }
         }
         return false;
@@ -259,10 +232,11 @@ class Authorize extends Server
      */
     private function processAuthRequest($user_id, $client_id, $redirect_uri, $state, $scope, $response_type)
     {
+        $request_token = App::getInstance()->get_cookie('auth_request_token');
         $token = sha1(sprintf("%s:%s:%s:%s:%s", $user_id, $client_id, $redirect_uri, $state, $scope, $response_type));
-        
+
         // Valid auth request session
-        if (App::getInstance()->get_cookie('request_token') === $token) {
+        if (empty($request_token) || App::getInstance()->get_cookie('auth_request_token') == $token) {
 
             $approve = $this->request->request("approve");
             $decline = $this->request->request("decline");
@@ -276,69 +250,47 @@ class Authorize extends Server
                     if ($this->get_oauth_server()->validateAuthorizeRequest($this->request, $this->response)) {
                         return true;
                     } else {
-                        if(!empty($redirect_uri)){
-                            App::getInstance()->redirect(App::parseUrl($redirect_uri, $this->response->getParameters()));
-                        }
-                        else {
-                            $this->showError([
-                                "msg"=>"Authorization failed",
-                                "sub_msg"=> $this->response->getParameter("error_description"),
-                            ]);
-                        }
+                        App::getInstance()->delete_cookie("auth_request_token");
+                        $this->showError($this->response->getParameter("error"), $this->response->getParameter("error_description"), $redirect_uri);
                         return false;
                     }
                 } else {
-                    if(!empty($redirect_uri)){
-                        App::getInstance()->redirect(App::parseUrl($redirect_uri,[
-                            "error" => "invalid_scope", 
-                            "error_description"=> "Scope(s) '$scope' not available for this user"
-                        ]));
-                    }
-                    else {
-                        $this->showError([
-                            "msg"=>"Authorization failed",
-                            "sub_msg"=> "Scope(s) '$scope' not available for this user",
-                        ]);
-                    }
+                    App::getInstance()->delete_cookie("auth_request_token");
+                    $this->showError("invalid_scope", "Scope(s) '$scope' not available for this user", $redirect_uri);
                     return false;
                 }
             }
-
             // Authorization approved
             else if($decline){
-                if(!empty($redirect_uri)){
-                    App::getInstance()->redirect(App::parseUrl($redirect_uri,[
-                        "error" => "authorization_declined", 
-                        "error_description"=> "Access declined by user"
-                    ]));
-                }
-                else {
-                    $this->showError([
-                        "msg"=>"Authorization declined",
-                        "sub_msg"=> "Access declined by user",
-                    ]);
-                }
+                App::getInstance()->delete_cookie("auth_request_token");
+                $this->showError("authorization_declined", "Access declined by user", $redirect_uri);
                 return false;
             }
-        } 
-        
-        // Client Id available
-        if(!empty($client = $this->get_oauth_storage()->getClientDetails($client_id))){
+            // Not authorized yet
+            else {
+                
+                // Client Id available
+                if(!empty($client = $this->get_oauth_storage()->getClientDetails($client_id))){
 
-            App::getInstance()->set_cookie("request_token", $token, 300);
-            $org = $this->get_oauth_storage()->getOrganizationDetails($client['org_id']);
-            $user = $this->get_oauth_storage()->getUser($user_id);
-            $scopes = $this->get_oauth_storage()->scopeExists($scope);
-            $this->showAuthorize([
-                'client_name' => $client['client_name'],
-                'org_name' => $org ? $org['org_name'] : null,
-                'user_name' => $user ? $user['name'] : null,
-                'user_email' => $user ? $user['email'] : null,
-                'claims' => $scopes ? array_map(function ($row) { return $row['description']; }, $scopes) : [],
-                'action' => OAUTH_CURRENT_URL,
-            ]);
+                    App::getInstance()->set_cookie("auth_request_token", $token, 300);
+                    $org = $this->get_oauth_storage()->getOrganizationDetails($client['org_id']);
+                    $user = $this->get_oauth_storage()->getUser($user_id);
+                    $scopes = $this->get_oauth_storage()->scopeExists($scope);
+                    $this->showAuthorize([
+                        'client_name' => $client['client_name'],
+                        'org_name' => $org ? $org['org_name'] : null,
+                        'user_name' => $user ? $user['name'] : null,
+                        'user_email' => $user ? $user['email'] : null,
+                        'claims' => $scopes ? array_map(function ($row) { return $row['description']; }, $scopes) : [],
+                        'action' => OAUTH_CURRENT_URL,
+                    ]);
+                }
+            }
         }
-
+        else {
+            App::getInstance()->delete_cookie("auth_request_token");
+            $this->showError("authorization_failed", "Request session invalid or expired. Please try again.", $redirect_uri);
+        }
         return false;
     }
 
@@ -372,13 +324,18 @@ class Authorize extends Server
             die;
         }
     }
-    /**Show Auth Email Success page
-     * @param array $vars
+    /**
+     * Show Auth Email Success page
+     * @param array $userInfo User Info
+     * - name - string
+     * - email - string
+     * - dial_code - string
+     * - phone - string
      */
-    private function showEmailSuccess($vars = array())
+    private function showEmailSuccess($userInfo)
     {
         try {
-            echo App::getInstance()->loadView("success", $vars, true);
+            echo App::getInstance()->loadView("success", $userInfo, true);
             die;
         } catch (Exception $e) {
             echo $e->getMessage();
@@ -386,18 +343,51 @@ class Authorize extends Server
         }
     }
 
-    /**Show Auth Failure page
-     * @param array $vars
+    /**
+     * Show Error
+     * @param string $error
+     * @param string $error_description
+     * @param string $redirect_uri
      */
-    private function showError($vars = array())
+    private function showError($error, $error_description = '', $redirect_uri = '')
     {
-        try {
-            echo App::getInstance()->loadView("failed", $vars, true);
-            die;
-        } catch (Exception $e) {
-            echo $e->getMessage();
-            die;
+        if(!empty($redirect_uri)){
+            App::getInstance()->redirect(App::parseUrl($redirect_uri, [
+                "error" => $error, 
+                "error_description"=> $error_description
+            ]));
         }
+        else {
+            try {
+                echo App::getInstance()->loadView("failed", [
+                    "msg" => ucfirst(str_replace('_', ' ', $error)), 
+                    "sub_msg"=> $error_description
+                ], true);
+                die;
+            } catch (Exception $e) {
+                echo $e->getMessage();
+                die;
+            }
+        }
+    }
+
+    /**Check if login request available
+     * @return array|boolean
+     */
+    private function loginRequestAvailable()
+    {
+        if (!empty($username = $this->request->request('username')) &&
+            !empty($password = $this->request->request('password')) &&
+            !empty($csrf_token = $this->request->request('csrf_token')) &&
+            !empty($recaptcha_token = $this->request->request('recaptcha_token'))) {
+            return [
+                'username' => $username,
+                'password' => $password,
+                'csrf_token' => $csrf_token,
+                'recaptcha_token' => $recaptcha_token,
+            ];
+        }
+        return false;
     }
 
     /**Get Email Authorization view to send as message to user
@@ -430,26 +420,6 @@ class Authorize extends Server
             return $content;
         }
     }
-
-    /**Check if login request available
-     * @return array|boolean
-     */
-    private function loginRequestAvailable()
-    {
-        if (!empty($username = $this->request->request('username')) &&
-            !empty($password = $this->request->request('password')) &&
-            !empty($csrf_token = $this->request->request('csrf_token')) &&
-            !empty($recaptcha_token = $this->request->request('recaptcha_token'))) {
-            return [
-                'username' => $username,
-                'password' => $password,
-                'csrf_token' => $csrf_token,
-                'recaptcha_token' => $recaptcha_token,
-            ];
-        }
-        return false;
-    }
-
     
     /** Validate Recaptcha
      * @return boolean
