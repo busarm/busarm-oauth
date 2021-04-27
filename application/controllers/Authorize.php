@@ -176,7 +176,7 @@ class Authorize extends Server
 
             $timeout = 600;
             $token = sha1(sprintf("%s:%s:%s:%s", $email, $redirect_uri, $state, $scope));
-            if (App::getInstance()->get_cookie('email_request_token') != $token) {
+            if (App::getInstance()->get_cookie('email_request_token') !== $token) {
 
                 $user_id = $userInfo['user_id'];
                 if ($this->get_oauth_storage()->scopeExistsForUser($scope, $user_id)) {
@@ -203,7 +203,7 @@ class Authorize extends Server
                     }
                     else {
                         $msg = $this->response->getParameter("error_description");  
-                        $msg = !empty($msg) ? $msg:"Unexpected error encountered";
+                        $msg = !empty($msg) ? $msg: "Unexpected error encountered";
                         $this->showError("authorization_failed", sprintf("<span style='color:red'>$msg</span>. Please contact <a href='%s' target='_blank'>support</a> for assistance", App::get_app_path('support')), $redirect_uri);
                     }
                 }
@@ -213,7 +213,7 @@ class Authorize extends Server
             }
             else {
                 $min = intval($timeout/60);
-                $this->showError("duplicate_authorization", "Authorization link already sent to <strong>$email</strong>. Try again in $min minutes or clear browser cookies and retry", $redirect_uri);
+                $this->showError("duplicate_authorization", "Authorization link already sent to <strong>$email</strong>. Try again in $min minutes or clear browser cookies and retry");
             }
         }
         return false;
