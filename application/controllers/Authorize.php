@@ -43,22 +43,22 @@ class Authorize extends Server
         $scope = $this->request->query("scope");
         $response_type = $this->request->query("response_type");
         
-        //If Logged in
-        if ($user_id = App::getInstance()->getLoginUser()) {
-            if($this->processAuthRequest($user_id, $client_id, $redirect_uri, $state, $scope, $response_type)){
-                $this->response = $this->get_oauth_server()->handleAuthorizeRequest($this->request, $this->response, true, $user_id);
-                $this->response->send();
-                die();
+        // If email request - Validate and Send authorization url
+        if (!empty($email = $this->request->query("email"))) { 
+            if ($userInfo = $this->processEmailRequest($email, $redirect_uri, $state, $scope)) {
+                $this->showEmailSuccess($userInfo);
             }
             else {
                 $this->showError("authorization_failed", $this->response->getParameter("error_description") ?? "Invalid request", $redirect_uri);
             }
         }
 
-        // If email request - Validate and Send authorization url
-        else if (!empty($email = $this->request->query("email"))) { 
-            if ($userInfo = $this->processEmailRequest($email, $redirect_uri, $state, $scope)) {
-                $this->showEmailSuccess($userInfo);
+        //If Logged in
+        else if ($user_id = App::getInstance()->getLoginUser()) {
+            if($this->processAuthRequest($user_id, $client_id, $redirect_uri, $state, $scope, $response_type)){
+                $this->response = $this->get_oauth_server()->handleAuthorizeRequest($this->request, $this->response, true, $user_id);
+                $this->response->send();
+                die();
             }
             else {
                 $this->showError("authorization_failed", $this->response->getParameter("error_description") ?? "Invalid request", $redirect_uri);
