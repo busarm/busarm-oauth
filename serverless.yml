@@ -84,7 +84,7 @@ functions:
     Resources:
         handler: index.php
         description: 'Retrieve oauth resources e.g user details with client credentials and access token'
-        memorySize: ${self:custom.avgMem.${self:provider.stage}}
+        memorySize: ${self:custom.highMem.${self:provider.stage}}
         timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
         logRetentionInDays: ${self:custom.logRetentionInDays} 
         layers:
@@ -126,6 +126,9 @@ functions:
                     warmer: true
 
 custom:
+    maxMem:
+        Dev: 2048
+        Prod: 4096 
     superMem:
         Dev: 1024
         Prod: 2048
