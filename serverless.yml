@@ -39,6 +39,7 @@ provider:
         # Google
         RECAPTCHA_SECRET_KEY: ${self:custom.secret.recaptcha_secret_key}
         RECAPTCHA_CLIENT_KEY: ${self:custom.secret.recaptcha_client_key}
+        SEPARATE_VENDOR: ${self:custom.bref.separateVendor}
     apiGateway:
         binaryMediaTypes:
             - '*/*'
@@ -126,6 +127,8 @@ functions:
                     warmer: true
 
 custom:
+    bref:
+        separateVendor: 0 
     maxMem:
         Dev: 2048
         Prod: 4096 

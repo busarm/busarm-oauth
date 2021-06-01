@@ -9,3 +9,5 @@
 .serverless/
 node_modules/
 tmp/
+
+composer.lock
