@@ -1,7 +1,6 @@
 <?php
 
 use GuzzleHttp\RequestOptions;
-use OAuth2\Controller\TokenController;
 
 defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
 
