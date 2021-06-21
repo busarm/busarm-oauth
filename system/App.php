@@ -158,8 +158,9 @@ class App {
     }
 
 
-    /**Re-Routing
-     * @param $routes
+    /**
+     * Re-Routing
+     * @param array $routes
      */
     private function reroute ($routes)
     {
@@ -406,11 +407,7 @@ class App {
     public function validate_csrf_token($csrf_token)
     {
         if ($csrf_token) {
-            $done = $csrf_token == $this->get_csrf_token();
-            if($done){
-                $this->delete_cookie("csrf_key");
-            }
-            return $done;
+            return $csrf_token == $this->get_csrf_token();
         }
         return false;
     }

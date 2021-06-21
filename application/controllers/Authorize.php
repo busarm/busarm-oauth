@@ -15,6 +15,9 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
  */
 class Authorize extends Server
 {
+    const AUTH_REQ_TOKEN_PARAM = "auth_request_token";
+    const EMAIL_REQ_TOKEN_PARAM = "email_request_token";
+
     public function __construct(){
         parent::__construct(false, true, true);
     }
@@ -104,7 +107,7 @@ class Authorize extends Server
         $redirect_url = $this->request->request("redirect_url", $this->request->query("redirect_url"));
         if(!empty($redirect_url)){
             App::getInstance()->clearLoginSession();
-            App::getInstance()->delete_cookie("auth_request_token");
+            App::getInstance()->delete_cookie(self::AUTH_REQ_TOKEN_PARAM);
             App::getInstance()->redirect('authorize/login?redirect_url='.urlencode($redirect_url));
         }
         else {
@@ -175,7 +178,7 @@ class Authorize extends Server
 
             $timeout = 600;
             $token = sha1(sprintf("%s:%s:%s:%s", $email, $redirect_uri, $state, $scope));
-            if (App::getInstance()->get_cookie('email_request_token') !== $token) {
+            if (App::getInstance()->get_cookie(self::EMAIL_REQ_TOKEN_PARAM) !== $token) {
 
                 $user_id = $userInfo['user_id'];
                 if ($this->get_oauth_storage()->scopeExistsForUser($scope, $user_id)) {
@@ -189,7 +192,7 @@ class Authorize extends Server
                         
                         if ($this->sendMail("Email Authorization", $message, $email)) {
                             try {
-                                App::getInstance()->set_cookie("email_request_token", $token, $timeout); //Save to cookie to prevent duplicate 
+                                App::getInstance()->set_cookie(self::EMAIL_REQ_TOKEN_PARAM, $token, $timeout); //Save to cookie to prevent duplicate 
                                 return $userInfo;
                             }
                             catch (Exception $e) {
@@ -231,11 +234,11 @@ class Authorize extends Server
      */
     private function processAuthRequest($user_id, $client_id, $redirect_uri, $state, $scope, $response_type)
     {
-        $request_token = App::getInstance()->get_cookie('auth_request_token');
+        $request_token = App::getInstance()->get_cookie(self::AUTH_REQ_TOKEN_PARAM);
         $token = sha1(sprintf("%s:%s:%s:%s:%s", $user_id, $client_id, $redirect_uri, $state, $scope, $response_type));
 
         // Valid auth request session
-        if (empty($request_token) || App::getInstance()->get_cookie('auth_request_token') == $token) {
+        if (empty($request_token) || App::getInstance()->get_cookie(self::AUTH_REQ_TOKEN_PARAM) == $token) {
 
             $approve = $this->request->request("approve");
             $decline = $this->request->request("decline");
@@ -249,19 +252,19 @@ class Authorize extends Server
                     if ($this->get_oauth_server()->validateAuthorizeRequest($this->request, $this->response)) {
                         return true;
                     } else {
-                        App::getInstance()->delete_cookie("auth_request_token");
+                        App::getInstance()->delete_cookie(self::AUTH_REQ_TOKEN_PARAM);
                         $this->showError($this->response->getParameter("error"), $this->response->getParameter("error_description"), $redirect_uri);
                         return false;
                     }
                 } else {
-                    App::getInstance()->delete_cookie("auth_request_token");
+                    App::getInstance()->delete_cookie(self::AUTH_REQ_TOKEN_PARAM);
                     $this->showError("invalid_scope", "Scope(s) '$scope' not available for this user", $redirect_uri);
                     return false;
                 }
             }
             // Authorization approved
             else if($decline){
-                App::getInstance()->delete_cookie("auth_request_token");
+                App::getInstance()->delete_cookie(self::AUTH_REQ_TOKEN_PARAM);
                 $this->showError("authorization_declined", "Access declined by user", $redirect_uri);
                 return false;
             }
@@ -271,7 +274,7 @@ class Authorize extends Server
                 // Client Id available
                 if(!empty($client = $this->get_oauth_storage()->getClientDetails($client_id))){
 
-                    App::getInstance()->set_cookie("auth_request_token", $token, 300);
+                    App::getInstance()->set_cookie(self::AUTH_REQ_TOKEN_PARAM, $token, 300);
                     $org = $this->get_oauth_storage()->getOrganizationDetails($client['org_id']);
                     $user = $this->get_oauth_storage()->getUser($user_id);
                     $scopes = $this->get_oauth_storage()->scopeExists($scope);
@@ -287,7 +290,7 @@ class Authorize extends Server
             }
         }
         else {
-            App::getInstance()->delete_cookie("auth_request_token");
+            App::getInstance()->delete_cookie(self::AUTH_REQ_TOKEN_PARAM);
             $this->showError("authorization_failed", "Request session invalid or expired. Please try again.", $redirect_uri);
         }
         return false;
