@@ -237,61 +237,46 @@ class Authorize extends Server
         $request_token = App::getInstance()->get_cookie(self::AUTH_REQ_TOKEN_PARAM);
         $token = sha1(sprintf("%s:%s:%s:%s:%s", $user_id, $client_id, $redirect_uri, $state, $scope, $response_type));
 
-        // Valid auth request session
-        if (empty($request_token) || App::getInstance()->get_cookie(self::AUTH_REQ_TOKEN_PARAM) == $token) {
+        $approve = $this->request->request("approve");
+        $decline = $this->request->request("decline");
 
-            $approve = $this->request->request("approve");
-            $decline = $this->request->request("decline");
+        // Authorization approved
+        if($approve && $request_token == $token){
 
-            // Authorization approved
-            if($approve){
+            $scope = !empty($scope) ? $scope : $this->get_oauth_storage()->getDefaultScope();
 
-                $scope = !empty($scope) ? $scope : $this->get_oauth_storage()->getDefaultScope();
-
-                if ($this->get_oauth_storage()->scopeExistsForUser($scope, $user_id)) {
-                    if ($this->get_oauth_server()->validateAuthorizeRequest($this->request, $this->response)) {
-                        return true;
-                    } else {
-                        App::getInstance()->delete_cookie(self::AUTH_REQ_TOKEN_PARAM);
-                        $this->showError($this->response->getParameter("error"), $this->response->getParameter("error_description"), $redirect_uri);
-                        return false;
-                    }
+            if ($this->get_oauth_storage()->scopeExistsForUser($scope, $user_id)) {
+                if ($this->get_oauth_server()->validateAuthorizeRequest($this->request, $this->response)) {
+                    return true;
                 } else {
                     App::getInstance()->delete_cookie(self::AUTH_REQ_TOKEN_PARAM);
-                    $this->showError("invalid_scope", "Scope(s) '$scope' not available for this user", $redirect_uri);
-                    return false;
+                    $this->showError($this->response->getParameter("error"), $this->response->getParameter("error_description"), $redirect_uri);
                 }
-            }
-            // Authorization approved
-            else if($decline){
+            } else {
                 App::getInstance()->delete_cookie(self::AUTH_REQ_TOKEN_PARAM);
-                $this->showError("authorization_declined", "Access declined by user", $redirect_uri);
-                return false;
-            }
-            // Not authorized yet
-            else {
-                
-                // Client Id available
-                if(!empty($client = $this->get_oauth_storage()->getClientDetails($client_id))){
-
-                    App::getInstance()->set_cookie(self::AUTH_REQ_TOKEN_PARAM, $token, 300);
-                    $org = $this->get_oauth_storage()->getOrganizationDetails($client['org_id']);
-                    $user = $this->get_oauth_storage()->getUser($user_id);
-                    $scopes = $this->get_oauth_storage()->scopeExists($scope);
-                    $this->showAuthorize([
-                        'client_name' => $client['client_name'],
-                        'org_name' => $org ? $org['org_name'] : null,
-                        'user_name' => $user ? $user['name'] : null,
-                        'user_email' => $user ? $user['email'] : null,
-                        'claims' => $scopes ? array_map(function ($row) { return $row['description']; }, $scopes) : [],
-                        'action' => OAUTH_CURRENT_URL,
-                    ]);
-                }
+                $this->showError("invalid_scope", "Scope(s) '$scope' not available for this user", $redirect_uri);
             }
         }
-        else {
+        // Authorization approved
+        else if($decline && $request_token == $token){
             App::getInstance()->delete_cookie(self::AUTH_REQ_TOKEN_PARAM);
-            $this->showError("authorization_failed", "Request session invalid or expired. Please try again.", $redirect_uri);
+            $this->showError("authorization_declined", "Access declined by user", $redirect_uri);
+        }
+        // Client Id available
+        else if(!empty($client = $this->get_oauth_storage()->getClientDetails($client_id))){
+
+            App::getInstance()->set_cookie(self::AUTH_REQ_TOKEN_PARAM, $token, 300);
+            $org = $this->get_oauth_storage()->getOrganizationDetails($client['org_id']);
+            $user = $this->get_oauth_storage()->getUser($user_id);
+            $scopes = $this->get_oauth_storage()->scopeExists($scope);
+            return $this->showAuthorize([
+                'client_name' => $client['client_name'],
+                'org_name' => $org ? $org['org_name'] : null,
+                'user_name' => $user ? $user['name'] : null,
+                'user_email' => $user ? $user['email'] : null,
+                'claims' => $scopes ? array_map(function ($row) { return $row['description']; }, $scopes) : [],
+                'action' => OAUTH_CURRENT_URL,
+            ]);
         }
         return false;
     }
