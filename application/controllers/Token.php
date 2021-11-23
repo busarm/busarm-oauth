@@ -14,9 +14,11 @@ class Token extends Server
         parent::__construct(false, true, true);
     }
 
-    /**Obtain access token if authorized
+    /**
+     * Obtain access token if authorized
      * @api token/get
-     * @method POST*/
+     * @method POST
+     * */
     public function get()
     {
         $result = $this->get_oauth_server()->grantAccessToken($this->request,$this->response);
@@ -28,7 +30,8 @@ class Token extends Server
     }
 
 
-    /**Verify Token
+    /**
+     * Verify Token
      * @api token/verify
      * @method GET|POST
      * */

@@ -18,7 +18,8 @@ class Resources extends Server
     /**
      * Verify token and obtain info
      * @api resources/getTokenInfo
-     * @method POST */
+     * @method POST 
+     * */
     public function getTokenInfo()
     {
         if ($result = $this->get_oauth_server()->getAccessTokenData($this->request, $this->response)) {
@@ -43,7 +44,8 @@ class Resources extends Server
     /**
      * Obtain user info
      * @api resources/getUser
-     * @method POST */
+     * @method POST 
+     * */
     public function getUser()
     {
         if ($result = $this->get_oauth_server()->getAccessTokenData($this->request, $this->response)) {
@@ -201,7 +203,7 @@ class Resources extends Server
      * @param password String Optional
      * @param scope Array Optional
      * @param remove_scope Array Optional
-    */
+     */
     public function updateUser()
     {
         if (!empty($user_id = $this->request->request('user_id'))) { //If User Id Provided, verify admin scope

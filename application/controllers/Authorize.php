@@ -23,7 +23,8 @@ class Authorize extends Server
     }
 
 
-    /**Authorize token request
+    /**
+     * Authorize token request
      * (If using authorization_code grant type)
      * or Implicit Authorization request
      * @api authorize/request
@@ -274,7 +275,7 @@ class Authorize extends Server
                 'org_name' => $org ? $org['org_name'] : null,
                 'user_name' => $user ? $user['name'] : null,
                 'user_email' => $user ? $user['email'] : null,
-                'claims' => $scopes ? array_map(function ($row) { return $row['description']; }, $scopes) : [],
+                'scopes' => $scopes ? array_map(function ($row) { return $row['description']; }, $scopes) : [],
                 'action' => OAUTH_CURRENT_URL,
             ]);
         }

@@ -31,5 +31,10 @@ services:
         APP_CACHE_PATH: '/tmp/cache'
         APP_UPLOAD_PATH: '/tmp/uploads'
         APP_LOGS_PATH: '/tmp/logs'
+        # Dev DB Credentials
+        DB_HOST: mysql
+        DB_PORT: 3306
+        DB_USER: root
+        DB_PASS: root
     networks: 
       - backend

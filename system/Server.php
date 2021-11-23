@@ -54,9 +54,9 @@ class Server
             App::getInstance()->loadModel("OauthPdo");
 
             //Create storage
-            $dsn = ENVIRONMENT == ENV_DEV ? 'mysql:dbname=13243546576879_oauth;host=mysql' : (ENVIRONMENT == ENV_TEST ? "mysql:dbname=13243546576879_oauth;host=".Configs::STAGE_DB_HOST() : "mysql:dbname=13243546576879_oauth;host=".Configs::DB_HOST());
-            $username = ENVIRONMENT == ENV_DEV? "root": (ENVIRONMENT == ENV_TEST? Configs::STAGE_DB_USER():Configs::DB_USER());
-            $password = ENVIRONMENT == ENV_DEV? "root": (ENVIRONMENT == ENV_TEST? Configs::STAGE_DB_PASS():Configs::DB_PASS());
+            $dsn = "mysql:dbname=13243546576879_oauth;host=".Configs::DB_HOST();
+            $username = Configs::DB_USER();
+            $password = Configs::DB_PASS();
 
             //Create PDO - MYSQL DB Storage
             $this->oauth_storage = new OauthPdo(array('dsn' => $dsn, 'username' => $username, 'password' => $password));

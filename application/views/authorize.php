@@ -6,7 +6,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
  * @var string $org_name
  * @var string $user_name
  * @var string $user_email
- * @var array $claims
+ * @var array $scopes
  * @var string $action
  */ 
 ?>
@@ -185,11 +185,11 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
                     <?php endif ?>
                     </div>
                 </div>
-                <?php if (!empty($claims)): ?>
+                <?php if (!empty($scopes)): ?>
                     <h4>Grant permission to do the following: </h3>
                     <ul>
-                        <?php foreach($claims as $claim): ?>
-                        <li style="font-size: 14px; text-align: left;"><?= $claim ?></li>
+                        <?php foreach($scopes as $scope): ?>
+                        <li style="font-size: 14px; text-align: left;"><?= $scope ?></li>
                         <?php endforeach ?>
                     </ul>
                 <?php endif ?>

@@ -20,17 +20,11 @@ provider:
         ENCRYPTION_KEY: ${self:custom.secret.oauth_encryption_key} 
         # Data
         BUGSNAG_KEY: ${self:custom.secret.oauth_bugsnag_key} 
-        # AWS RDS - Production
-        DB_NAME: 13243546576879_oauth
+        # AWS RDS
         DB_HOST: ${self:custom.secret.db_host}
         DB_PORT: ${self:custom.secret.db_port}
         DB_USER: ${self:custom.secret.db_username}
         DB_PASS: ${self:custom.secret.db_password}
-        # AWS RDS - Staging
-        STAGE_DB_HOST: ${self:custom.secret.db_host}
-        STAGE_DB_PORT: ${self:custom.secret.db_port}
-        STAGE_DB_USER: ${self:custom.secret.db_username}
-        STAGE_DB_PASS: ${self:custom.secret.db_password}
         # AWS SMTP
         AWS_SMTP_HOST: ${self:custom.secret.smtp_host}
         AWS_SMTP_PORT: ${self:custom.secret.smtp_port}
