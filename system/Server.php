@@ -1,5 +1,5 @@
 <?php
-defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
+defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
 
 use PHPMailer\PHPMailer\PHPMailer;
 
@@ -26,7 +26,7 @@ class Server
 
     /** @var \OAuth2\Request */
     protected $request;
-    
+
     /** @var \OAuth2\Response */
     protected $response;
 
@@ -34,7 +34,7 @@ class Server
     private $client_info;
 
     //TODO ADD Client settings
-    
+
     /**
      * Server constructor.
      * @param boolean $validateClient Validate client
@@ -42,7 +42,7 @@ class Server
      * @param boolean $useOpenID Use OpenID Connect - issue id tokens
      */
     protected function __construct($validateClient = false, $useJWT = false, $useOpenID = false)
-    { 
+    {
 
         //Create request & response objects
         $this->request = \OAuth2\Request::createFromGlobals();
@@ -53,14 +53,9 @@ class Server
             //Load custom model
             App::getInstance()->loadModel("OauthPdo");
 
-            //Create storage
-            $dsn = "mysql:dbname=13243546576879_oauth;host=".Configs::DB_HOST();
-            $username = Configs::DB_USER();
-            $password = Configs::DB_PASS();
-
             //Create PDO - MYSQL DB Storage
-            $this->oauth_storage = new OauthPdo(array('dsn' => $dsn, 'username' => $username, 'password' => $password));
-                        
+            $this->oauth_storage = new OauthPdo(array('dsn' => "mysql:dbname=13243546576879_oauth;host=" . Configs::DB_HOST(), 'username' => Configs::DB_USER(), 'password' => Configs::DB_PASS()));
+
             //Create server without implicit
             $this->oauth_server = new \OAuth2\Server($this->oauth_storage, array(
                 'access_lifetime' => 86400, //1 day
@@ -73,7 +68,7 @@ class Server
                 'use_openid_connect' => $useOpenID,
                 'issuer' => OAUTH_BASE_URL
             ));
-            
+
             /*User Credentials grant type*/
             $this->oauth_server->addGrantType(new OAuth2\GrantType\UserCredentials($this->oauth_storage));
 
@@ -89,13 +84,12 @@ class Server
             )));
 
             /**Check if client is valid*/
-            if($validateClient){
+            if ($validateClient) {
                 if (!$this->validateClient(self::SCOPE_SYSTEM)) {
                     $this->response->send();
                     die;
                 }
             }
-
         } catch (Exception $e) {
             $this->response->setParameters(['success' => false, 'error' => 'internal_error', 'error_description' => $e->getMessage()]);
             $this->response->send();
@@ -127,28 +121,26 @@ class Server
      */
     protected function validateClient($scope = null)
     {
-        if($this->get_oauth_storage()->checkClientCredentials(
+        if ($this->get_oauth_storage()->checkClientCredentials(
             !empty($client_id = $this->request->headers("client_id")) ? $client_id : ($client_id = $this->request->request("client_id")),
             !empty($client_secret = $this->request->headers("client_secret")) ? $client_secret : ($client_secret = $this->request->request("client_secret"))
-        )){
-            if (!empty($scope)){
+        )) {
+            if (!empty($scope)) {
                 $scope = is_array($scope) ? $this->implode($scope) : $scope;
-                if (!$this->get_oauth_storage()->scopeExistsForClient($scope, $client_id)){
+                if (!$this->get_oauth_storage()->scopeExistsForClient($scope, $client_id)) {
                     $this->response->setParameters(array('success' => false, 'error' => 'invalid_scope', 'error_description' => "'$scope' scope does not exist for client '$client_id'"));
                     return false;
                 }
             }
 
             $this->client_info = $this->get_oauth_storage()->getClientDetails($client_id);
-            if(!empty($this->client_info)){
+            if (!empty($this->client_info)) {
                 return true;
-            }
-            else {
+            } else {
                 $this->response->setParameters(array('success' => false, 'error' => 'invalid_client', 'error_description' => "Failed to get client details"));
                 return false;
             }
-        }
-        else {
+        } else {
             $this->response->setParameters(array('success' => false, 'error' => 'invalid_client', 'error_description' => "Invalid Client Credentials"));
             return false;
         }
@@ -162,11 +154,12 @@ class Server
      * @param string $from
      * @return bool
      */
-    public function sendMail($subject,
-                             $message,
-                             $to,
-                             $from = null)
-    {
+    public function sendMail(
+        $subject,
+        $message,
+        $to,
+        $from = null
+    ) {
 
         try {
 
@@ -191,7 +184,7 @@ class Server
             $mail->CharSet = $this->smtp_charset;
 
             //Recipients
-            $from = !empty($from)?$from:$this->getInfoEmail();
+            $from = !empty($from) ? $from : $this->getInfoEmail();
             $mail->setFrom($from, 'Wecari');
             $mail->addReplyTo($from, 'Wecari');
             $mail->addAddress($to);
@@ -211,14 +204,16 @@ class Server
     /**Get Info Email
      * @return string
      */
-    public function getInfoEmail(){
+    public function getInfoEmail()
+    {
         return $this->get_oauth_storage()->getConfig("email_info");
     }
 
     /**Get Support Email
      * @return string
      */
-    public function getSupportEmail(){
+    public function getSupportEmail()
+    {
         return $this->get_oauth_storage()->getConfig("email_support");
     }
 
@@ -238,11 +233,11 @@ class Server
             } else {
                 if (is_string($data) && !empty($arr = json_decode($data, true))) {
                     $res = $arr;
-                } else if(is_string($data)) {
+                } else if (is_string($data)) {
                     $res = explode($delimiter, $data);
                 }
             }
-        } 
+        }
         return $res;
     }
 
@@ -271,7 +266,7 @@ class Server
 
     /**
      * Get the value of client_info
-     */ 
+     */
     public function getClient_info()
     {
         return $this->client_info;

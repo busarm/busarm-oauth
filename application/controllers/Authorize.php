@@ -2,7 +2,7 @@
 
 use GuzzleHttp\RequestOptions;
 
-defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
+defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
 
 /**
  * Created by PhpStorm.
@@ -18,7 +18,8 @@ class Authorize extends Server
     const AUTH_REQ_TOKEN_PARAM = "auth_request_token";
     const EMAIL_REQ_TOKEN_PARAM = "email_request_token";
 
-    public function __construct(){
+    public function __construct()
+    {
         parent::__construct(false, true, true);
     }
 
@@ -45,32 +46,30 @@ class Authorize extends Server
         $state = $this->request->query("state");
         $scope = $this->request->query("scope");
         $response_type = $this->request->query("response_type");
-        
+
         // If email request - Validate and Send authorization url
-        if (!empty($email = $this->request->query("email"))) { 
+        if (!empty($email = $this->request->query("email"))) {
             if ($userInfo = $this->processEmailRequest($email, $redirect_uri, $state, $scope)) {
                 $this->showEmailSuccess($userInfo);
-            }
-            else {
+            } else {
                 $this->showError("authorization_failed", $this->response->getParameter("error_description") ?? "Invalid request", $redirect_uri);
             }
         }
 
         //If Logged in
         else if ($user_id = App::getInstance()->getLoginUser()) {
-            if($this->processAuthRequest($user_id, $client_id, $redirect_uri, $state, $scope, $response_type)){
+            if ($this->processAuthRequest($user_id, $client_id, $redirect_uri, $state, $scope, $response_type)) {
                 $this->response = $this->get_oauth_server()->handleAuthorizeRequest($this->request, $this->response, true, $user_id);
                 $this->response->send();
                 die();
-            }
-            else {
+            } else {
                 $this->showError("authorization_failed", $this->response->getParameter("error_description") ?? "Invalid request", $redirect_uri);
             }
         }
 
         // Redirect to login
         else {
-            App::getInstance()->redirect('authorize/login?redirect_url='.urlencode(OAUTH_CURRENT_URL));
+            App::getInstance()->redirect('authorize/login?redirect_url=' . urlencode(OAUTH_CURRENT_URL));
         }
     }
 
@@ -79,22 +78,21 @@ class Authorize extends Server
      *
      * @return void
      */
-    public function login(){ 
+    public function login()
+    {
         $redirect_url = $this->request->request("redirect_url", $this->request->query("redirect_url"));
-        if(!empty($redirect_url)){
+        if (!empty($redirect_url)) {
             if ($userInfo = $this->processLoginRequest()) { //Process Login
                 App::getInstance()->startLoginSession($userInfo['user_id'], 86400);
                 App::getInstance()->redirect($redirect_url);
-            }
-            else {
+            } else {
                 App::getInstance()->clearLoginSession();
                 $this->showLogin([
-                    "redirect_url" => $redirect_url, 
+                    "redirect_url" => $redirect_url,
                     "msg" => $this->response->getParameter("error_description")
                 ]);
             }
-        }
-        else {
+        } else {
             $this->showError("login_failed", "A Redirect Url is required");
         }
     }
@@ -104,14 +102,14 @@ class Authorize extends Server
      *
      * @return void
      */
-    public function logout(){
+    public function logout()
+    {
         $redirect_url = $this->request->request("redirect_url", $this->request->query("redirect_url"));
-        if(!empty($redirect_url)){
+        if (!empty($redirect_url)) {
             App::getInstance()->clearLoginSession();
             App::getInstance()->delete_cookie(self::AUTH_REQ_TOKEN_PARAM);
-            App::getInstance()->redirect('authorize/login?redirect_url='.urlencode($redirect_url));
-        }
-        else {
+            App::getInstance()->redirect('authorize/login?redirect_url=' . urlencode($redirect_url));
+        } else {
             $this->showError("login_failed", "A Redirect Url is required");
         }
     }
@@ -126,8 +124,8 @@ class Authorize extends Server
                 $max_count = 5;
                 $timeout = 60;
                 $count = App::getInstance()->get_cookie('request_count') ?? 0;
-                if($count < $max_count){ // Max request count
-                    $count+=1;
+                if ($count < $max_count) { // Max request count
+                    $count += 1;
                     App::getInstance()->set_cookie('request_count', $count, $timeout);
                     if ($userInfo = ($this->get_oauth_storage()->checkUserCredentials(@$data['username'], @$data['password']))) {
                         if (!empty($userInfo[@'user_id'])) {
@@ -137,28 +135,31 @@ class Authorize extends Server
                             $this->response->setParameters(array(
                                 'success' => false,
                                 'error' => 'invalid_user',
-                                'error_description' => "Invalid Username or Password. $remaining_count tries left"));
+                                'error_description' => "Invalid Username or Password. $remaining_count tries left"
+                            ));
                         }
                     } else {
                         $remaining_count = $max_count - $count;
                         $this->response->setParameters(array(
                             'success' => false,
                             'error' => 'invalid_user',
-                            'error_description' => "Invalid Username or Password. $remaining_count tries left"));
+                            'error_description' => "Invalid Username or Password. $remaining_count tries left"
+                        ));
                     }
-                }
-                else {
-                    $min = intval($timeout/60);
+                } else {
+                    $min = intval($timeout / 60);
                     $this->response->setParameters(array(
                         'success' => false,
                         'error' => 'max_request',
-                        'error_description' => "Maximum attempt reached. Please try again in $min minute(s)"));
+                        'error_description' => "Maximum attempt reached. Please try again in $min minute(s)"
+                    ));
                 }
             } else {
                 $this->response->setParameters(array(
                     'success' => false,
                     'error' => 'validation_error',
-                    'error_description' => "Session validation failed. Please try again"));
+                    'error_description' => "Session validation failed. Please try again"
+                ));
             }
         }
         return false;
@@ -185,37 +186,32 @@ class Authorize extends Server
                 if ($this->get_oauth_storage()->scopeExistsForUser($scope, $user_id)) {
 
                     if ($is_authorized = $this->get_oauth_server()->validateAuthorizeRequest($this->request, $this->response)) {
-                        
+
                         $this->response = new OAuth2\Response(); //reinitialize response
                         $this->get_oauth_server()->handleAuthorizeRequest($this->request, $this->response, $is_authorized, $user_id);
                         $link = $this->response->getHttpHeader("Location");
                         $message = $this->getEmailAuthView($link);
-                        
+
                         if ($this->sendMail("Email Authorization", $message, $email)) {
                             try {
                                 App::getInstance()->set_cookie(self::EMAIL_REQ_TOKEN_PARAM, $token, $timeout); //Save to cookie to prevent duplicate 
                                 return $userInfo;
-                            }
-                            catch (Exception $e) {
+                            } catch (Exception $e) {
                                 $this->showError("authorization_failed", sprintf("Unknown error. Please contact <a href='%s' target='_blank'>support</a> for assistance", App::get_app_path('support')), $redirect_uri);
                             }
-                        }
-                        else {
+                        } else {
                             $this->showError("authorization_failed", sprintf("Failed to send mail. Please contact <a href='%s' target='_blank'>support</a> for assistance", App::get_app_path('support')), $redirect_uri);
                         }
-                    }
-                    else {
-                        $msg = $this->response->getParameter("error_description");  
-                        $msg = !empty($msg) ? $msg: "Unexpected error encountered";
+                    } else {
+                        $msg = $this->response->getParameter("error_description");
+                        $msg = !empty($msg) ? $msg : "Unexpected error encountered";
                         $this->showError("authorization_failed", sprintf("<span style='color:red'>$msg</span>. Please contact <a href='%s' target='_blank'>support</a> for assistance", App::get_app_path('support')), $redirect_uri);
                     }
-                }
-                else {
+                } else {
                     $this->showError("authorization_failed", sprintf("Requested scope(s) does not exist for the specified user. Please contact <strong>%s</strong> for assistance", $this->getSupportEmail()), $redirect_uri);
                 }
-            }
-            else {
-                $min = intval($timeout/60);
+            } else {
+                $min = intval($timeout / 60);
                 $this->showError("duplicate_authorization", "Authorization link already sent to <strong>$email</strong>. Try again in $min minutes or clear browser cookies and retry");
             }
         }
@@ -242,7 +238,7 @@ class Authorize extends Server
         $decline = $this->request->request("decline");
 
         // Authorization approved
-        if($approve && $request_token == $token){
+        if ($approve && $request_token == $token) {
 
             $scope = !empty($scope) ? $scope : $this->get_oauth_storage()->getDefaultScope();
 
@@ -259,12 +255,12 @@ class Authorize extends Server
             }
         }
         // Authorization approved
-        else if($decline && $request_token == $token){
+        else if ($decline && $request_token == $token) {
             App::getInstance()->delete_cookie(self::AUTH_REQ_TOKEN_PARAM);
             $this->showError("authorization_declined", "Access declined by user", $redirect_uri);
         }
         // Client Id available
-        else if(!empty($client = $this->get_oauth_storage()->getClientDetails($client_id))){
+        else if (!empty($client = $this->get_oauth_storage()->getClientDetails($client_id))) {
 
             App::getInstance()->set_cookie(self::AUTH_REQ_TOKEN_PARAM, $token, 300);
             $org = $this->get_oauth_storage()->getOrganizationDetails($client['org_id']);
@@ -275,7 +271,9 @@ class Authorize extends Server
                 'org_name' => $org ? $org['org_name'] : null,
                 'user_name' => $user ? $user['name'] : null,
                 'user_email' => $user ? $user['email'] : null,
-                'scopes' => $scopes ? array_map(function ($row) { return $row['description']; }, $scopes) : [],
+                'scopes' => $scopes ? array_map(function ($row) {
+                    return $row['description'];
+                }, $scopes) : [],
                 'action' => OAUTH_CURRENT_URL,
             ]);
         }
@@ -339,17 +337,16 @@ class Authorize extends Server
      */
     private function showError($error, $error_description = '', $redirect_uri = '')
     {
-        if(!empty($redirect_uri)){
+        if (!empty($redirect_uri)) {
             App::getInstance()->redirect(App::parseUrl($redirect_uri, [
-                "error" => $error, 
-                "error_description"=> $error_description
+                "error" => $error,
+                "error_description" => $error_description
             ]));
-        }
-        else {
+        } else {
             try {
                 echo App::getInstance()->loadView("failed", [
-                    "msg" => ucfirst(str_replace('_', ' ', $error)), 
-                    "sub_msg"=> $error_description
+                    "msg" => ucfirst(str_replace('_', ' ', $error)),
+                    "sub_msg" => $error_description
                 ], true);
                 die;
             } catch (Exception $e) {
@@ -364,10 +361,12 @@ class Authorize extends Server
      */
     private function loginRequestAvailable()
     {
-        if (!empty($username = $this->request->request('username')) &&
+        if (
+            !empty($username = $this->request->request('username')) &&
             !empty($password = $this->request->request('password')) &&
             !empty($csrf_token = $this->request->request('csrf_token')) &&
-            !empty($recaptcha_token = $this->request->request('recaptcha_token'))) {
+            !empty($recaptcha_token = $this->request->request('recaptcha_token'))
+        ) {
             return [
                 'username' => $username,
                 'password' => $password,
@@ -408,7 +407,7 @@ class Authorize extends Server
             return $content;
         }
     }
-    
+
     /** Validate Recaptcha
      * @return boolean
      */
@@ -423,9 +422,9 @@ class Authorize extends Server
                     'remoteip' => IPADDRESS,
                 ]
             ]);
-            if($res->getStatusCode() == 200){
+            if ($res->getStatusCode() == 200) {
                 $data = json_decode($res->getBody()->getContents(), true);
-                if($data && @$data['success']){
+                if ($data && @$data['success']) {
                     return true;
                 }
             }

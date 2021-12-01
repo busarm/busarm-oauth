@@ -1,5 +1,5 @@
 <?php
-defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
+defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
 
 /**
  * Created by PhpStorm.
@@ -10,7 +10,8 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
 
 class Token extends Server
 {
-    public function __construct(){
+    public function __construct()
+    {
         parent::__construct(false, true, true);
     }
 
@@ -21,7 +22,7 @@ class Token extends Server
      * */
     public function get()
     {
-        $result = $this->get_oauth_server()->grantAccessToken($this->request,$this->response);
+        $result = $this->get_oauth_server()->grantAccessToken($this->request, $this->response);
         if ($result) {
             $this->response->setParameters($result);
         }
@@ -44,7 +45,7 @@ class Token extends Server
         die;
     }
 
-    
+
     /**
      * Delete Access token and refresh token
      * @api token/invalidate
@@ -68,11 +69,10 @@ class Token extends Server
         if (!empty($refresh_token)) {
             $done = $this->get_oauth_storage()->unsetRefreshToken($refresh_token);
         }
-        
-        if ($done){
+
+        if ($done) {
             $this->response->setParameters(array('success' => true, 'msg' => 'Successfully cleared access'));
-        }
-        else {
+        } else {
             $this->response->setParameters(array('success' => $done, 'msg' => 'Failed to invalidate access'));
         }
         $this->response->send();

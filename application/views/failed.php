@@ -1,48 +1,64 @@
 <?php
-defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
+defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
 
 /**
  * @var string $msg
  * @var string $sub_msg
  */
 
-defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
+defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <link rel="icon" type="image/png" href="<?=App::get_cdn_path('public/images/favicon/dark/favicon-16x16.png')?>" sizes="16x16" />
-    <link rel="icon" type="image/png" href="<?=App::get_cdn_path('public/images/favicon/dark/favicon-32x32.png')?>" sizes="32x32" />
-    <link rel="icon" type="image/png" href="<?=App::get_cdn_path('public/images/favicon/dark/favicon-64x64.png')?>" sizes="64x64" />
-    <link rel="icon" type="image/png" href="<?=App::get_cdn_path('public/images/favicon/dark/favicon-96x96.png')?>" sizes="96x96" />
+    <link rel="icon" type="image/png" href="<?= App::get_cdn_path('public/images/favicon/dark/favicon-16x16.png') ?>" sizes="16x16" />
+    <link rel="icon" type="image/png" href="<?= App::get_cdn_path('public/images/favicon/dark/favicon-32x32.png') ?>" sizes="32x32" />
+    <link rel="icon" type="image/png" href="<?= App::get_cdn_path('public/images/favicon/dark/favicon-64x64.png') ?>" sizes="64x64" />
+    <link rel="icon" type="image/png" href="<?= App::get_cdn_path('public/images/favicon/dark/favicon-96x96.png') ?>" sizes="96x96" />
     <title>Login</title>
     <style>
-        body{
+        body {
             margin: auto !important;
             user-select: none;
             background: #335038 !important;
         }
-        oauth-failed body,h1,h2,h3,h4,h5,p,div,input,button,textarea,li  {
+
+        oauth-failed body,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        p,
+        div,
+        input,
+        button,
+        textarea,
+        li {
             font-family: "Palatino Linotype", sans-serif !important;
         }
 
-        oauth-failed h1{
+        oauth-failed h1 {
             font-size: 26px;
             font-weight: bold;
         }
-        oauth-failed h2{
+
+        oauth-failed h2 {
             font-size: 24px;
             font-weight: bold;
         }
-        oauth-failed h3{
+
+        oauth-failed h3 {
             font-size: 20px;
             font-weight: bold;
         }
-        oauth-failed h4{
+
+        oauth-failed h4 {
             font-size: 16px;
             font-weight: bold;
         }
@@ -53,6 +69,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             padding: 10px;
             text-align: center;
         }
+
         oauth-failed footer .copyright {
             color: #fff;
             font-size: 0.9em;
@@ -68,7 +85,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             display: inline-block;
             list-style: none;
             margin: 5px;
-            padding:5px;
+            padding: 5px;
         }
 
 
@@ -84,7 +101,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             -moz-osx-font-smoothing: grayscale;
         }
 
-        oauth-failed .failed-page .logo.icon{
+        oauth-failed .failed-page .logo.icon {
             margin: auto;
             height: 100%;
             padding: 0;
@@ -94,14 +111,17 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             border: 0;
             background: transparent;
         }
+
         oauth-failed .failed-page .logo.logo_icon {
-            height:80px !important;
+            height: 80px !important;
         }
+
         oauth-failed .failed-page .logo.icon {
-            height:100px !important;
+            height: 100px !important;
         }
+
         oauth-failed .failed-page .logo.logo_txt {
-            height:25px !important;
+            height: 25px !important;
         }
 
         oauth-failed .failed-page .form {
@@ -113,8 +133,9 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             padding: 45px;
             text-align: center;
             border-radius: 3px;
-            box-shadow:  0 2px 5px 0 rgba(77, 80, 79, 0.6)
+            box-shadow: 0 2px 5px 0 rgba(77, 80, 79, 0.6)
         }
+
         oauth-failed .failed-page .form input {
             font-family: "", sans-serif;
             outline: 0;
@@ -126,6 +147,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             box-sizing: border-box;
             font-size: 14px;
         }
+
         oauth-failed .failed-page .form button {
             outline: 0;
             background: #3F5F44;
@@ -138,10 +160,16 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             transition: all 0.3s ease;
             cursor: pointer;
         }
-        oauth-failed .failed-page .form button:hover,.form button:active,.form button:focus {
+
+        oauth-failed .failed-page .form button:hover,
+        .form button:active,
+        .form button:focus {
             opacity: .8;
         }
-        oauth-failed .failed-page .form a:hover,.form a:active,.form a:focus {
+
+        oauth-failed .failed-page .form a:hover,
+        .form a:active,
+        .form a:focus {
             opacity: .8;
         }
 
@@ -150,52 +178,55 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             color: #DF632D;
             font-size: 12px;
         }
+
         oauth-failed .failed-page .form .message a {
             color: #3F5F44;
             text-decoration: none;
         }
     </style>
 </head>
-<body>
-<oauth-failed>
-    <div class="failed-page">
-        <div class="form">
-            <div>
-                <img class="logo logo_icon" src="<?=App::get_cdn_path('public/images/logo/dark/logo_256px.png')?>">
-            </div>
-            <div>
-                <img class="logo logo_txt" src="<?=App::get_cdn_path('public/images/logo/dark/logo_txt_512px.png')?>">
-            </div>
-            <br/>
-            <div>
-                <img class="logo icon" src="<?=App::get_cdn_path('public/images/icons/Warning.png')?>">
-            </div>
-            <br>
-            <?php
-            if (isset($msg)) {
-                ?>
-                <h3><?= $msg ?></h3>
-                <?php
-            }
-            if (isset($sub_msg)) {
-                ?>
-                <i>(<?= $sub_msg ?>)</i>
-                <?php
-            }
-            ?>
 
+<body>
+    <oauth-failed>
+        <div class="failed-page">
+            <div class="form">
+                <div>
+                    <img class="logo logo_icon" src="<?= App::get_cdn_path('public/images/logo/dark/logo_256px.png') ?>">
+                </div>
+                <div>
+                    <img class="logo logo_txt" src="<?= App::get_cdn_path('public/images/logo/dark/logo_txt_512px.png') ?>">
+                </div>
+                <br />
+                <div>
+                    <img class="logo icon" src="<?= App::get_cdn_path('public/images/icons/Warning.png') ?>">
+                </div>
+                <br>
+                <?php
+                if (isset($msg)) {
+                ?>
+                    <h3><?= $msg ?></h3>
+                <?php
+                }
+                if (isset($sub_msg)) {
+                ?>
+                    <i>(<?= $sub_msg ?>)</i>
+                <?php
+                }
+                ?>
+
+            </div>
         </div>
-    </div>
-    <!-- Footer -->
-    <footer>
-        <ul class="copyright">
-            <li style="min-width: 100px;"><a href="<?=App::get_app_path('privacy')?>" target="_blank">Privacy Policy</a></li>
-            <li style="min-width: 100px;"><a href="<?=App::get_app_path('terms')?>" target="_blank">Terms & Conditions</a></li>
-        </ul>
-        <ul class="copyright">
-            <li>&copy; Wecari All rights reserved.</li>
-        </ul>
-    </footer>
-</oauth-failed>
+        <!-- Footer -->
+        <footer>
+            <ul class="copyright">
+                <li style="min-width: 100px;"><a href="<?= App::get_app_path('privacy') ?>" target="_blank">Privacy Policy</a></li>
+                <li style="min-width: 100px;"><a href="<?= App::get_app_path('terms') ?>" target="_blank">Terms & Conditions</a></li>
+            </ul>
+            <ul class="copyright">
+                <li>&copy; Wecari All rights reserved.</li>
+            </ul>
+        </footer>
+    </oauth-failed>
 </body>
+
 </html>

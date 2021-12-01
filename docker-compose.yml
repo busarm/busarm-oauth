@@ -5,10 +5,6 @@ networks:
     name: wecari
     external: true
 
-volumes:
-  app:
-    driver: local
-
 services:
 
   # Web server
@@ -20,12 +16,13 @@ services:
     ports: 
       - 8000:80
     environment:
-        WEB_DOCUMENT_ROOT: '/var/www'
+        WEB_DOCUMENT_ROOT: '/var/www/public'
         WEB_DOCUMENT_INDEX: index.php
         WEB_ALIAS_DOMAIN: 'oauth.test'
+        # APP
         APP_NAME: 'Wecari Oauth'
         COMPANY_NAME: 'Wecari'
-        ENV: development # Environment variable 
+        ENV: local
         ENCRYPTION_KEY: "P6xpRQ#MWxP6MNdDs2#g*eQzuDHx?rN"
         # Custom Paths
         APP_CACHE_PATH: '/tmp/cache'

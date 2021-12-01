@@ -33,6 +33,7 @@ class Console extends Server
     /**
      * Create Admin Client
      *
+     * @param string $org_name
      * @return void
      */
     public function create_org($org_name)
@@ -48,9 +49,13 @@ class Console extends Server
     /**
      * Create Admin Client
      *
+     * @param string $org_id
+     * @param string $client_id
+     * @param string $client_name
+     * @param string $redirect_uri
      * @return void
      */
-    public function create_client($org_id, $client_id, $client_name, $redirect_uri)
+    public function create_client($org_id, $client_id, $client_name, $redirect_uri = null)
     {
         $client_secret = md5(uniqid($client_id));
         $grant_types = "password client_credentials authorization_code refresh_code";
@@ -92,6 +97,7 @@ class Console extends Server
     /**
      * Update Client Keys
      *
+     * @param string $client_id
      * @return void
      */
     public function update_client_key($client_id)
@@ -118,9 +124,13 @@ class Console extends Server
     /**
      * Create Admin User
      *
+     * @param string $name
+     * @param string $email
+     * @param string $pass
+     * @param string $scopes
      * @return void
      */
-    public function create_user($name, $email, $pass = null)
+    public function create_user($name, $email, $pass = null, $scopes = "*")
     {
         //Create user id
         $prefix = !empty($email)?$email:(!empty($phone)?$phone:"");

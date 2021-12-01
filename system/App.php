@@ -1,5 +1,5 @@
 <?php
-defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
+defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
 require_once "Configs.php";
 require_once "CIPHER.php";
 
@@ -14,7 +14,8 @@ require_once "CIPHER.php";
  * @copyright wecari.com
  */
 
-class App {
+class App
+{
 
     private $controllerDir = Configs::OAUTH_CONTROLLER_PATH;
     private $viewDir = Configs::OAUTH_VIEW_PATH;
@@ -22,35 +23,36 @@ class App {
     private $libraryDir = Configs::OAUTH_LIBRARY_PATH;
 
     private static $instance;
-    
+
     /** @var \Bugsnag\Client */
     public $bugsnag;
 
-    public function __construct(){
+    public function __construct()
+    {
         self::$instance = $this;
-        
-        if($key = Configs::BUGSNAG_KEY()){
+
+        if ($key = Configs::BUGSNAG_KEY()) {
             $this->bugsnag = Bugsnag\Client::make($key);
             $this->bugsnag->setReleaseStage(ENVIRONMENT);
             $this->bugsnag->setAppType(is_cli() ? "Console" : "HTTP");
             Bugsnag\Handler::register($this->bugsnag);
         }
-        set_error_handler(function($errno , $errstr , $errfile = null, $errline = null){
-            if($this->bugsnag){
+        set_error_handler(function ($errno, $errstr, $errfile = null, $errline = null) {
+            if ($this->bugsnag) {
                 $this->bugsnag->notifyError("unexpected_error", $errstr);
             }
             $this->showMessage(500, false, "unexpected_error", $errstr, $errline, $errfile);
         });
-        set_exception_handler(function($e){
-            if($this->bugsnag){
+        set_exception_handler(function ($e) {
+            if ($this->bugsnag) {
                 $this->bugsnag->notifyException($e);
             }
-            $trace = array_map(function($instance){
+            $trace = array_map(function ($instance) {
                 return [
-                    'file' => $instance['file']??null,
-                    'line' => $instance['line']??null,
-                    'class' => $instance['class']??null,
-                    'function' => $instance['function']??null,
+                    'file' => $instance['file'] ?? null,
+                    'line' => $instance['line'] ?? null,
+                    'class' => $instance['class'] ?? null,
+                    'function' => $instance['function'] ?? null,
                 ];
             }, $e->getTrace());
             $this->showMessage(500, false, "unexpected_exception", $e->getMessage(), $e->getLine(), $e->getFile(), $trace);
@@ -62,7 +64,8 @@ class App {
      *
      * @return App
      */
-    public static function getInstance(){
+    public static function getInstance()
+    {
         return self::$instance;
     }
 
@@ -72,13 +75,14 @@ class App {
      * @param string $path
      * @return void
      */
-    public static function get_app_path($path = ''){
+    public static function get_app_path($path = '')
+    {
         if (ENVIRONMENT == ENV_PROD)
-            return "https://wecari.com/".$path;
+            return "https://wecari.com/" . $path;
         else  if (ENVIRONMENT == ENV_TEST)
-            return "https://staging.wecari.com/".$path;
+            return "https://staging.wecari.com/" . $path;
         else
-            return "http://localhost/".$path;
+            return "http://localhost/" . $path;
     }
 
     /**
@@ -87,31 +91,31 @@ class App {
      * @param string $path
      * @return void
      */
-    public static function get_cdn_path($path = ''){
+    public static function get_cdn_path($path = '')
+    {
         if (ENVIRONMENT == ENV_PROD)
-            return "https://cdn.wecari.com/".$path;
+            return "https://cdn.wecari.com/" . $path;
         else  if (ENVIRONMENT == ENV_TEST)
-            return "https://cdn.staging.wecari.com/".$path;
+            return "https://cdn.staging.wecari.com/" . $path;
         else
-            return "https://cdn.staging.wecari.com/".$path;
+            return "https://cdn.staging.wecari.com/" . $path;
     }
 
     /**
      * Initialize app
      */
-    public function initialize ($controller = null, $function = null, $params = [])
+    public function initialize($controller = null, $function = null, $params = [])
     {
         /*Preflight Checking*/
-        if(!is_cli()){
+        if (!is_cli()) {
             $this->preflight();
         }
 
         /*Initiate rerouting*/
-        if($controller && $function) {
+        if ($controller && $function) {
             $this->processRoute($controller, $function, $params);
-        }
-        else {
-               
+        } else {
+
             $request_path = getServer('PATH_INFO');
             if (empty($request_path)) {
                 $request_path = getServer('ORIG_PATH_INFO');
@@ -119,25 +123,22 @@ class App {
             if (empty($request_path)) {
                 $request_path = getServer('REQUEST_URI');
             }
-            
+
             if (!empty($request_path)) {
-                if(preg_match('/\/ping(\/)?$/',$request_path)){
+                if (preg_match('/\/ping(\/)?$/', $request_path)) {
                     $this->showMessage(200, true, "System Online", ENVIRONMENT);
-                }
-                else { 
-                    $routes = explode('/', explode('?',$request_path)[0]);
-                    if(!empty($routes)){
+                } else {
+                    $routes = explode('/', explode('?', $request_path)[0]);
+                    if (!empty($routes)) {
                         $this->reroute($routes);
-                    }
-                    else {
+                    } else {
                         $this->showMessage(404, false, "Invalid Request", "Invalid Request Path");
                     }
                 }
-            }
-            else {
+            } else {
                 $this->showMessage(404, false, "Invalid Request", "Invalid Request Path");
             }
-        } 
+        }
     }
 
     /**
@@ -145,11 +146,12 @@ class App {
      *
      * @return void
      */
-    private function preflight(){
+    private function preflight()
+    {
         // Check for CORS access request
         if (Configs::CHECK_CORS == TRUE) {
             $this->check_cors();
-        } else { 
+        } else {
             if (strtolower(getServer("REQUEST_METHOD")) === 'options') {
                 // kill the response and send it to the client
                 $this->showMessage(200, true, "Preflight Ok", ENVIRONMENT);
@@ -162,7 +164,7 @@ class App {
      * Re-Routing
      * @param array $routes
      */
-    private function reroute ($routes)
+    private function reroute($routes)
     {
         $controller = "";
         $function = "";
@@ -171,7 +173,7 @@ class App {
             if (!empty(trim($route, "\n\r'\"\\/&%!@#$*)(|<>{} "))) {
                 if ($key == 0) { //Route at section 0 = Controller
                     $controller = basename(trim($this->controllerDir . $route));
-                } else if ($key == 1){ //Route at section 1 = Function
+                } else if ($key == 1) { //Route at section 1 = Function
                     $function = $route;
                 } else { //Every other section. = Url params
                     $params[] = $route;
@@ -182,11 +184,10 @@ class App {
                 return $this->reroute($routes);
             }
         }
-        
-        if ($controller && $function ){  //Last
+
+        if ($controller && $function) {  //Last
             $this->processRoute($controller, $function, $params);
-        }
-        else {
+        } else {
             $this->showMessage(404, false, "Invalid Request", "Invalid Request Path");
         }
     }
@@ -199,8 +200,9 @@ class App {
      * @param string $params
      * @return void
      */
-    private function processRoute($controller, $function, $params = []){
-        if ($realPath = $this->fileExists($this->controllerDir.$controller.".php", false)) {
+    private function processRoute($controller, $function, $params = [])
+    {
+        if ($realPath = $this->fileExists($this->controllerDir . $controller . ".php", false)) {
             /*
             * Let's Go...
             */
@@ -210,8 +212,10 @@ class App {
                 /*Load Class*/
                 /*Create instance of class*/
                 $object = new $controller();
-                if (method_exists($object, $function)
-                    && is_callable(array($object, $function))) {
+                if (
+                    method_exists($object, $function)
+                    && is_callable(array($object, $function))
+                ) {
                     call_user_func_array(
                         array($object, $function),
                         $params
@@ -252,28 +256,27 @@ class App {
 
 
     /**
-	 * Show Message
+     * Show Message
      * @param string $code Code
      * @param bool $status Status
      * @param string $title itle
      * @param string $msg Message
      */
-    public function showMessage($code, $status, $title, $msg, $errorLine = null, $errorFile = null, $errorContext = []){
-        if(!is_cli() && !headers_sent()){
+    public function showMessage($code, $status, $title, $msg, $errorLine = null, $errorFile = null, $errorContext = [])
+    {
+        if (!is_cli() && !headers_sent()) {
             header(PROTOCOL_HEADER . ' ' . $code . ' ' . $title, TRUE, $code);
             header("Content-type: application/json");
             header('Access-Control-Allow-Origin: *', true);
-            header('Access-Control-Allow-Methods: *', true); 
+            header('Access-Control-Allow-Methods: *', true);
         }
-        if($status){
-            echo json_encode(['status'=>true, 'msg' => $title, 'env' => ENVIRONMENT, 'ip' => IPADDRESS]);
-        }
-        else {
-            if(ENVIRONMENT != ENV_PROD){
-                echo json_encode(['status'=>false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT, 'ip' => IPADDRESS,  'line' =>  $errorLine,  'file_path' =>  $errorFile,  'backtrace' =>  $errorContext]);
-            }
-            else {
-                echo json_encode(['status'=>false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT, 'ip' => IPADDRESS]);
+        if ($status) {
+            echo json_encode(['status' => true, 'msg' => $title, 'env' => ENVIRONMENT, 'ip' => IPADDRESS]);
+        } else {
+            if (ENVIRONMENT != ENV_PROD) {
+                echo json_encode(['status' => false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT, 'ip' => IPADDRESS,  'line' =>  $errorLine,  'file_path' =>  $errorFile,  'backtrace' =>  $errorContext]);
+            } else {
+                echo json_encode(['status' => false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT, 'ip' => IPADDRESS]);
             }
         }
         exit;
@@ -379,12 +382,12 @@ class App {
      */
     public function generate_csrf_token($key = null)
     {
-        if(empty($key) && empty($key = $this->get_cookie("csrf_key"))){
+        if (empty($key) && empty($key = $this->get_cookie("csrf_key"))) {
             $key = md5(uniqid(IPADDRESS));
             $this->set_cookie("csrf_key", $key);
         }
         $dateObj = new DateTime("now", new DateTimeZone("GMT"));
-        $csrf_token = sha1(sprintf("%s:%s:%s",$key, IPADDRESS, $dateObj->format('Y-m-d H')));
+        $csrf_token = sha1(sprintf("%s:%s:%s", $key, IPADDRESS, $dateObj->format('Y-m-d H')));
         return $csrf_token;
     }
 
@@ -394,7 +397,7 @@ class App {
      */
     public function get_csrf_token()
     {
-        if(!empty($key = $this->get_cookie("csrf_key"))){
+        if (!empty($key = $this->get_cookie("csrf_key"))) {
             return $this->generate_csrf_token($key);
         }
         return null;
@@ -414,19 +417,21 @@ class App {
 
     /**
      * Get cookie
-    * @param String $name
-    * @return void
-    */
-    public function get_cookie($name){
-        return !empty($_COOKIE["oauth_".$name])? @$_COOKIE["oauth_".$name] : null;
+     * @param String $name
+     * @return void
+     */
+    public function get_cookie($name)
+    {
+        return !empty($_COOKIE["oauth_" . $name]) ? @$_COOKIE["oauth_" . $name] : null;
     }
 
     /**
      * Pull cookie - Get and delete cooke
-    * @param String $name
-    * @return void
-    */
-    public function pull_cookie($name){
+     * @param String $name
+     * @return void
+     */
+    public function pull_cookie($name)
+    {
         $value = $this->get_cookie($name);
         if ($value)
             $this->delete_cookie($name);
@@ -441,8 +446,9 @@ class App {
      * @param integer $duration
      * @return bool
      */
-    public function set_cookie($name, $value, $duration = 3600){
-        return setcookie("oauth_".$name, $value, time() + $duration, "/");
+    public function set_cookie($name, $value, $duration = 3600)
+    {
+        return setcookie("oauth_" . $name, $value, time() + $duration, "/");
     }
 
     /**
@@ -450,10 +456,11 @@ class App {
      * @param String $name
      * @return bool
      */
-    public function delete_cookie($name){
+    public function delete_cookie($name)
+    {
         return $this->set_cookie($name, "", -3600);
     }
-    
+
     /**
      * Checks allowed domains, and adds appropriate headers for HTTP access control (CORS)
      * @credits Codeigniter
@@ -519,94 +526,89 @@ class App {
      * @param string $duration Session duration in seconds. default = 1hr
      * @return void
      */
-    public function startLoginSession($user, $duration = 3600){
-        if(!$user) return ;
-        $encryptedUser = CIPHER::encrypt(Configs::ENCRYPTION_KEY().md5(IPADDRESS), $user);
+    public function startLoginSession($user, $duration = 3600)
+    {
+        if (!$user) return;
+        $encryptedUser = CIPHER::encrypt(Configs::ENCRYPTION_KEY() . md5(IPADDRESS), $user);
         $this->set_cookie('login_user', $encryptedUser, $duration);
     }
-    
+
     /**
      * Clear Login session
      * 
      * @return void
      */
-    public function clearLoginSession(){
+    public function clearLoginSession()
+    {
         $this->delete_cookie('login_user');
     }
-    
+
     /**
      * Get Login User
      *
      * @return string|bool
      */
-    public function getLoginUser(){
+    public function getLoginUser()
+    {
         $encryptedUser = $this->get_cookie('login_user');
-        if($encryptedUser){
-            return CIPHER::decrypt(Configs::ENCRYPTION_KEY().md5(IPADDRESS), $encryptedUser); 
+        if ($encryptedUser) {
+            return CIPHER::decrypt(Configs::ENCRYPTION_KEY() . md5(IPADDRESS), $encryptedUser);
         }
         return false;
     }
-    
-	/**
-	 * Header Redirect
-	 *	 *
-	 * @param	string	$uri	URL
-	 * @param	string	$method	Redirect method
-	 *			'auto', 'location' or 'refresh'
-	 * @param	int	$code	HTTP Response status code
-	 * @return	void
-	 */
-	public function redirect($uri, $method = 'auto', $code = NULL)
-	{
-		if ( ! preg_match('#^(\w+:)?//#i', $uri))
-		{
-			$uri = trim(OAUTH_BASE_URL, '/').'/'.$uri;
-		}
 
-		// IIS environment likely? Use 'refresh' for better compatibility
-		if ($method === 'auto' && isset($_SERVER['SERVER_SOFTWARE']) && strpos($_SERVER['SERVER_SOFTWARE'], 'Microsoft-IIS') !== FALSE)
-		{
-			$method = 'refresh';
-		}
-		elseif ($method !== 'refresh' && (empty($code) OR ! is_numeric($code)))
-		{
-			if (isset($_SERVER['SERVER_PROTOCOL'], $_SERVER['REQUEST_METHOD']) && $_SERVER['SERVER_PROTOCOL'] === 'HTTP/1.1')
-			{
-				$code = ($_SERVER['REQUEST_METHOD'] !== 'GET')
-					? 303	// reference: http://en.wikipedia.org/wiki/Post/Redirect/Get
-					: 307;
-			}
-			else
-			{
-				$code = 302;
-			}
-		}
+    /**
+     * Header Redirect
+     *	 *
+     * @param	string	$uri	URL
+     * @param	string	$method	Redirect method
+     *			'auto', 'location' or 'refresh'
+     * @param	int	$code	HTTP Response status code
+     * @return	void
+     */
+    public function redirect($uri, $method = 'auto', $code = NULL)
+    {
+        if (!preg_match('#^(\w+:)?//#i', $uri)) {
+            $uri = trim(OAUTH_BASE_URL, '/') . '/' . $uri;
+        }
 
-		switch ($method)
-		{
-			case 'refresh':
-				header('Refresh:0;url='.$uri);
-				break;
-			default:
-				header('Location: '.$uri, TRUE, $code);
-				break;
-		}
-		exit;
-	}
+        // IIS environment likely? Use 'refresh' for better compatibility
+        if ($method === 'auto' && isset($_SERVER['SERVER_SOFTWARE']) && strpos($_SERVER['SERVER_SOFTWARE'], 'Microsoft-IIS') !== FALSE) {
+            $method = 'refresh';
+        } elseif ($method !== 'refresh' && (empty($code) or !is_numeric($code))) {
+            if (isset($_SERVER['SERVER_PROTOCOL'], $_SERVER['REQUEST_METHOD']) && $_SERVER['SERVER_PROTOCOL'] === 'HTTP/1.1') {
+                $code = ($_SERVER['REQUEST_METHOD'] !== 'GET')
+                    ? 303    // reference: http://en.wikipedia.org/wiki/Post/Redirect/Get
+                    : 307;
+            } else {
+                $code = 302;
+            }
+        }
+
+        switch ($method) {
+            case 'refresh':
+                header('Refresh:0;url=' . $uri);
+                break;
+            default:
+                header('Location: ' . $uri, TRUE, $code);
+                break;
+        }
+        exit;
+    }
 
     /**
      * @param array $params
      * @param string $parent
      * @return string
      */
-    public static function buildUrlParams($params, $parent = null){
+    public static function buildUrlParams($params, $parent = null)
+    {
         $query = '';
-        foreach($params as $key => $param){
-            if(is_array($param)){
-                $query .= $parent ? self::buildUrlParams($param, $parent."[$key]") : self::buildUrlParams($param, $key);
-            }
-            else {
-                $query .= ($parent ? urlencode($parent."[$key]")."=$param&" : "$key=$param&");
+        foreach ($params as $key => $param) {
+            if (is_array($param)) {
+                $query .= $parent ? self::buildUrlParams($param, $parent . "[$key]") : self::buildUrlParams($param, $key);
+            } else {
+                $query .= ($parent ? urlencode($parent . "[$key]") . "=$param&" : "$key=$param&");
             }
         }
         return trim($query, '&');
@@ -618,32 +620,32 @@ class App {
      * @param bool $override Overide URL query with given params if duplicate found
      * @return string
      */
-    public static function parseUrl($url, $params = [], $override = false){
-        if(!empty($params)){
-            parse_str(parse_url($url,  PHP_URL_QUERY), $query); 
+    public static function parseUrl($url, $params = [], $override = false)
+    {
+        if (!empty($params)) {
+            parse_str(parse_url($url,  PHP_URL_QUERY), $query);
 
             // Defining a callback function
-            $callback = function ($var){
+            $callback = function ($var) {
                 return ($var !== NULL && $var !== FALSE && $var !== "");
             };
 
-            if($override){
+            if ($override) {
                 $params = array_merge(array_filter($query, $callback), array_filter($params, $callback));
-            }
-            else {
+            } else {
                 $params = array_merge(array_filter($params, $callback), array_filter($query, $callback));
             }
 
-            if(isset($params['ajax'])){
+            if (isset($params['ajax'])) {
                 unset($params['ajax']);
-            }   
-            if(isset($params['pjax'])){
+            }
+            if (isset($params['pjax'])) {
                 unset($params['pjax']);
-            }  
+            }
 
             $url = explode('?', $url)[0];
-            if(!empty($params)){
-                $url.= '?'. ((function_exists('http_build_query')) ? http_build_query($params) : self::buildUrlParams($params));
+            if (!empty($params)) {
+                $url .= '?' . ((function_exists('http_build_query')) ? http_build_query($params) : self::buildUrlParams($params));
             }
         }
         return $url;

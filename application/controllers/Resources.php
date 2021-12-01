@@ -1,5 +1,5 @@
 <?php
-defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
+defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
 
 /**
  * Created by PhpStorm.
@@ -24,17 +24,16 @@ class Resources extends Server
     {
         if ($result = $this->get_oauth_server()->getAccessTokenData($this->request, $this->response)) {
             $user = null;
-            if(!empty($user_id = $result["user_id"])){
+            if (!empty($user_id = $result["user_id"])) {
                 $user = $this->get_oauth_storage()->getSingleUserInfo($user_id);
-                if(!empty($user)){
+                if (!empty($user)) {
                     unset($user["scope"]); //remove user's scope
                 }
             }
             $result["user"] = $user;
             unset($result["user_id"]); //remove user id
             $this->response->setParameters(array('success' => true, 'data' => $result));
-        }
-        else if(empty($this->response->getParameters())){
+        } else if (empty($this->response->getParameters())) {
             $this->response->setParameters(array('success' => false, 'error' => 'invalid_token', 'error_description' => "Authorization failed"));
         }
         $this->response->send();
@@ -55,8 +54,7 @@ class Resources extends Server
             } else {
                 $this->response->setParameters(array('success' => false, 'error' => 'invalid_user', 'error_description' => "User doesn't exist"));
             }
-        }
-        else if(empty($this->response->getParameters())){
+        } else if (empty($this->response->getParameters())) {
             $this->response->setParameters(array('success' => false, 'error' => 'invalid_token', 'error_description' => "Authorization failed"));
         }
         $this->response->send();
@@ -84,8 +82,7 @@ class Resources extends Server
             } else {
                 $this->response->setParameters(array('success' => false, 'error' => 'invalid_request', 'error_description' => "Please specify valid users"));
             }
-        }
-        else if(empty($this->response->getParameters())){
+        } else if (empty($this->response->getParameters())) {
             $this->response->setParameters(array('success' => false, 'error' => 'invalid_token', 'error_description' => "Authorization failed"));
         }
         $this->response->send();
@@ -111,11 +108,10 @@ class Resources extends Server
         if (!empty($refresh_token)) {
             $done = $this->get_oauth_storage()->unsetRefreshToken($refresh_token);
         }
-        if ($done){
-            $this->response->setParameters(array('success' => true, 'msg' => 'Successfully cleared access', 'data' => [$access_token,$refresh_token]));
-        }
-        else{
-            $this->response->setParameters(array('success' => $done, 'msg' => 'Failed to clear access', 'data' => [$access_token,$refresh_token]));
+        if ($done) {
+            $this->response->setParameters(array('success' => true, 'msg' => 'Successfully cleared access', 'data' => [$access_token, $refresh_token]));
+        } else {
+            $this->response->setParameters(array('success' => $done, 'msg' => 'Failed to clear access', 'data' => [$access_token, $refresh_token]));
         }
         $this->response->send();
         die;
@@ -145,7 +141,7 @@ class Resources extends Server
             $scopes = $this->implode($scope);
 
             //Create user id
-            $prefix = !empty($email)?$email:(!empty($phone)?$phone:"");
+            $prefix = !empty($email) ? $email : (!empty($phone) ? $phone : "");
             $user_id = sha1(uniqid($prefix));
 
             //Check if scope is valid
@@ -153,41 +149,33 @@ class Resources extends Server
 
             //Check if user exists
             if ($email && ($user = $this->get_oauth_storage()->getUser($email))) {
-                if($force){
+                if ($force) {
                     $this->response->setParameters(array('success' => false, 'error' => 'duplicate_user', 'error_description' => sprintf("User with email %s already exists", $email)));
+                } else {
+                    $this->response->setParameters(array('success' => true, 'data' => ['user_id' => $user['user_id'], 'existing' => true]));
                 }
-                else {
-                    $this->response->setParameters(array('success' => true, 'data' => ['user_id'=>$user['user_id'], 'existing' => true]));
-                }
-            } 
-            else if ($phone && ($user = $this->get_oauth_storage()->getUser($phone))) {
-                if($force){
+            } else if ($phone && ($user = $this->get_oauth_storage()->getUser($phone))) {
+                if ($force) {
                     $this->response->setParameters(array('success' => false, 'error' => 'duplicate_user', 'error_description' => sprintf("User with phone number %s already exists", $phone)));
+                } else {
+                    $this->response->setParameters(array('success' => true, 'data' => ['user_id' => $user['user_id'], 'existing' => true]));
                 }
-                else {
-                    $this->response->setParameters(array('success' => true, 'data' => ['user_id'=>$user['user_id'], 'existing' => true]));
-                }
-            } 
-            else if ($user = $this->get_oauth_storage()->getUser($user_id)) {
-                if($force){
+            } else if ($user = $this->get_oauth_storage()->getUser($user_id)) {
+                if ($force) {
                     $this->response->setParameters(array('success' => false, 'error' => 'duplicate_user', 'error_description' => "User already exists"));
+                } else {
+                    $this->response->setParameters(array('success' => true, 'data' => ['user_id' => $user['user_id'], 'existing' => true]));
                 }
-                else {
-                    $this->response->setParameters(array('success' => true, 'data' => ['user_id'=>$user['user_id'], 'existing' => true]));
-                }
-            } 
-            else {
+            } else {
                 //Insert User
                 $result = $this->get_oauth_storage()->setUserCustom($user_id, $password, $email, $name, $phone, $dial_code, $scope);
-                if ($result){
-                    $this->response->setParameters(array('success' => true, 'data' => ['user_id'=>$user_id, 'existing' => false]));
-                }
-                else {
+                if ($result) {
+                    $this->response->setParameters(array('success' => true, 'data' => ['user_id' => $user_id, 'existing' => false]));
+                } else {
                     $this->response->setParameters(array('success' => false, 'error' => 'internal_error', 'error_description' => 'Failed to create user'));
                 }
             }
-        }
-        else if(empty($this->response->getParameters())){
+        } else if (empty($this->response->getParameters())) {
             $this->response->setParameters(array('success' => false, 'error' => 'invalid_token', 'error_description' => "Authorization failed"));
         }
         $this->response->send();
@@ -211,10 +199,9 @@ class Resources extends Server
                 $user_id = null;
             }
         } else {
-            if($result = $this->get_oauth_server()->getAccessTokenData($this->request, $this->response)){
+            if ($result = $this->get_oauth_server()->getAccessTokenData($this->request, $this->response)) {
                 $user_id = @$result['user_id'];
-            }
-            else {
+            } else {
                 $user_id = null;
             }
         }
@@ -248,10 +235,9 @@ class Resources extends Server
                 //Update User
                 $result = $this->get_oauth_storage()->setUserCustom($user_id, $password, $email, $name, $phone, $dial_code, $this->implode($newScopes));
 
-                if($result){
+                if ($result) {
                     $this->response->setParameters(array('success' => $result));
-                }
-                else {
+                } else {
                     $this->response->setParameters(array('success' => false, 'error' => 'invalid_user', 'error_description' => "Unable to update user info"));
                 }
             } else {
@@ -299,37 +285,40 @@ class Resources extends Server
             $result = $this->get_oauth_storage()->setClientDetailsCustom($org_id, $client_id, $client_name, $client_secret, $redirect_uri, $grant_types, $scopes, $user_id);
 
             //Insert jwt public keys for client
-            if($result){
+            if ($result) {
 
                 $algo = 'sha256';
                 $rsa = new phpseclib\Crypt\RSA();
                 $rsa->setHash($algo);
                 $keys = $rsa->createKey(2048);
-                if(!empty($keys) && $this->get_oauth_storage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")){
+                if (!empty($keys) && $this->get_oauth_storage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
                     $this->response->setParameters(
-                        array('success' => true,
+                        array(
+                            'success' => true,
                             'data' => [
                                 'client_id' => $client_id,
                                 'client_secret' => $client_secret,
                                 'public_key' => base64_encode($keys['publickey']),
                                 'algorithm' => $algo,
                                 'encode' => 'base64'
-                            ]));
-                }
-                else {
+                            ]
+                        )
+                    );
+                } else {
                     $this->response->setParameters(
-                        array('success' => false,
+                        array(
+                            'success' => false,
                             'data' => [
                                 'client_id' => $client_id,
                                 'client_secret' => $client_secret,
-                            ]));
+                            ]
+                        )
+                    );
                 }
-            }
-            else {
+            } else {
                 $this->response->setParameters(array('success' => false, 'error' => 'server_error', 'error_description' => "Failed to create client"));
             }
-        }
-        else if(empty($this->response->getParameters())){
+        } else if (empty($this->response->getParameters())) {
             $this->response->setParameters(array('success' => false, 'error' => 'invalid_token', 'error_description' => "Authorization failed"));
         }
         $this->response->send();
@@ -346,28 +335,26 @@ class Resources extends Server
     public function updateClientKeys()
     {
         $client_id = $this->request->request('request_client_id');
-        if(empty($client_id) && !empty($client_info = $this->getClient_info())){
+        if (empty($client_id) && !empty($client_info = $this->getClient_info())) {
             $client_id = $client_info['client_id'];
         }
-        
-        if(!empty($client_id)){
+
+        if (!empty($client_id)) {
             $algo = 'sha256';
             $rsa = new phpseclib\Crypt\RSA();
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
-            if(!empty($keys) && $this->get_oauth_storage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")){
+            if (!empty($keys) && $this->get_oauth_storage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
                 $this->response->setParameters(array('success' => true, 'data' => [
-                            'client_id' => $client_id,
-                            'public_key' => base64_encode($keys['publickey']),
-                            'algorithm' => $algo,
-                            'encode' => 'base64'
-                        ]));
-            }
-            else {
+                    'client_id' => $client_id,
+                    'public_key' => base64_encode($keys['publickey']),
+                    'algorithm' => $algo,
+                    'encode' => 'base64'
+                ]));
+            } else {
                 $this->response->setParameters(array('success' => false, 'error' => 'server_error', 'error_description' => "Failed to update client keys"));
             }
-        }
-        else {
+        } else {
             $this->response->setParameters(array('success' => false, 'msg' => 'Invalid Client'));
         }
         $this->response->send();
@@ -383,41 +370,40 @@ class Resources extends Server
     public function getPublicKey()
     {
         $client_id = $this->request->request('request_client_id');
-        if(empty($client_id) && !empty($client_info = $this->getClient_info())){
+        if (empty($client_id) && !empty($client_info = $this->getClient_info())) {
             $client_id = $client_info['client_id'];
         }
-        
-        if(!empty($client_id)){
-            if(!empty($key = $this->get_oauth_storage()->getPublicKey($client_id))){
+
+        if (!empty($client_id)) {
+            if (!empty($key = $this->get_oauth_storage()->getPublicKey($client_id))) {
                 $this->response->setParameters(array('success' => true, 'data' => [
-                        'client_id' => $client_id,
-                        'public_key' => base64_encode($key),
-                        'encode' => 'base64'
-                    ]));
-            }
-            else {
+                    'client_id' => $client_id,
+                    'public_key' => base64_encode($key),
+                    'encode' => 'base64'
+                ]));
+            } else {
                 $this->response->setParameters(array('success' => false, 'msg' => 'No public key available for this client'));
             }
-        }
-        else {
+        } else {
             $this->response->setParameters(array('success' => false, 'msg' => 'Invalid Client'));
         }
         $this->response->send();
         die;
     }
-    
+
 
     /**
      * Get Public  Private Key Pairs
      * @api resources/generateKeyPair
      * @method POST
      * */
-    public function generateKeyPair(){
+    public function generateKeyPair()
+    {
         $algo = 'sha256';
         $rsa = new phpseclib\Crypt\RSA();
         $rsa->setHash($algo);
         $keys = $rsa->createKey(2048);
-        if(!empty($keys)){
+        if (!empty($keys)) {
             $this->response->setParameters(array('success' => true, 'data' => [
                 'private_key' => base64_encode($keys['privatekey']),
                 'public_key' => base64_encode($keys['publickey']),
@@ -425,8 +411,7 @@ class Resources extends Server
                 'algorithm' => $algo,
                 'encode' => 'base64'
             ]));
-        }
-        else {
+        } else {
             $this->response->setParameters(array('success' => false, 'msg' => 'Failed to generate key pair'));
         }
         $this->response->send();

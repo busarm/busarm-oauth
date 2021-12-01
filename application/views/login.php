@@ -1,48 +1,64 @@
 <?php
-defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
+defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
 
 /**
  * @var string $msg
  * @var string $csrf_token
  * @var string $action
  * @var string $redirect_url
- */ 
+ */
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <link rel="icon" type="image/png" href="<?=App::get_cdn_path('public/images/favicon/dark/favicon-16x16.png')?>" sizes="16x16" />
-    <link rel="icon" type="image/png" href="<?=App::get_cdn_path('public/images/favicon/dark/favicon-32x32.png')?>" sizes="32x32" />
-    <link rel="icon" type="image/png" href="<?=App::get_cdn_path('public/images/favicon/dark/favicon-64x64.png')?>" sizes="64x64" />
-    <link rel="icon" type="image/png" href="<?=App::get_cdn_path('public/images/favicon/dark/favicon-96x96.png')?>" sizes="96x96" />
+    <link rel="icon" type="image/png" href="<?= App::get_cdn_path('public/images/favicon/dark/favicon-16x16.png') ?>" sizes="16x16" />
+    <link rel="icon" type="image/png" href="<?= App::get_cdn_path('public/images/favicon/dark/favicon-32x32.png') ?>" sizes="32x32" />
+    <link rel="icon" type="image/png" href="<?= App::get_cdn_path('public/images/favicon/dark/favicon-64x64.png') ?>" sizes="64x64" />
+    <link rel="icon" type="image/png" href="<?= App::get_cdn_path('public/images/favicon/dark/favicon-96x96.png') ?>" sizes="96x96" />
     <title>Login</title>
     <style>
-        body{
+        body {
             margin: auto !important;
             user-select: none;
             background: #335038 !important;
         }
-        oauth-login body,h1,h2,h3,h4,h5,p,div,input,button,textarea,li  {
+
+        oauth-login body,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        p,
+        div,
+        input,
+        button,
+        textarea,
+        li {
             font-family: "Palatino Linotype", sans-serif !important;
         }
 
-        oauth-login h1{
+        oauth-login h1 {
             font-size: 26px;
             font-weight: bold;
         }
-        oauth-login h2{
+
+        oauth-login h2 {
             font-size: 24px;
             font-weight: bold;
         }
-        oauth-login h3{
+
+        oauth-login h3 {
             font-size: 20px;
             font-weight: bold;
         }
-        oauth-login h4{
+
+        oauth-login h4 {
             font-size: 16px;
             font-weight: bold;
         }
@@ -53,6 +69,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             padding: 10px;
             text-align: center;
         }
+
         oauth-login footer .copyright {
             color: #fff;
             font-size: 0.9em;
@@ -68,7 +85,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             display: inline-block;
             list-style: none;
             margin: 5px;
-            padding:5px;
+            padding: 5px;
         }
 
         oauth-login .login-page {
@@ -83,7 +100,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             -moz-osx-font-smoothing: grayscale;
         }
 
-        oauth-login .login-page .logo.icon{
+        oauth-login .login-page .logo.icon {
             margin: auto;
             height: 100%;
             padding: 0;
@@ -93,14 +110,17 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             border: 0;
             background: transparent;
         }
-        oauth-login .login-page .logo.logo_icon{
-            height:80px;
+
+        oauth-login .login-page .logo.logo_icon {
+            height: 80px;
         }
-        oauth-login .login-page .icon{
-            height:40px;
+
+        oauth-login .login-page .icon {
+            height: 40px;
         }
-        oauth-login .login-page .logo.logo_txt{
-            height:25px;
+
+        oauth-login .login-page .logo.logo_txt {
+            height: 25px;
         }
 
         oauth-login .login-page .form {
@@ -112,6 +132,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             text-align: center;
             border-radius: 3px;
         }
+
         oauth-login .login-page .form input {
             font-family: "", sans-serif;
             outline: 0;
@@ -123,6 +144,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             box-sizing: border-box;
             font-size: 14px;
         }
+
         oauth-login .login-page .form button {
             outline: 0;
             background: #3F5F44;
@@ -135,7 +157,10 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             transition: all 0.3s ease;
             cursor: pointer;
         }
-        oauth-login .login-page .form button:hover,.form button:active,.form button:focus {
+
+        oauth-login .login-page .form button:hover,
+        .form button:active,
+        .form button:focus {
             opacity: .8;
         }
 
@@ -144,13 +169,14 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             color: #DF632D;
             font-size: 12px;
         }
+
         oauth-login .login-page .form .message a {
             color: #3F5F44;
             text-decoration: none;
         }
     </style>
     <script src="https://www.google.com/recaptcha/api.js"></script>
-    <script>        
+    <script>
         function onSubmit(token) {
             let auth_type = document.getElementById('auth_type');
             let username = document.getElementById('username');
@@ -158,16 +184,14 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             let csrf_token = document.getElementById('csrf_token');
             let recaptcha_token = document.getElementById('recaptcha_token');
             let form = document.getElementById("login-form");
-            if(auth_type.value == "user"){
-                if(username.value == null || username.value == ''){
+            if (auth_type.value == "user") {
+                if (username.value == null || username.value == '') {
                     return alert('Username or Email is required')
                 }
-            }
-            else if(auth_type.value == "login"){
-                if(username.value == null || username.value == ''){
+            } else if (auth_type.value == "login") {
+                if (username.value == null || username.value == '') {
                     return alert('Username or Email is required')
-                }
-                else if(password.value == null || password.value == ''){
+                } else if (password.value == null || password.value == '') {
                     return alert('Password is required')
                 }
             }
@@ -176,45 +200,44 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
         }
     </script>
 </head>
+
 <body>
-<oauth-login>
-    <div class="login-page">
-        <div class="form">
-            <div>
-                <img class="logo logo_icon" src="<?=App::get_cdn_path('public/images/logo/dark/logo_256px.png')?>">
+    <oauth-login>
+        <div class="login-page">
+            <div class="form">
+                <div>
+                    <img class="logo logo_icon" src="<?= App::get_cdn_path('public/images/logo/dark/logo_256px.png') ?>">
+                </div>
+                <div>
+                    <img class="logo logo_txt" src="<?= App::get_cdn_path('public/images/logo/dark/logo_txt_512px.png') ?>">
+                </div>
+                <br>
+                <form id="login-form" class="form" method="post" action="<?= $action ?? null ?>">
+                    <h2> Login </h2>
+                    <input id="username" type="text" required="required" name="username" placeholder="Username/Email" />
+                    <input id="auth_type" type="hidden" required="required" name="auth_type" value="login" />
+                    <input id="password" type="password" required="required" name="password" placeholder="Password" />
+                    <input id="recaptcha_token" type="hidden" required="required" name="recaptcha_token" />
+                    <input id="csrf_token" type="hidden" required="required" name="csrf_token" value="<?= $csrf_token ?>" />
+                    <input id="redirect_url" type="hidden" required="required" name="redirect_url" value="<?= $redirect_url ?>" />
+                    <button class="g-recaptcha" data-sitekey="<?= Configs::RECAPTCHA_CLIENT_KEY() ?>" data-callback='onSubmit' data-action='submit'>Proceed</button>
+                    <?php if (isset($msg)) : ?>
+                        <div class="message"><?= $msg ?></div>
+                    <?php endif ?>
+                </form>
             </div>
-            <div>
-                <img class="logo logo_txt" src="<?=App::get_cdn_path('public/images/logo/dark/logo_txt_512px.png')?>">
-            </div>
-            <br>
-            <form id="login-form" class="form" method="post" action="<?=$action??null?>">
-                <h2> Login </h2>
-                <input id="username" type="text" required="required" name="username" placeholder="Username/Email"/>
-                <input id="auth_type" type="hidden" required="required" name="auth_type" value="login"/>
-                <input id="password" type="password" required="required" name="password" placeholder="Password"/>
-                <input id="recaptcha_token" type="hidden" required="required" name="recaptcha_token"/>
-                <input id="csrf_token" type="hidden" required="required" name="csrf_token" value="<?=$csrf_token?>"/>
-                <input id="redirect_url" type="hidden" required="required" name="redirect_url" value="<?=$redirect_url?>"/>
-                <button class="g-recaptcha" 
-                    data-sitekey="<?= Configs::RECAPTCHA_CLIENT_KEY() ?>" 
-                    data-callback='onSubmit' 
-                    data-action='submit'>Proceed</button>
-                <?php if (isset($msg)): ?>
-                    <div class="message"><?=$msg?></div>
-                <?php endif ?>
-            </form>
         </div>
-    </div>
-    <!-- Footer -->
-    <footer>
-        <ul class="copyright">
-            <li style="min-width: 100px;"><a href="<?=App::get_app_path('privacy')?>" target="_blank">Privacy Policy</a></li>
-            <li style="min-width: 100px;"><a href="<?=App::get_app_path('terms')?>" target="_blank">Terms & Conditions</a></li>
-        </ul>
-        <ul class="copyright">
-            <li>&copy; Wecari All rights reserved.</li>
-        </ul>
-    </footer>
-</oauth-login>
+        <!-- Footer -->
+        <footer>
+            <ul class="copyright">
+                <li style="min-width: 100px;"><a href="<?= App::get_app_path('privacy') ?>" target="_blank">Privacy Policy</a></li>
+                <li style="min-width: 100px;"><a href="<?= App::get_app_path('terms') ?>" target="_blank">Terms & Conditions</a></li>
+            </ul>
+            <ul class="copyright">
+                <li>&copy; Wecari All rights reserved.</li>
+            </ul>
+        </footer>
+    </oauth-login>
 </body>
+
 </html>

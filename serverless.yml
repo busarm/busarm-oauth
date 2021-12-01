@@ -59,7 +59,7 @@ package:
        
 functions:
     Authorize:
-        handler: index.php
+        handler: 'public/index.php'
         description: 'Allow user to authorize access to their account'
         memorySize: ${self:custom.avgMem.${self:provider.stage}}
         timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
@@ -77,7 +77,7 @@ functions:
                     cacheControl: 'max-age=600, s-maxage=600, proxy-revalidate' 
                     
     Resources:
-        handler: index.php
+        handler: 'public/index.php'
         description: 'Retrieve oauth resources e.g user details with client credentials and access token'
         memorySize: ${self:custom.highMem.${self:provider.stage}}
         timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
@@ -99,7 +99,7 @@ functions:
                     warmer: true
                     
     Token:
-        handler: index.php
+        handler: 'public/index.php'
         description: 'Generate and verify oauth access tokens'
         memorySize: ${self:custom.highMem.${self:provider.stage}}
         timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)

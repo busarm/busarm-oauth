@@ -198,18 +198,17 @@ class OauthPdo  extends Pdo
             return $stmt->execute(compact('user_id', 'password', 'salt', 'email', 'name', 'phone', 'dial_code', 'scope'));
         }
     }
-    
+
     /**
      * @param string $client_id
      * @return array|mixed
      */
     public function getClientDetailsCustom($client_id, $org_id = null)
     {
-        if($org_id){
+        if ($org_id) {
             $stmt = $this->db->prepare(sprintf('SELECT * from %s where client_id = :client_id and org_id = :org_id', $this->config['client_table']));
             $stmt->execute(compact('client_id', 'org_id'));
-        }
-        else {
+        } else {
             $stmt = $this->db->prepare(sprintf('SELECT * from %s where client_id = :client_id', $this->config['client_table']));
             $stmt->execute(compact('client_id'));
         }
@@ -307,17 +306,16 @@ class OauthPdo  extends Pdo
      */
     public function scopeExistsForUser($scope, $user_id)
     {
-        $found = [];     
+        $found = [];
         $stmt = $this->db->prepare(sprintf('SELECT scope FROM %s WHERE user_id = ? LIMIT 1', $this->config['user_table']));
         $stmt->execute([$user_id]);
-        if ($result = $stmt->fetch(\PDO::FETCH_ASSOC)) {            
-            $user_scopes = array_map('strtolower', explode(' ', $result['scope']));     
+        if ($result = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $user_scopes = array_map('strtolower', explode(' ', $result['scope']));
             $scopes = !is_array($scope) ? explode(' ', $scope) : $scope;
             foreach ($scopes as $scope) {
-                if(in_array(strtolower($scope), $user_scopes) || in_array('*', $user_scopes)){
+                if (in_array(strtolower($scope), $user_scopes) || in_array('*', $user_scopes)) {
                     $found[] = $scope;
-                }
-                else {
+                } else {
                     return false; // All must exist
                 }
             }
@@ -334,17 +332,16 @@ class OauthPdo  extends Pdo
      */
     public function scopeExistsForClient($scope, $client_id)
     {
-        $found = [];     
+        $found = [];
         $stmt = $this->db->prepare(sprintf('SELECT scope FROM %s WHERE client_id = ? LIMIT 1', $this->config['client_table']));
         $stmt->execute([$client_id]);
         if ($result = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-            $client_scopes = array_map('strtolower', explode(' ', $result['scope']));     
+            $client_scopes = array_map('strtolower', explode(' ', $result['scope']));
             $scopes = !is_array($scope) ? explode(' ', $scope) : $scope;
             foreach ($scopes as $scope) {
-                if(in_array(strtolower($scope), $client_scopes) || in_array('*', $client_scopes)){
+                if (in_array(strtolower($scope), $client_scopes) || in_array('*', $client_scopes)) {
                     $found[] = $scope;
-                }
-                else {
+                } else {
                     return false; // All must exist
                 }
             }
@@ -361,19 +358,18 @@ class OauthPdo  extends Pdo
      */
     public function setClientPublickKey($client_id, $private_key, $public_key, $encryption_algorithm = "RS256")
     {
-        if($this->getPublicKey($client_id)){
+        if ($this->getPublicKey($client_id)) {
             $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET private_key=:private_key, public_key=:public_key, encryption_algorithm=:encryption_algorithm where client_id=:client_id', $this->config['public_key_table']));
-        }
-        else {
+        } else {
             $stmt = $this->db->prepare(sprintf('INSERT INTO %s (client_id, private_key, public_key, encryption_algorithm) VALUES (:client_id, :private_key, :public_key, :encryption_algorithm)', $this->config['public_key_table']));
         }
         return $stmt->execute(compact('client_id', 'private_key', 'public_key', 'encryption_algorithm'));
     }
 
-    
+
     /**In array case-insensitive */
-    public function in_arrayi($needle, $haystack) {
+    public function in_arrayi($needle, $haystack)
+    {
         return in_array(strtolower($needle), array_map('strtolower', $haystack));
     }
-
 }

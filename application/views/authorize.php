@@ -1,5 +1,5 @@
 <?php
-defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
+defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
 
 /**
  * @var string $client_name
@@ -8,43 +8,59 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
  * @var string $user_email
  * @var array $scopes
  * @var string $action
- */ 
+ */
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <link rel="icon" type="image/png" href="<?=App::get_cdn_path('public/images/favicon/dark/favicon-16x16.png')?>" sizes="16x16" />
-    <link rel="icon" type="image/png" href="<?=App::get_cdn_path('public/images/favicon/dark/favicon-32x32.png')?>" sizes="32x32" />
-    <link rel="icon" type="image/png" href="<?=App::get_cdn_path('public/images/favicon/dark/favicon-64x64.png')?>" sizes="64x64" />
-    <link rel="icon" type="image/png" href="<?=App::get_cdn_path('public/images/favicon/dark/favicon-96x96.png')?>" sizes="96x96" />
+    <link rel="icon" type="image/png" href="<?= App::get_cdn_path('public/images/favicon/dark/favicon-16x16.png') ?>" sizes="16x16" />
+    <link rel="icon" type="image/png" href="<?= App::get_cdn_path('public/images/favicon/dark/favicon-32x32.png') ?>" sizes="32x32" />
+    <link rel="icon" type="image/png" href="<?= App::get_cdn_path('public/images/favicon/dark/favicon-64x64.png') ?>" sizes="64x64" />
+    <link rel="icon" type="image/png" href="<?= App::get_cdn_path('public/images/favicon/dark/favicon-96x96.png') ?>" sizes="96x96" />
     <title>Login</title>
     <style>
-        body{
+        body {
             margin: auto !important;
             user-select: none;
             background: #335038 !important;
         }
-        oauth-authorize body,h1,h2,h3,h4,h5,p,div,input,button,textarea,li {
+
+        oauth-authorize body,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        p,
+        div,
+        input,
+        button,
+        textarea,
+        li {
             font-family: "Palatino Linotype", sans-serif !important;
         }
 
-        oauth-authorize h1{
+        oauth-authorize h1 {
             font-size: 26px;
             font-weight: bold;
         }
-        oauth-authorize h2{
+
+        oauth-authorize h2 {
             font-size: 24px;
             font-weight: bold;
         }
-        oauth-authorize h3{
+
+        oauth-authorize h3 {
             font-size: 20px;
             font-weight: bold;
         }
-        oauth-authorize h4{
+
+        oauth-authorize h4 {
             font-size: 16px;
             font-weight: bold;
         }
@@ -55,6 +71,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             padding: 10px;
             text-align: center;
         }
+
         oauth-authorize footer .copyright {
             color: #fff;
             font-size: 0.9em;
@@ -70,7 +87,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             display: inline-block;
             list-style: none;
             margin: 5px;
-            padding:5px;
+            padding: 5px;
         }
 
         oauth-authorize .auth-page {
@@ -85,7 +102,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             -moz-osx-font-smoothing: grayscale;
         }
 
-        oauth-authorize .auth-page .logo.icon{
+        oauth-authorize .auth-page .logo.icon {
             margin: auto;
             height: 100%;
             padding: 0;
@@ -95,14 +112,17 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             border: 0;
             background: transparent;
         }
-        oauth-authorize .auth-page .logo.logo_icon{
-            height:80px;
+
+        oauth-authorize .auth-page .logo.logo_icon {
+            height: 80px;
         }
-        oauth-authorize .auth-page .icon{
-            height:40px;
+
+        oauth-authorize .auth-page .icon {
+            height: 40px;
         }
-        oauth-authorize .auth-page .logo.logo_txt{
-            height:25px;
+
+        oauth-authorize .auth-page .logo.logo_txt {
+            height: 25px;
         }
 
         oauth-authorize .auth-page .form {
@@ -115,6 +135,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             text-align: center;
             border-radius: 3px;
         }
+
         oauth-authorize .auth-page .form input {
             font-family: "", sans-serif;
             outline: 0;
@@ -126,6 +147,7 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             box-sizing: border-box;
             font-size: 14px;
         }
+
         oauth-authorize .auth-page .form .auth-buttons .auth-button {
             outline: 0;
             background: #3F5F44;
@@ -138,14 +160,18 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             transition: all 0.3s ease;
             cursor: pointer;
         }
+
         oauth-authorize .auth-page .form .auth-buttons .auth-button.ok {
             background-color: seagreen;
         }
+
         oauth-authorize .auth-page .form .auth-buttons .auth-button.cancel {
             background-color: #DF632D;
         }
 
-        oauth-authorize .auth-page .form button:hover,.form button:active,.form button:focus {
+        oauth-authorize .auth-page .form button:hover,
+        .form button:active,
+        .form button:focus {
             opacity: .8;
         }
 
@@ -154,70 +180,73 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
             color: #DF632D;
             font-size: 12px;
         }
+
         oauth-authorize .auth-page .form .message a {
             color: #3F5F44;
             text-decoration: none;
         }
     </style>
 </head>
+
 <body>
-<oauth-authorize>
-    <div class="auth-page">
-        <div class="form">
-            <div>
-                <img class="logo logo_icon" src="<?=App::get_cdn_path('public/images/logo/dark/logo_256px.png')?>">
-            </div>
-            <div>
-                <img class="logo logo_txt" src="<?=App::get_cdn_path('public/images/logo/dark/logo_txt_512px.png')?>">
-            </div>
-            <br>
-            <form id="login-form" class="form" method="post" action="<?=$action ?? null?>">
-                <h3> <span style="color:#DF632D"><?=ucfirst($client_name??$org_name)?></span> is requesting access to your account</h3>
-                <?php if (!empty($user_name) || !empty($user_email)): ?>
+    <oauth-authorize>
+        <div class="auth-page">
+            <div class="form">
                 <div>
-                    <img class="icon" src="<?=App::get_cdn_path('public/images/icons/Name_104px.png')?>">
-                    <div>
-                    <?php if ($user_name): ?>
-                    <strong><?= $user_name ?> </strong>
-                    <div><?= $user_email ?> </div>
-                    <?php else: ?>
-                    <strong><?= $user_email ?> </strong>
-                    <?php endif ?>
-                    </div>
+                    <img class="logo logo_icon" src="<?= App::get_cdn_path('public/images/logo/dark/logo_256px.png') ?>">
                 </div>
-                <?php if (!empty($scopes)): ?>
-                    <h4>Grant permission to do the following: </h3>
-                    <ul>
-                        <?php foreach($scopes as $scope): ?>
-                        <li style="font-size: 14px; text-align: left;"><?= $scope ?></li>
-                        <?php endforeach ?>
-                    </ul>
-                <?php endif ?>
-                <?php endif ?>
-                <div class="auth-buttons">
-                    <div style="padding: 5px;">
-                        <button id="approve" class="auth-button ok" name="approve" value="1" type="submit">Approve</button>
-                    </div>
-                    <div style="padding: 5px;">
-                        <button id="decline" class="auth-button cancel" name="decline" value="1" type="submit">Decline</button>
-                    </div>
-                    <div style="padding: 8px; color:darkcyan; text-decoration: none;">
-                        <a style="color:darkcyan; text-decoration: none;" href="/authorize/logout?redirect_url=<?=urlencode($action) ?? null?>">Use another account</a>
-                    </div>
+                <div>
+                    <img class="logo logo_txt" src="<?= App::get_cdn_path('public/images/logo/dark/logo_txt_512px.png') ?>">
                 </div>
-            </form>
+                <br>
+                <form id="login-form" class="form" method="post" action="<?= $action ?? null ?>">
+                    <h3> <span style="color:#DF632D"><?= ucfirst($client_name ?? $org_name) ?></span> is requesting access to your account</h3>
+                    <?php if (!empty($user_name) || !empty($user_email)) : ?>
+                        <div>
+                            <img class="icon" src="<?= App::get_cdn_path('public/images/icons/Name_104px.png') ?>">
+                            <div>
+                                <?php if ($user_name) : ?>
+                                    <strong><?= $user_name ?> </strong>
+                                    <div><?= $user_email ?> </div>
+                                <?php else : ?>
+                                    <strong><?= $user_email ?> </strong>
+                                <?php endif ?>
+                            </div>
+                        </div>
+                        <?php if (!empty($scopes)) : ?>
+                            <h4>Grant permission to do the following: </h3>
+                                <ul>
+                                    <?php foreach ($scopes as $scope) : ?>
+                                        <li style="font-size: 14px; text-align: left;"><?= $scope ?></li>
+                                    <?php endforeach ?>
+                                </ul>
+                            <?php endif ?>
+                        <?php endif ?>
+                        <div class="auth-buttons">
+                            <div style="padding: 5px;">
+                                <button id="approve" class="auth-button ok" name="approve" value="1" type="submit">Approve</button>
+                            </div>
+                            <div style="padding: 5px;">
+                                <button id="decline" class="auth-button cancel" name="decline" value="1" type="submit">Decline</button>
+                            </div>
+                            <div style="padding: 8px; color:darkcyan; text-decoration: none;">
+                                <a style="color:darkcyan; text-decoration: none;" href="/authorize/logout?redirect_url=<?= urlencode($action) ?? null ?>">Use another account</a>
+                            </div>
+                        </div>
+                </form>
+            </div>
         </div>
-    </div>
-    <!-- Footer -->
-    <footer>
-        <ul class="copyright">
-            <li style="min-width: 100px;"><a href="<?=App::get_app_path('privacy')?>" target="_blank">Privacy Policy</a></li>
-            <li style="min-width: 100px;"><a href="<?=App::get_app_path('terms')?>" target="_blank">Terms & Conditions</a></li>
-        </ul>
-        <ul class="copyright">
-            <li>&copy; Wecari All rights reserved.</li>
-        </ul>
-    </footer>
-</oauth-authorize>
+        <!-- Footer -->
+        <footer>
+            <ul class="copyright">
+                <li style="min-width: 100px;"><a href="<?= App::get_app_path('privacy') ?>" target="_blank">Privacy Policy</a></li>
+                <li style="min-width: 100px;"><a href="<?= App::get_app_path('terms') ?>" target="_blank">Terms & Conditions</a></li>
+            </ul>
+            <ul class="copyright">
+                <li>&copy; Wecari All rights reserved.</li>
+            </ul>
+        </footer>
+    </oauth-authorize>
 </body>
+
 </html>

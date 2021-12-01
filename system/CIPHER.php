@@ -1,5 +1,5 @@
 <?php
-defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
+defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
 
 /**
  * Created by PhpStorm.
@@ -21,7 +21,8 @@ class CIPHER
      * @param string $iv
      * @return mixed Base64 encoded result of encrypted data
      */
-    public static function encrypt($passphrase, $plain) {
+    public static function encrypt($passphrase, $plain)
+    {
         if (!empty($passphrase)) {
             $salt = openssl_random_pseudo_bytes(128);
             $iv = openssl_random_pseudo_bytes(16);
@@ -42,30 +43,34 @@ class CIPHER
      * @param string $iv
      * @return string|boolean
      */
-    public static function decrypt($passphrase, $cipher) {
+    public static function decrypt($passphrase, $cipher)
+    {
         if (!empty($passphrase) && ($data = json_decode(base64_decode($cipher), true))) {
             try {
                 $ciphertext = $data["ciphertext"];
                 $salt = hex2bin($data["salt"]);
-                $iv  = hex2bin($data["iv"]);  
-                $hash  = $data["hash"];          
-            } catch(Throwable $e) { return false; }
+                $iv  = hex2bin($data["iv"]);
+                $hash  = $data["hash"];
+            } catch (Throwable $e) {
+                return false;
+            }
             $key = hash_pbkdf2("sha512", $passphrase, $salt, 100, 64, true);
-            if ($hash == self::getDigest($ciphertext, md5($passphrase))){
-                return openssl_decrypt(base64_decode($ciphertext) , CIPHER::$method, $key, OPENSSL_RAW_DATA, $iv);
+            if ($hash == self::getDigest($ciphertext, md5($passphrase))) {
+                return openssl_decrypt(base64_decode($ciphertext), CIPHER::$method, $key, OPENSSL_RAW_DATA, $iv);
             }
         }
         return false;
     }
 
-    
+
     /**
      * Generate hmac signature for data
      * @param string $data String Data 
      * @param string $key hmac key
      * @return string|boolean
      */
-    public static function getDigest($data, $key){
+    public static function getDigest($data, $key)
+    {
         return hash_hmac("sha256", $data, $key);
     }
 }
