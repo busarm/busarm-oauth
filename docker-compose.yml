@@ -1,37 +1,75 @@
 version: '3.7'
 
 networks:
-  backend:
-    name: wecari
-    external: true
+  # Local network - 'bridge' to allow others to connect
+  local:
+    driver: bridge
+    name: oauth-network
 
+volumes:
+  mysql-volume:
+    name: oauth-mysql-volume
+    
 services:
 
-  # Web server
-  oauth:
-    image: webdevops/php-nginx:8.0-alpine
+  # MYSQL
+  oauth-mysql:
+    restart: always
+    image: mysql:latest
+    ports: 
+      - 3308:3306
     volumes:
-      - .:/var/www:rw
-      - ./nginx/app.conf:/opt/docker/etc/nginx/conf.d/app.conf
+      - mysql-volume:/var/lib/mysql:rw
+      - ./mysql/mysql.conf:/etc/mysql/conf.d/mysql.conf:ro
+      # Deploy database ddl scripts on fresh init 
+      # NOTE: If ddl has any error, docker will fail to start
+      - ./database:/docker-entrypoint-initdb.d/:ro
+    environment:
+      - MYSQL_DATABASE=default
+      - MYSQL_PASSWORD=root
+      - MYSQL_ROOT_PASSWORD=root
+      - TZ=UTC
+    networks: 
+      - local
+
+  # PHP Server
+  oauth-php:
+    restart: always
+    image: webdevops/php:8.0-alpine
+    depends_on:
+      - oauth-mysql
+    expose: 
+      - 9000
+    volumes:
+        - .:/var/www:rw
+        - ./php/conf.d/php.ini:/opt/docker/etc/php/conf.d/php.ini:ro
+    env_file:
+      # Add enviroment file
+      - .env
+    environment:
+        # PHP
+        PHP_MEMORY_LIMIT: 512M
+        PHP_DATE_TIMEZONE: UTC
+    networks: 
+      - local
+
+  # Nginx Web server
+  oauth:
+    restart: always
+    image: webdevops/nginx:alpine
+    depends_on:
+      - oauth-php
+      - oauth-mysql
     ports: 
       - 8000:80
+    volumes:
+        - .:/var/www:rw
+        - ./nginx/app.conf:/opt/docker/etc/nginx/conf.d/app.conf
     environment:
+        # NGINX
         WEB_DOCUMENT_ROOT: '/var/www/public'
         WEB_DOCUMENT_INDEX: index.php
-        WEB_ALIAS_DOMAIN: 'oauth.test'
-        # APP
-        APP_NAME: 'Wecari Oauth'
-        COMPANY_NAME: 'Wecari'
-        ENV: local
-        ENCRYPTION_KEY: "P6xpRQ#MWxP6MNdDs2#g*eQzuDHx?rN"
-        # Custom Paths
-        APP_CACHE_PATH: '/tmp/cache'
-        APP_UPLOAD_PATH: '/tmp/uploads'
-        APP_LOGS_PATH: '/tmp/logs'
-        # Dev DB Credentials
-        DB_HOST: mysql
-        DB_PORT: 3306
-        DB_USER: root
-        DB_PASS: root
+        # `php` service name + exposed port
+        WEB_PHP_SOCKET: 'oauth-php:9000'
     networks: 
-      - backend
+      - local

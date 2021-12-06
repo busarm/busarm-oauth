@@ -1,167 +1,24 @@
 <?php
 defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
 
-/* Initialize composer autoloader*/
-if (boolval(getenv('SEPARATE_VENDOR'))) {
-    require_once('/tmp/vendor/autoload.php');
-} else {
-    require_once('vendor/autoload.php');
-}
-
-
-if (!function_exists('is_cli')) {
-    /**
-     * Is CLI?
-     *
-     * Test to see if a request was made from the command line.
-     *
-     * @return 	bool
-     */
-    function is_cli()
-    {
-        return (PHP_SAPI === 'cli' or defined('STDIN'));
-    }
-}
-
-/**
- * Get Server Variable
- *
- * @param string $name
- * @param string $default
- * @return string
- */
-function getServer($name, $default = null)
-{
-    return (!empty($data = @getenv($name)) ? $data : $default);
-}
-
-/**Check if https enabled*/
-function is_https()
-{
-    if (!empty(getServer('HTTPS')) && strtolower(getServer('HTTPS')) !== 'off') {
-        return TRUE;
-    } elseif (!empty(getServer('HTTP_X_FORWARDED_PROTO')) && strtolower(getServer('HTTP_X_FORWARDED_PROTO')) === 'https') {
-        return TRUE;
-    } elseif (!empty(getServer('HTTP_FRONT_END_HTTPS')) && strtolower(getServer('HTTP_FRONT_END_HTTPS')) !== 'off') {
-        return TRUE;
-    }
-    return FALSE;
-}
-
-
-$server_protocol = (!empty(getServer('SERVER_PROTOCOL')) && in_array(getServer('SERVER_PROTOCOL'), array('HTTP/1.0', 'HTTP/1.1', 'HTTP/2'), TRUE))
-    ? getServer('SERVER_PROTOCOL') : 'HTTP/1.1';
-
-define("PROTOCOL_HEADER", $server_protocol); //Server Protocol header
-
-$base_url = (is_https() ? "https" : "http") . "://";
-define("OAUTH_BASE_SCHEME", $base_url);
-$base_url .= getServer('HTTP_HOST');
-define("OAUTH_BASE_SERVER", $base_url);
-$base_url .= str_replace(basename(getServer('SCRIPT_NAME')), "", getServer('SCRIPT_NAME'));
-$config['base_url'] = $base_url;
-define("OAUTH_BASE_URL", $base_url);
-define("OAUTH_CURRENT_URL", OAUTH_BASE_SERVER . getServer('REQUEST_URI'));
-
 define("ENV_DEV", "development");
 define("ENV_PROD", "production");
 define("ENV_TEST", "testing");
 
-// fix cross site to option request error
-if (getServer('REQUEST_METHOD') == 'OPTIONS') {
-    header(PROTOCOL_HEADER . " 200 OK", TRUE, 200);
-    exit();
-}
-
-/**
- * Get Ip of users
- *
- */
-function get_ip_address()
-{
-    // check for shared internet/ISP IP
-    if (!empty(getServer('HTTP_CLIENT_IP')) && validate_ip(getServer('HTTP_CLIENT_IP'))) {
-        return getServer('HTTP_CLIENT_IP');
-    }
-    // check for IPs passing through proxies
-    if (!empty(getServer('HTTP_X_FORWARDED_FOR'))) {
-        // check if multiple ips exist in var
-        if (strpos(getServer('HTTP_X_FORWARDED_FOR'), ',') !== false) {
-            $iplist = explode(',', getServer('HTTP_X_FORWARDED_FOR'));
-            foreach ($iplist as $ip) {
-                if (validate_ip($ip))
-                    return $ip;
-            }
-        } else {
-            if (validate_ip(getServer('HTTP_X_FORWARDED_FOR')))
-                return getServer('HTTP_X_FORWARDED_FOR');
-        }
-    }
-    if (!empty(getServer('HTTP_X_FORWARDED')) && validate_ip(getServer('HTTP_X_FORWARDED')))
-        return getServer('HTTP_X_FORWARDED');
-
-    if (!empty(getServer('HTTP_X_CLUSTER_CLIENT_IP')) && validate_ip(getServer('HTTP_X_CLUSTER_CLIENT_IP')))
-        return getServer('HTTP_X_CLUSTER_CLIENT_IP');
-
-    if (!empty(getServer('HTTP_FORWARDED_FOR')) && validate_ip(getServer('HTTP_FORWARDED_FOR')))
-        return getServer('HTTP_FORWARDED_FOR');
-
-    if (!empty(getServer('HTTP_FORWARDED')) && validate_ip(getServer('HTTP_FORWARDED')))
-        return getServer('HTTP_FORWARDED');
-
-    // return unreliable ip since all else failed
-    return getServer('REMOTE_ADDR');
-}
-
-
-/**
- * Ensures an ip address is both a valid IP and does not fall within
- * a private network range.
- * @param $ip
- * @return bool
- */
-function validate_ip($ip)
-{
-    if (strtolower($ip) === 'unknown')
-        return false;
-    // generate ipv4 network address
-    $ip = ip2long($ip);
-
-    // if the ip is set and not equivalent to 255.255.255.255
-    if ($ip !== false && $ip !== -1) {
-
-        // make sure to get unsigned long representation of ip
-        // due to discrepancies between 32 and 64 bit OSes and
-        // signed numbers (ints default to signed in PHP)
-        $ip = sprintf('%u', $ip);
-
-        // do private network range checking
-        if ($ip >= 0 && $ip <= 50331647) return false;
-        if ($ip >= 167772160 && $ip <= 184549375) return false;
-        if ($ip >= 2130706432 && $ip <= 2147483647) return false;
-        if ($ip >= 2851995648 && $ip <= 2852061183) return false;
-        if ($ip >= 2886729728 && $ip <= 2887778303) return false;
-        if ($ip >= 3221225984 && $ip <= 3221226239) return false;
-        if ($ip >= 3232235520 && $ip <= 3232301055) return false;
-        if ($ip >= 4294967040) return false;
-    }
-
-    return true;
-}
-
-
-/*
-* Define user's IP Address as
-* to be viewed across the server
-*
-*/
-
+// Define user's IP Address as to be viewed across the server
 define('IPADDRESS', get_ip_address());
 
-/*
-* Define Server Local Ip
-*/
+// Define Server Local Ip
 define('LOCALHOST', getHostByName(getHostName()));
+
+// Define base variables
+define("OAUTH_BASE_SCHEME", (is_https() ? "https" : "http") . "://");
+define("OAUTH_BASE_SERVER", OAUTH_BASE_SCHEME . env('HTTP_HOST'));
+define("OAUTH_BASE_URL", OAUTH_BASE_SERVER . str_replace(basename(env('SCRIPT_NAME')), "", env('SCRIPT_NAME')));
+define("OAUTH_CURRENT_URL", OAUTH_BASE_SERVER . env('REQUEST_URI'));
+
+// Define HTTP_VERSION
+define("HTTP_VERSION", get_server_protocol());
 
 
 /*
@@ -182,9 +39,9 @@ define('LOCALHOST', getHostByName(getHostName()));
 * NOTE: If you change these, also change the error_reporting() code below
 */
 
-if (strtolower(getServer('ENV')) == "prod" || strtolower(getServer('STAGE')) == "prod") {
+if (strtolower(env('ENV')) == "prod" || strtolower(env('STAGE')) == "prod") {
     define('ENVIRONMENT', ENV_PROD);
-} else if (strtolower(getServer('ENV')) == "dev" || strtolower(getServer('STAGE')) == "dev") {
+} else if (strtolower(env('ENV')) == "dev" || strtolower(env('STAGE')) == "dev") {
     define('ENVIRONMENT', ENV_TEST);
 } else {
     define('ENVIRONMENT', ENV_DEV);
@@ -219,6 +76,10 @@ switch (ENVIRONMENT) {
         echo 'The application environment is not set correctly.';
         exit(1); // EXIT_ERROR
 }
+
+/**
+ * Define Configuration
+ */
 class Configs
 {
     const OAUTH_CONTROLLER_PATH =  "application/controllers/";
@@ -340,56 +201,67 @@ class Configs
         'https://partner.staging.wecari.com/'
     ];
 
+    # App Settings
     static function ENCRYPTION_KEY($default = null)
     {
-        return getServer("ENCRYPTION_KEY", $default);
+        return env("ENCRYPTION_KEY", $default);
+    }
+    static function EMAIL_INFO()
+    {
+        return env("EMAIL_INFO", "");
+    }
+    static function EMAIL_SUPPORT()
+    {
+        return env("EMAIL_SUPPORT", "");
     }
 
+    # Database
     static function DB_HOST()
     {
-        return getServer("DB_HOST");
+        return env("DB_HOST");
     }
     static function DB_PORT()
     {
-        return intval(getServer("DB_PORT"));
+        return intval(env("DB_PORT"));
     }
     static function DB_USER()
     {
-        return getServer("DB_USER");
+        return env("DB_USER");
     }
     static function DB_PASS()
     {
-        return getServer("DB_PASS");
+        return env("DB_PASS");
     }
 
-    static function AWS_SMTP_HOST()
+    # AWS
+    static function SMTP_HOST()
     {
-        return getServer("AWS_SMTP_HOST", "");
+        return env("SMTP_HOST", "");
     }
-    static function AWS_SMTP_PORT()
+    static function SMTP_PORT()
     {
-        return intval(getServer("AWS_SMTP_PORT", ""));
+        return intval(env("SMTP_PORT", ""));
     }
-    static function AWS_SMTP_KEY()
+    static function SMTP_KEY()
     {
-        return getServer("AWS_SMTP_KEY", "");
+        return env("SMTP_KEY", "");
     }
-    static function AWS_SMTP_SECRET()
+    static function SMTP_SECRET()
     {
-        return getServer("AWS_SMTP_SECRET", "");
+        return env("SMTP_SECRET", "");
     }
 
+    # External
     static function BUGSNAG_KEY()
     {
-        return getServer("BUGSNAG_KEY", "");
+        return env("BUGSNAG_KEY", "");
     }
-
     static function RECAPTCHA_SECRET_KEY()
     {
-        return getServer("RECAPTCHA_SECRET_KEY", "");
+        return env("RECAPTCHA_SECRET_KEY", "");
     }
     static function RECAPTCHA_CLIENT_KEY()
     {
-        return getServer("RECAPTCHA_CLIENT_KEY", "");
+        return env("RECAPTCHA_CLIENT_KEY", "");
     }
 }

@@ -381,7 +381,7 @@ if (empty($content)) {
         <!--Header-->
         <tr align="center" style="height: auto !important;background: #3F5F44;">
             <td height="40" align="center" style="padding:10px;display: flex; align-content: center; justify-content: center;">
-                <img style="height:40px !important;margin:auto;object-fit: contain;user-select: none;image-rendering:auto;" src="<?= App::get_cdn_path('public/images/logo/white/logo_txt_512px.png') ?>" alt="Wecari Logo" />
+                <img style="height:40px !important;margin:auto;object-fit: contain;user-select: none;image-rendering:auto;" src="<?= App::getCDNUrl('public/images/logo/white/logo_txt_512px.png') ?>" alt="Wecari Logo" />
             </td>
         </tr>
         <!--Content-->

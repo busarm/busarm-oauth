@@ -77,6 +77,7 @@ class Console extends Server
                 $this->print("Client Secret = $client_secret");
                 $this->print("Client Grant_types = $grant_types");
                 $this->print("Client Scopes = $scopes");
+                $this->print("Client Redirect Url = $redirect_uri");
                 $this->print("Client Public Key = ".$keys['publickey']);
                 $this->print("Client Public Key ALGO = $algo"); 
             }
@@ -86,6 +87,7 @@ class Console extends Server
                 $this->print("Client Secret = $client_secret");
                 $this->print("Client Grant_types = $grant_types");
                 $this->print("Client Scopes = $scopes");
+                $this->print("Client Redirect Url = $redirect_uri");
             }
             die;
         }
@@ -111,6 +113,7 @@ class Console extends Server
                 $this->print("Successfully Updated Client Keys");
                 $this->print("Client Public Key = ".$keys['publickey']);
                 $this->print("Client Public Key ALGO = $algo"); 
+                die;
             }
             else {
                 exit ("Failed to update client keys");
@@ -126,29 +129,30 @@ class Console extends Server
      *
      * @param string $name
      * @param string $email
-     * @param string $pass
+     * @param string $password
      * @param string $scopes
      * @return void
      */
-    public function create_user($name, $email, $pass = null, $scopes = "*")
+    public function create_user($name, $email, $password = null, $scopes = "*")
     {
         //Create user id
         $prefix = !empty($email)?$email:(!empty($phone)?$phone:"");
         $user_id = sha1(uniqid($prefix));
-        $password = $pass ?? bin2hex(random_bytes(5));
+        $user_password = $password ?? bin2hex(random_bytes(5));
         $scopes = "*";
 
         //Insert User
-        $result = $this->get_oauth_storage()->setUserCustom($user_id, $password, $email, $name, null, null, $scopes);
+        $result = $this->get_oauth_storage()->setUserCustom($user_id, $user_password, $email, $name, null, null, $scopes);
         if($result){
             $this->print("Successfully Created User");
             $this->print("User ID = $user_id");
             $this->print("User Name = $name");
             $this->print("User Email = $email");
-            if(!$pass){
-                $this->print("User Password = $password");
+            if(!$password){
+                $this->print("User Password = $user_password");
             }
             $this->print("User Scopes = $scopes");
+            die;
         }
         else {
             exit ("Failed to create user");

@@ -174,17 +174,17 @@ class Server
                 $mail->isSendmail();
             }
 
-            $mail->Username = Configs::AWS_SMTP_KEY();
-            $mail->Password = Configs::AWS_SMTP_SECRET();
-            $mail->Host = Configs::AWS_SMTP_HOST();
-            $mail->Port = Configs::AWS_SMTP_PORT();
+            $mail->Username = Configs::SMTP_KEY();
+            $mail->Password = Configs::SMTP_SECRET();
+            $mail->Host = Configs::SMTP_HOST();
+            $mail->Port = Configs::SMTP_PORT();
             $mail->SMTPAuth = true;
             $mail->SMTPSecure = 'tls';
             $mail->Timeout = $this->smtp_timeout;
             $mail->CharSet = $this->smtp_charset;
 
             //Recipients
-            $from = !empty($from) ? $from : $this->getInfoEmail();
+            $from = !empty($from) ? $from : Configs::EMAIL_INFO();
             $mail->setFrom($from, 'Wecari');
             $mail->addReplyTo($from, 'Wecari');
             $mail->addAddress($to);
@@ -199,22 +199,6 @@ class Server
         }
 
         return false;
-    }
-
-    /**Get Info Email
-     * @return string
-     */
-    public function getInfoEmail()
-    {
-        return $this->get_oauth_storage()->getConfig("email_info");
-    }
-
-    /**Get Support Email
-     * @return string
-     */
-    public function getSupportEmail()
-    {
-        return $this->get_oauth_storage()->getConfig("email_support");
     }
 
 

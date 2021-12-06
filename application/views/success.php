@@ -16,10 +16,10 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <link rel="icon" type="image/png" href="<?= App::get_cdn_path('public/images/favicon/dark/favicon-16x16.png') ?>" sizes="16x16" />
-    <link rel="icon" type="image/png" href="<?= App::get_cdn_path('public/images/favicon/dark/favicon-32x32.png') ?>" sizes="32x32" />
-    <link rel="icon" type="image/png" href="<?= App::get_cdn_path('public/images/favicon/dark/favicon-64x64.png') ?>" sizes="64x64" />
-    <link rel="icon" type="image/png" href="<?= App::get_cdn_path('public/images/favicon/dark/favicon-96x96.png') ?>" sizes="96x96" />
+    <link rel="icon" type="image/png" href="<?= App::getCDNUrl('public/images/favicon/dark/favicon-16x16.png') ?>" sizes="16x16" />
+    <link rel="icon" type="image/png" href="<?= App::getCDNUrl('public/images/favicon/dark/favicon-32x32.png') ?>" sizes="32x32" />
+    <link rel="icon" type="image/png" href="<?= App::getCDNUrl('public/images/favicon/dark/favicon-64x64.png') ?>" sizes="64x64" />
+    <link rel="icon" type="image/png" href="<?= App::getCDNUrl('public/images/favicon/dark/favicon-96x96.png') ?>" sizes="96x96" />
     <title>Login</title>
     <style>
         body {
@@ -190,14 +190,14 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
         <div class="success-page">
             <div class="form">
                 <div>
-                    <img class="logo logo_icon" src="<?= App::get_cdn_path('public/images/logo/dark/logo_256px.png') ?>">
+                    <img class="logo logo_icon" src="<?= App::getCDNUrl('public/images/logo/dark/logo_256px.png') ?>">
                 </div>
                 <div>
-                    <img class="logo logo_txt" src="<?= App::get_cdn_path('public/images/logo/dark/logo_txt_512px.png') ?>">
+                    <img class="logo logo_txt" src="<?= App::getCDNUrl('public/images/logo/dark/logo_txt_512px.png') ?>">
                 </div>
                 <br />
                 <div>
-                    <img class="logo icon" src="<?= App::get_cdn_path('public/images/icons/Verified.png') ?>">
+                    <img class="logo icon" src="<?= App::getCDNUrl('public/images/icons/Verified.png') ?>">
                 </div>
                 <br>
                 <h3> Authorization link Sent to <strong style="font-size: 16px"><?= $email ?></strong></h3>
@@ -208,8 +208,8 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
         <!-- Footer -->
         <footer>
             <ul class="copyright">
-                <li style="min-width: 100px;"><a href="<?= App::get_app_path('privacy') ?>" target="_blank">Privacy Policy</a></li>
-                <li style="min-width: 100px;"><a href="<?= App::get_app_path('terms') ?>" target="_blank">Terms & Conditions</a></li>
+                <li style="min-width: 100px;"><a href="<?= App::getAppUrl('privacy') ?>" target="_blank">Privacy Policy</a></li>
+                <li style="min-width: 100px;"><a href="<?= App::getAppUrl('terms') ?>" target="_blank">Terms & Conditions</a></li>
             </ul>
             <ul class="copyright">
                 <li>&copy; Wecari All rights reserved.</li>

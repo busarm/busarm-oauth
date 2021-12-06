@@ -16,24 +16,27 @@ provider:
     environment: # define service wide environment variables here
         ENV: ${self:provider.stage} # Environment variable
         BREF_BINARY_RESPONSES: '1' # For bref to return binary responses. Bref will automatically encode responses to base64
-        # Data and Session encryption key
+        SEPARATE_VENDOR: '0'
+        # App
+        APP_NAME: 'Wecari Oauth'
+        COMPANY_NAME: 'Wecari'
         ENCRYPTION_KEY: ${self:custom.secret.oauth_encryption_key} 
-        # Data
         BUGSNAG_KEY: ${self:custom.secret.oauth_bugsnag_key} 
-        # AWS RDS
+        EMAIL_INFO: "info@wecari.com"
+        EMAIL_SUPPORT: "support@wecari.com"
+        # Databse
         DB_HOST: ${self:custom.secret.db_host}
         DB_PORT: ${self:custom.secret.db_port}
         DB_USER: ${self:custom.secret.db_username}
         DB_PASS: ${self:custom.secret.db_password}
-        # AWS SMTP
-        AWS_SMTP_HOST: ${self:custom.secret.smtp_host}
-        AWS_SMTP_PORT: ${self:custom.secret.smtp_port}
-        AWS_SMTP_KEY: ${self:custom.secret.smtp_username}
-        AWS_SMTP_SECRET: ${self:custom.secret.smtp_password}
+        # SMTP
+        SMTP_HOST: ${self:custom.secret.smtp_host}
+        SMTP_PORT: ${self:custom.secret.smtp_port}
+        SMTP_KEY: ${self:custom.secret.smtp_username}
+        SMTP_SECRET: ${self:custom.secret.smtp_password}
         # Google
         RECAPTCHA_SECRET_KEY: ${self:custom.secret.recaptcha_secret_key}
         RECAPTCHA_CLIENT_KEY: ${self:custom.secret.recaptcha_client_key}
-        SEPARATE_VENDOR: ${self:custom.bref.separateVendor}
     apiGateway:
         binaryMediaTypes:
             - '*/*'

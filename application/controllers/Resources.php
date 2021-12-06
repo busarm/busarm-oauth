@@ -23,15 +23,10 @@ class Resources extends Server
     public function getTokenInfo()
     {
         if ($result = $this->get_oauth_server()->getAccessTokenData($this->request, $this->response)) {
-            $user = null;
-            if (!empty($user_id = $result["user_id"])) {
-                $user = $this->get_oauth_storage()->getSingleUserInfo($user_id);
-                if (!empty($user)) {
-                    unset($user["scope"]); //remove user's scope
-                }
-            }
-            $result["user"] = $user;
-            unset($result["user_id"]); //remove user id
+            // Get user info
+            $result["user"] = isset($result["user_id"]) ? $this->get_oauth_storage()->getSingleUserInfo($result["user_id"], true) : null;
+            // Remove user_id field
+            unset($result["user_id"]);
             $this->response->setParameters(array('success' => true, 'data' => $result));
         } else if (empty($this->response->getParameters())) {
             $this->response->setParameters(array('success' => false, 'error' => 'invalid_token', 'error_description' => "Authorization failed"));

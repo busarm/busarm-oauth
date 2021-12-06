@@ -8,39 +8,9 @@ class OauthPdo  extends Pdo
     {
         //Add custom configs
         $config = array_merge(array(
-            'configs_table' => 'oauth_configs',
             'orgs_table' => 'oauth_organizations',
         ), $config);
         parent::__construct($connection, $config);
-    }
-
-    /**
-     * Get Configuration for name
-     * @param $name
-     * @return string|boolean
-     */
-    public function getConfig($name)
-    {
-        $stmt = $this->db->prepare(sprintf('SELECT value FROM %s WHERE name = :name ', $this->config['configs_table']));
-        $stmt->execute(compact('name'));
-        if ($config = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-            return $config != null && isset($config['value']) ? $config['value'] : false;
-        } else
-            return false;
-    }
-
-
-    /**Get Configurations
-     * @return array
-     */
-    public function getConfigs()
-    {
-        $stmt = $this->db->prepare(sprintf('SELECT * from %s', $this->config['configs_table']));
-        $stmt->execute();
-        if ($configs = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-            return $configs;
-        } else
-            return [];
     }
 
     /**
@@ -82,7 +52,7 @@ class OauthPdo  extends Pdo
      */
     public function checkUserCredentials($unique, $password)
     {
-        $stmt = $this->db->prepare($sql = sprintf('SELECT * FROM %s WHERE (user_id=:unique OR email=:unique OR phone=:unique) AND password=sha2(CONCAT(user_id,\':\',salt,\':\',:password),256) LIMIT 1', $this->config['user_table']));
+        $stmt = $this->db->prepare(sprintf('SELECT * FROM %s WHERE (user_id=:unique OR email=:unique) AND password=sha2(CONCAT(user_id,\':\',salt,\':\',:password),256) LIMIT 1', $this->config['user_table']));
         $stmt->execute(array('unique' => $unique, 'password' => $password));
 
         if ($userInfo = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -100,7 +70,7 @@ class OauthPdo  extends Pdo
      */
     public function getUser($unique)
     {
-        $stmt = $this->db->prepare($sql = sprintf('SELECT * FROM %s WHERE (user_id=:unique OR email=:unique OR phone=:unique) LIMIT 1', $this->config['user_table']));
+        $stmt = $this->db->prepare(sprintf('SELECT * FROM %s WHERE (user_id=:unique OR email=:unique) LIMIT 1', $this->config['user_table']));
         $stmt->execute(array('unique' => $unique));
         if (!$userInfo = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             return false;
@@ -111,14 +81,19 @@ class OauthPdo  extends Pdo
 
     /**
      * Get User
-     * @param $user_id
+     * @param $unique
+     * @param $excludeScopes
      * @return array|bool
      */
-    public function getSingleUserInfo($unique)
+    public function getSingleUserInfo($unique, $excludeScopes = false)
     {
-        $stmt = $this->db->prepare($sql = sprintf('SELECT user_id, email, name, phone, dial_code, scope, cred_updated_at  FROM %s WHERE (user_id=:unique OR email=:unique OR phone=:unique) LIMIT 1', $this->config['user_table']));
+        if($excludeScopes) {
+            $stmt = $this->db->prepare(sprintf('SELECT user_id, email, name, phone, dial_code, cred_updated_at  FROM %s WHERE (user_id=:unique OR email=:unique) LIMIT 1', $this->config['user_table']));
+        }
+        else {
+            $stmt = $this->db->prepare(sprintf('SELECT user_id, email, name, phone, dial_code, scope, cred_updated_at  FROM %s WHERE (user_id=:unique OR email=:unique) LIMIT 1', $this->config['user_table']));
+        }
         $stmt->execute(array('unique' => $unique));
-
         if (!$userInfo = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             return false;
         }
@@ -137,7 +112,7 @@ class OauthPdo  extends Pdo
         $users = [];
         if (!empty($uniques)) {
             $whereInUserIds = implode(',', array_fill(0, is_array($uniques) ? count($uniques) : 0, '?'));
-            $stmt = $this->db->prepare(sprintf('SELECT user_id, email, name, phone, dial_code, scope, cred_updated_at FROM %s WHERE user_id IN (%s) OR email IN (%s) OR phone IN (%s);', $this->config['user_table'], $whereInUserIds, $whereInUserIds, $whereInUserIds));
+            $stmt = $this->db->prepare(sprintf('SELECT user_id, email, name, phone, dial_code, scope, cred_updated_at FROM %s WHERE user_id IN (%s) OR email IN (%s);', $this->config['user_table'], $whereInUserIds, $whereInUserIds));
             $stmt->execute(array_merge($uniques, $uniques, $uniques));
             if ($result = $stmt->fetchAll(\PDO::FETCH_ASSOC)) {
                 $users = (array_merge($users, $result));
@@ -168,27 +143,27 @@ class OauthPdo  extends Pdo
         if ($this->getUser($user_id)) {
             $done = false;
             if (!empty($password)) {
-                $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET password=sha2(CONCAT(:user_id,\':\',:salt,\':\',:password),256), salt=:salt, cred_updated_at=NOW() where user_id=:user_id', $this->config['user_table']));
+                $stmt = $this->db->prepare(sprintf('UPDATE %s SET password=sha2(CONCAT(:user_id,\':\',:salt,\':\',:password),256), salt=:salt, cred_updated_at=NOW() where user_id=:user_id', $this->config['user_table']));
                 $done = $stmt->execute(compact('user_id', 'password', 'salt')) ? true : $done;
             }
             if (!empty($email)) {
-                $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET email=:email where user_id=:user_id', $this->config['user_table']));
+                $stmt = $this->db->prepare(sprintf('UPDATE %s SET email=:email where user_id=:user_id', $this->config['user_table']));
                 $done = $stmt->execute(compact('user_id', 'email')) ? true : $done;
             }
             if (!empty($name)) {
-                $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET name=:name where user_id=:user_id', $this->config['user_table']));
+                $stmt = $this->db->prepare(sprintf('UPDATE %s SET name=:name where user_id=:user_id', $this->config['user_table']));
                 $done = $stmt->execute(compact('user_id', 'name')) ? true : $done;
             }
             if (!empty($phone)) {
-                $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET phone=:phone where user_id=:user_id', $this->config['user_table']));
+                $stmt = $this->db->prepare(sprintf('UPDATE %s SET phone=:phone where user_id=:user_id', $this->config['user_table']));
                 $done = $stmt->execute(compact('user_id', 'phone')) ? true : $done;
             }
             if (!empty($dial_code)) {
-                $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET dial_code=:dial_code where user_id=:user_id', $this->config['user_table']));
+                $stmt = $this->db->prepare(sprintf('UPDATE %s SET dial_code=:dial_code where user_id=:user_id', $this->config['user_table']));
                 $done = $stmt->execute(compact('user_id', 'dial_code')) ? true : $done;
             }
             if (!empty($scope)) {
-                $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET scope=:scope where user_id=:user_id', $this->config['user_table']));
+                $stmt = $this->db->prepare(sprintf('UPDATE %s SET scope=:scope where user_id=:user_id', $this->config['user_table']));
                 $done = $stmt->execute(compact('user_id', 'scope')) ? true : $done;
             }
 
@@ -231,10 +206,10 @@ class OauthPdo  extends Pdo
     {
         // if it exists, update it.
         if ($this->getClientDetailsCustom($client_id, $org_id)) {
-            $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET client_secret=:client_secret, client_name=:client_name, redirect_uri=:redirect_uri, grant_types=:grant_types, scope=:scope, user_id=:user_id, issue_jwt=:issue_jwt where client_id=:client_id', $this->config['client_table']));
+            $stmt = $this->db->prepare(sprintf('UPDATE %s SET client_secret=:client_secret, client_name=:client_name, redirect_uri=:redirect_uri, grant_types=:grant_types, scope=:scope, user_id=:user_id, issue_jwt=:issue_jwt where client_id=:client_id', $this->config['client_table']));
             return $stmt->execute(compact('client_id', 'client_name', 'client_secret', 'redirect_uri', 'grant_types', 'scope', 'user_id', 'issue_jwt'));
         } else {
-            $stmt = $this->db->prepare(sprintf('INSERT INTO %s (org_id, client_id, client_name, client_secret, redirect_uri, grant_types, scope, user_id, issue_jwt) VALUES (:org_id, :client_id, :client_secret, :redirect_uri, :grant_types, :scope, :user_id, :issue_jwt)', $this->config['client_table']));
+            $stmt = $this->db->prepare(sprintf('INSERT INTO %s (org_id, client_id, client_name, client_secret, redirect_uri, grant_types, scope, user_id, issue_jwt) VALUES (:org_id, :client_id, :client_name, :client_secret, :redirect_uri, :grant_types, :scope, :user_id, :issue_jwt)', $this->config['client_table']));
             return $stmt->execute(compact('org_id', 'client_id', 'client_name', 'client_secret', 'redirect_uri', 'grant_types', 'scope', 'user_id', 'issue_jwt'));
         }
     }
@@ -261,7 +236,7 @@ class OauthPdo  extends Pdo
     {
         // if it exists, update it.
         if ($org_id && $this->getOrganizationDetails($org_id)) {
-            $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET org_name=:org_name, logo=:logo where org_id=:org_id', $this->config['orgs_table']));
+            $stmt = $this->db->prepare(sprintf('UPDATE %s SET org_name=:org_name, logo=:logo where org_id=:org_id', $this->config['orgs_table']));
             return $stmt->execute(compact('org_id', 'org_name', 'logo'));
         } else {
             $stmt = $this->db->prepare(sprintf('INSERT INTO %s (org_name, logo) VALUES (:org_name, :logo)', $this->config['orgs_table']));
@@ -359,7 +334,7 @@ class OauthPdo  extends Pdo
     public function setClientPublickKey($client_id, $private_key, $public_key, $encryption_algorithm = "RS256")
     {
         if ($this->getPublicKey($client_id)) {
-            $stmt = $this->db->prepare($sql = sprintf('UPDATE %s SET private_key=:private_key, public_key=:public_key, encryption_algorithm=:encryption_algorithm where client_id=:client_id', $this->config['public_key_table']));
+            $stmt = $this->db->prepare(sprintf('UPDATE %s SET private_key=:private_key, public_key=:public_key, encryption_algorithm=:encryption_algorithm where client_id=:client_id', $this->config['public_key_table']));
         } else {
             $stmt = $this->db->prepare(sprintf('INSERT INTO %s (client_id, private_key, public_key, encryption_algorithm) VALUES (:client_id, :private_key, :public_key, :encryption_algorithm)', $this->config['public_key_table']));
         }

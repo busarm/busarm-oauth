@@ -97,20 +97,6 @@ CREATE TABLE `oauth_clients` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `oauth_configs`
---
-
-DROP TABLE IF EXISTS `oauth_configs`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `oauth_configs` (
-  `name` varchar(50) NOT NULL,
-  `value` text CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
-  PRIMARY KEY (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
 -- Table structure for table `oauth_jti`
 --
 

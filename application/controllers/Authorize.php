@@ -197,18 +197,18 @@ class Authorize extends Server
                                 App::getInstance()->set_cookie(self::EMAIL_REQ_TOKEN_PARAM, $token, $timeout); //Save to cookie to prevent duplicate 
                                 return $userInfo;
                             } catch (Exception $e) {
-                                $this->showError("authorization_failed", sprintf("Unknown error. Please contact <a href='%s' target='_blank'>support</a> for assistance", App::get_app_path('support')), $redirect_uri);
+                                $this->showError("authorization_failed", sprintf("Unknown error. Please contact <a href='%s' target='_blank'>support</a> for assistance", App::getAppUrl('support')), $redirect_uri);
                             }
                         } else {
-                            $this->showError("authorization_failed", sprintf("Failed to send mail. Please contact <a href='%s' target='_blank'>support</a> for assistance", App::get_app_path('support')), $redirect_uri);
+                            $this->showError("authorization_failed", sprintf("Failed to send mail. Please contact <a href='%s' target='_blank'>support</a> for assistance", App::getAppUrl('support')), $redirect_uri);
                         }
                     } else {
                         $msg = $this->response->getParameter("error_description");
                         $msg = !empty($msg) ? $msg : "Unexpected error encountered";
-                        $this->showError("authorization_failed", sprintf("<span style='color:red'>$msg</span>. Please contact <a href='%s' target='_blank'>support</a> for assistance", App::get_app_path('support')), $redirect_uri);
+                        $this->showError("authorization_failed", sprintf("<span style='color:red'>$msg</span>. Please contact <a href='%s' target='_blank'>support</a> for assistance", App::getAppUrl('support')), $redirect_uri);
                     }
                 } else {
-                    $this->showError("authorization_failed", sprintf("Requested scope(s) does not exist for the specified user. Please contact <strong>%s</strong> for assistance", $this->getSupportEmail()), $redirect_uri);
+                    $this->showError("authorization_failed", sprintf("Requested scope(s) does not exist for the specified user. Please contact <strong>%s</strong> for assistance", Configs::EMAIL_SUPPORT()), $redirect_uri);
                 }
             } else {
                 $min = intval($timeout / 60);

@@ -1,5 +1,6 @@
 <?php
 defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
+require_once "Helpers.php";
 require_once "Configs.php";
 require_once "CIPHER.php";
 
@@ -75,7 +76,7 @@ class App
      * @param string $path
      * @return void
      */
-    public static function get_app_path($path = '')
+    public static function getAppUrl($path = '')
     {
         if (ENVIRONMENT == ENV_PROD)
             return "https://wecari.com/" . $path;
@@ -91,7 +92,7 @@ class App
      * @param string $path
      * @return void
      */
-    public static function get_cdn_path($path = '')
+    public static function getCDNUrl($path = '')
     {
         if (ENVIRONMENT == ENV_PROD)
             return "https://cdn.wecari.com/" . $path;
@@ -116,12 +117,12 @@ class App
             $this->processRoute($controller, $function, $params);
         } else {
 
-            $request_path = getServer('PATH_INFO');
+            $request_path = env('PATH_INFO');
             if (empty($request_path)) {
-                $request_path = getServer('ORIG_PATH_INFO');
+                $request_path = env('ORIG_PATH_INFO');
             }
             if (empty($request_path)) {
-                $request_path = getServer('REQUEST_URI');
+                $request_path = env('REQUEST_URI');
             }
 
             if (!empty($request_path)) {
@@ -152,7 +153,7 @@ class App
         if (Configs::CHECK_CORS == TRUE) {
             $this->check_cors();
         } else {
-            if (strtolower(getServer("REQUEST_METHOD")) === 'options') {
+            if (strtolower(env("REQUEST_METHOD")) === 'options') {
                 // kill the response and send it to the client
                 $this->showMessage(200, true, "Preflight Ok", ENVIRONMENT);
             }
@@ -202,7 +203,7 @@ class App
      */
     private function processRoute($controller, $function, $params = [])
     {
-        if ($realPath = $this->fileExists($this->controllerDir . $controller . ".php", false)) {
+        if ($realPath = $this->fileExists(FCPATH . $this->controllerDir . $controller . ".php", false)) {
             /*
             * Let's Go...
             */
@@ -265,18 +266,18 @@ class App
     public function showMessage($code, $status, $title, $msg, $errorLine = null, $errorFile = null, $errorContext = [])
     {
         if (!is_cli() && !headers_sent()) {
-            header(PROTOCOL_HEADER . ' ' . $code . ' ' . $title, TRUE, $code);
+            header(HTTP_VERSION . ' ' . $code . ' ' . $title, TRUE, $code);
             header("Content-type: application/json");
             header('Access-Control-Allow-Origin: *', true);
             header('Access-Control-Allow-Methods: *', true);
         }
         if ($status) {
-            echo json_encode(['status' => true, 'msg' => $title, 'env' => ENVIRONMENT, 'ip' => IPADDRESS]);
+            echo json_encode(['status' => true, 'msg' => $title, 'env' => ENVIRONMENT, 'ip' => IPADDRESS], JSON_PRETTY_PRINT);
         } else {
             if (ENVIRONMENT != ENV_PROD) {
-                echo json_encode(['status' => false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT, 'ip' => IPADDRESS,  'line' =>  $errorLine,  'file_path' =>  $errorFile,  'backtrace' =>  $errorContext]);
+                echo json_encode(['status' => false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT, 'ip' => IPADDRESS,  'line' =>  $errorLine,  'file_path' =>  $errorFile,  'backtrace' =>  $errorContext], JSON_PRETTY_PRINT);
             } else {
-                echo json_encode(['status' => false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT, 'ip' => IPADDRESS]);
+                echo json_encode(['status' => false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT, 'ip' => IPADDRESS], JSON_PRETTY_PRINT);
             }
         }
         exit;
@@ -321,7 +322,7 @@ class App
      */
     public function loadView($path, $vars = array(), $return = false)
     {
-        if ($filePath = $this->fileExists($this->viewDir . $path . ".php")) {
+        if ($filePath = $this->fileExists(FCPATH . $this->viewDir . $path . ".php")) {
             ob_start();
             if (!empty($vars))
                 extract($vars);
@@ -351,7 +352,7 @@ class App
      */
     public function loadLibrary($path, $vars = array())
     {
-        if ($filePath = $this->fileExists($this->libraryDir . $path . ".php")) {
+        if ($filePath = $this->fileExists(FCPATH .$this->libraryDir . $path . ".php")) {
             if (!empty($vars))
                 extract($vars);
             require_once $filePath;
@@ -368,7 +369,7 @@ class App
      */
     public function loadModel($path, $vars = array())
     {
-        if ($filePath = $this->fileExists($this->modelDir . $path . ".php")) {
+        if ($filePath = $this->fileExists(FCPATH .$this->modelDir . $path . ".php")) {
             if (!empty($vars))
                 extract($vars);
             require_once $filePath;
@@ -482,7 +483,7 @@ class App
 
         // If we want to allow any domain to access the API
         if (Configs::ALLOWED_ANY_CORS_DOMAIN == TRUE) {
-            header(PROTOCOL_HEADER . " 200 OK", TRUE, 200);
+            header(HTTP_VERSION . " 200 OK", TRUE, 200);
             header('Access-Control-Allow-Origin: *', true);
             header('Access-Control-Allow-Methods: ' . $allowed_methods, true);
             header('Access-Control-Allow-Headers: ' . $allowed_headers, true);
@@ -492,9 +493,9 @@ class App
 
             // We're going to allow only certain domains access
             // Store the HTTP Origin header
-            $origin = getServer('HTTP_ORIGIN');
+            $origin = env('HTTP_ORIGIN');
             if ($origin === NULL) {
-                $origin = getServer('HTTP_REFERER');
+                $origin = env('HTTP_REFERER');
                 if ($origin === NULL) {
                     $origin = '';
                 }
@@ -504,7 +505,7 @@ class App
 
             // If the origin domain is in the allowed_cors_origins list, then add the Access Control headers
             if (is_array($allowed_origins) && in_array(trim($origin, "/"), $allowed_origins)) {
-                header(PROTOCOL_HEADER . " 200 OK", true, 200);
+                header(HTTP_VERSION . " 200 OK", true, 200);
                 header('Access-Control-Allow-Origin: ' . $origin, true);
                 header('Access-Control-Allow-Methods: ' . $allowed_methods, true);
                 header('Access-Control-Allow-Headers: ' . $allowed_headers, true);
@@ -514,7 +515,7 @@ class App
         }
 
         // If the request HTTP method is 'OPTIONS', kill the response and send it to the client
-        if (strtolower(getServer("REQUEST_METHOD")) === 'options') {
+        if (strtolower(env("REQUEST_METHOD")) === 'options') {
             die();
         }
     }
