@@ -63,8 +63,8 @@ services:
     ports: 
       - 8000:80
     volumes:
-        - .:/var/www:rw
-        - ./nginx/app.conf:/opt/docker/etc/nginx/conf.d/app.conf
+        - .:/var/www:ro
+        - ./nginx/app.conf:/opt/docker/etc/nginx/conf.d/app.conf:ro
     environment:
         # NGINX
         WEB_DOCUMENT_ROOT: '/var/www/public'

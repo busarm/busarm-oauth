@@ -240,7 +240,7 @@ class Authorize extends Server
         // Authorization approved
         if ($approve && $request_token == $token) {
 
-            $scope = !empty($scope) ? $scope : $this->get_oauth_storage()->getDefaultScope();
+            $scope = !empty($scope) ? $scope : $this->get_oauth_server()->getScopeUtil()->getDefaultScope();
 
             if ($this->get_oauth_storage()->scopeExistsForUser($scope, $user_id)) {
                 if ($this->get_oauth_server()->validateAuthorizeRequest($this->request, $this->response)) {
@@ -265,15 +265,13 @@ class Authorize extends Server
             App::getInstance()->set_cookie(self::AUTH_REQ_TOKEN_PARAM, $token, 300);
             $org = $this->get_oauth_storage()->getOrganizationDetails($client['org_id']);
             $user = $this->get_oauth_storage()->getUser($user_id);
-            $scopes = $this->get_oauth_storage()->scopeExists($scope);
+            $scopes = Scopes::findScope($scope);
             return $this->showAuthorize([
                 'client_name' => $client['client_name'],
                 'org_name' => $org ? $org['org_name'] : null,
                 'user_name' => $user ? $user['name'] : null,
                 'user_email' => $user ? $user['email'] : null,
-                'scopes' => $scopes ? array_map(function ($row) {
-                    return $row['description'];
-                }, $scopes) : [],
+                'scopes' => $scopes ? array_values($scopes): [],
                 'action' => OAUTH_CURRENT_URL,
             ]);
         }

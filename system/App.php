@@ -3,6 +3,7 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
 require_once "Helpers.php";
 require_once "Configs.php";
 require_once "CIPHER.php";
+require_once "Scopes.php";
 
 /**
  * Created by PhpStorm.

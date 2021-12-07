@@ -140,7 +140,7 @@ class Resources extends Server
             $user_id = sha1(uniqid($prefix));
 
             //Check if scope is valid
-            $scopes = $this->get_oauth_storage()->scopeExists($scopes) ? $scopes : $this->get_oauth_storage()->getDefaultScope();
+            $scopes = $this->get_oauth_server()->getScopeUtil()->scopeExists($scopes) ? $scopes : $this->get_oauth_server()->getScopeUtil()->getDefaultScope();
 
             //Check if user exists
             if ($email && ($user = $this->get_oauth_storage()->getUser($email))) {
@@ -214,7 +214,7 @@ class Resources extends Server
             //Check if scope is valid if it's available
             $scopes = $this->implode($scope);
             if (!empty($scopes)) {
-                $scopes = $this->get_oauth_storage()->scopeExists($scopes) ? $scopes : "";
+                $scopes = $this->get_oauth_server()->getScopeUtil()->scopeExists($scopes) ? $scopes : "";
             }
 
             //Check if user exists
@@ -274,7 +274,7 @@ class Resources extends Server
             $redirect_uri = $this->implode($redirect_uri);
 
             //Check if scope is valid
-            $scopes = $this->get_oauth_storage()->scopeExists($scope) ? $scope : $this->get_oauth_storage()->getDefaultScope();
+            $scopes = $this->get_oauth_server()->getScopeUtil()->scopeExists($scope) ? $scope : $this->get_oauth_server()->getScopeUtil()->getDefaultScope();
 
             //Insert Client
             $result = $this->get_oauth_storage()->setClientDetailsCustom($org_id, $client_id, $client_name, $client_secret, $redirect_uri, $grant_types, $scopes, $user_id);

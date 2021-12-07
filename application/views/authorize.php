@@ -222,6 +222,8 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
                                 </ul>
                             <?php endif ?>
                         <?php endif ?>
+                        <br>
+                        <br>
                         <div class="auth-buttons">
                             <div style="padding: 5px;">
                                 <button id="approve" class="auth-button ok" name="approve" value="1" type="submit">Approve</button>

@@ -245,35 +245,6 @@ class OauthPdo  extends Pdo
     }
 
     /**
-     * @return null|array
-     */
-    public function getAllScopes()
-    {
-        $stmt = $this->db->prepare(sprintf('SELECT * FROM %s', $this->config['scope_table']));
-        $stmt->execute();
-        if ($result = $stmt->fetchAll(\PDO::FETCH_ASSOC)) {
-            return $result;
-        }
-        return null;
-    }
-
-    /**
-     * @param $scope
-     * @return bool|array Bool or Array of scopes
-     */
-    public function scopeExists($scope)
-    {
-        $scopes = !is_array($scope) ? explode(' ', $scope) : $scope;
-        $whereIn = implode(',', array_fill(0, count($scopes), '?'));
-        $stmt = $this->db->prepare(sprintf('SELECT * FROM %s WHERE scope IN (%s)', $this->config['scope_table'], $whereIn));
-        $stmt->execute($scopes);
-        if ($result = $stmt->fetchAll(\PDO::FETCH_ASSOC)) {
-            return count($result) == count($scopes) ? $result : false;
-        }
-        return false;
-    }
-
-    /**
      * Check if User has the requested scope
      * @param $scope
      * @param $user_id
@@ -286,12 +257,17 @@ class OauthPdo  extends Pdo
         $stmt->execute([$user_id]);
         if ($result = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $user_scopes = array_map('strtolower', explode(' ', $result['scope']));
-            $scopes = !is_array($scope) ? explode(' ', $scope) : $scope;
-            foreach ($scopes as $scope) {
-                if (in_array(strtolower($scope), $user_scopes) || in_array('*', $user_scopes)) {
-                    $found[] = $scope;
-                } else {
-                    return false; // All must exist
+            if (in_array(Scopes::SCOPE_OWNER, $user_scopes)) {
+                $found = array_keys(Scopes::ALL_SCOPES);
+            } else {
+                $scopes = !is_array($scope) ? explode(' ', $scope) : $scope;
+                $scopes = in_array(Scopes::SCOPE_OWNER, $scopes) ? array_keys(Scopes::ALL_SCOPES) : $scopes;
+                foreach ($scopes as $scope) {
+                    if (in_array(strtolower($scope), $user_scopes)) {
+                        $found[] = $scope;
+                    } else {
+                        return false; // All must exist
+                    }
                 }
             }
         }
@@ -312,12 +288,17 @@ class OauthPdo  extends Pdo
         $stmt->execute([$client_id]);
         if ($result = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $client_scopes = array_map('strtolower', explode(' ', $result['scope']));
-            $scopes = !is_array($scope) ? explode(' ', $scope) : $scope;
-            foreach ($scopes as $scope) {
-                if (in_array(strtolower($scope), $client_scopes) || in_array('*', $client_scopes)) {
-                    $found[] = $scope;
-                } else {
-                    return false; // All must exist
+            if (in_array(Scopes::SCOPE_OWNER, $client_scopes)) {
+                $found = array_keys(Scopes::ALL_SCOPES);
+            } else {
+                $scopes = !is_array($scope) ? explode(' ', $scope) : $scope;
+                $scopes = in_array(Scopes::SCOPE_OWNER, $scopes) ? array_keys(Scopes::ALL_SCOPES) : $scopes;
+                foreach ($scopes as $scope) {
+                    if (in_array(strtolower($scope), $client_scopes)) {
+                        $found[] = $scope;
+                    } else {
+                        return false; // All must exist
+                    }
                 }
             }
         }

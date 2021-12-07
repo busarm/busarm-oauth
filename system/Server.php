@@ -11,9 +11,6 @@ use PHPMailer\PHPMailer\PHPMailer;
  */
 class Server
 {
-    const SCOPE_SYSTEM = 'system';
-    const SCOPE_ADMIN = 'admin';
-
     private $smtp_protocol = 'smtp';
     private $smtp_timeout = 10;
     private $smtp_charset = 'utf-8';
@@ -83,13 +80,20 @@ class Server
                 'always_issue_new_refresh_token' => true
             )));
 
+            /*Set up Scopes*/
+            $this->oauth_server->setScopeUtil(new Scopes(new OAuth2\Storage\Memory(array(
+                'default_scope' => Scopes::DEFAULT_SCOPE,
+                'supported_scopes' => array_keys(Scopes::ALL_SCOPES)
+            ))));
+            
             /**Check if client is valid*/
             if ($validateClient) {
-                if (!$this->validateClient(self::SCOPE_SYSTEM)) {
+                if (!$this->validateClient(Scopes::SCOPE_SYSTEM)) {
                     $this->response->send();
                     die;
                 }
             }
+
         } catch (Exception $e) {
             $this->response->setParameters(['success' => false, 'error' => 'internal_error', 'error_description' => $e->getMessage()]);
             $this->response->send();
