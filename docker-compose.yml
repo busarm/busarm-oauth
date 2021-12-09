@@ -50,6 +50,7 @@ services:
         # PHP
         PHP_MEMORY_LIMIT: 512M
         PHP_DATE_TIMEZONE: UTC
+        PHP_DISPLAY_ERRORS: 1
     networks: 
       - local
 

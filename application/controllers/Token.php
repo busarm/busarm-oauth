@@ -41,6 +41,9 @@ class Token extends Server
         if ($this->get_oauth_server()->verifyResourceRequest($this->request, $this->response)) {
             $this->response->setParameters(array('success' => true, 'message' => 'Api access granted'));
         }
+        else {
+            $this->response->setParameters(array('success' => false, 'message' => 'Unauthorized aceess'));
+        }
         $this->response->send();
         die;
     }
@@ -56,13 +59,12 @@ class Token extends Server
     public function invalidate()
     {
         $done = false;
-        $refresh_token = $this->request->request('refresh_token');
-        if (!($access_token = $this->request->request('access_token'))) {
-            if ($token = $this->get_oauth_server()->getAccessTokenData($this->request)) {
-                $access_token = ($token['access_token'] ?? $token['id'] ?? $token['jti'] ?? null);
-            }
+        $access_token = null;
+        if ($token = $this->get_oauth_server()->getAccessTokenData($this->request)) {
+            $access_token = ($token['access_token'] ?? $token['id'] ?? $token['jti'] ?? null);
         }
-
+        $refresh_token = $this->request->request('refresh_token');
+        
         if (!empty($access_token)) {
             $done = $this->get_oauth_storage()->unsetAccessToken($access_token);
         }
@@ -73,7 +75,8 @@ class Token extends Server
         if ($done) {
             $this->response->setParameters(array('success' => true, 'msg' => 'Successfully cleared access'));
         } else {
-            $this->response->setParameters(array('success' => $done, 'msg' => 'Failed to invalidate access'));
+            $this->response->setStatusCode(400);
+            $this->response->setParameters(array('success' => false, 'msg' => 'Failed to invalidate access'));
         }
         $this->response->send();
         die;
