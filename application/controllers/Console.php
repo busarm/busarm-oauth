@@ -53,13 +53,15 @@ class Console extends Server
      * @param string $client_id
      * @param string $client_name
      * @param string $redirect_uri
+     * @param string $scopes
+     * @param string $grant_types
      * @return void
      */
-    public function create_client($org_id, $client_id, $client_name, $redirect_uri = null)
+    public function create_client($org_id, $client_id, $client_name, $redirect_uri = null, $scopes = null, $grant_types = null)
     {
         $client_secret = md5(uniqid($client_id));
-        $grant_types = "password client_credentials authorization_code refresh_code";
-        $scopes = "*";
+        $grant_types = $grant_types ?? "password client_credentials authorization_code refresh_code";
+        $scopes = $scopes ?? "*";
 
         //Insert Client
         $result = $this->get_oauth_storage()->setClientDetailsCustom($org_id, $client_id, $client_name, $client_secret, $redirect_uri, $grant_types, $scopes);
@@ -138,7 +140,7 @@ class Console extends Server
         //Create user id
         $prefix = !empty($email)?$email:(!empty($phone)?$phone:"");
         $user_id = sha1(uniqid($prefix));
-        $user_password = $password ?? bin2hex(random_bytes(5));
+        $user_password = !empty($password) ? $password : bin2hex(random_bytes(5));
         $scopes = "*";
 
         //Insert User
@@ -148,7 +150,7 @@ class Console extends Server
             $this->print("User ID = $user_id");
             $this->print("User Name = $name");
             $this->print("User Email = $email");
-            if(!$password){
+            if(empty($password)){
                 $this->print("User Password = $user_password");
             }
             $this->print("User Scopes = $scopes");

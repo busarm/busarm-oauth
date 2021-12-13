@@ -62,9 +62,12 @@ Wecari Authorization server. Manages user authentication and authorization to ac
 - Refer to `application/controllers/Console.php`
 ### Available Console commands
 - `create_org` - Create an Organization. E.g `create_org <org_name>`
-- `create_client` - Create an Oauth Client. E.g `create_client <org_id> <client_id> <client_name> <redirect_uri>`
+- `create_client` - Create an Oauth Client. E.g `create_client <org_id> <client_id> <client_name> <redirect_uri> <scopes> <grant_types>`
+- - E.g create_client 2 "wecari_partner_223333" "Wecari Partner" "https://partner.wecari.com/hooks/authorize" "user agent partner" "password authorization_code refresh_token"
+- - [CAUTION] Not specifying the right scopes will grant 'owner' scope by default - which can be dangerous. 
 - `update_client_key` - Update an Oauth Client key pair. E.g `update_client_key <client_id>`
 - `create_user` - Create a user. E.g `create_user <name> <email> <password> <scopes>`
+- - [CAUTION] Not specifying the right scopes will grant 'owner' scope by default - which can be dangerous. 
 ### Create Console commands
 - Go to `application/controllers/Console.php`
 - Add commands as functions. E.g `get_user` command = `public function get_user() { ... }`
