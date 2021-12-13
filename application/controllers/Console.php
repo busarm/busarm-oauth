@@ -60,7 +60,7 @@ class Console extends Server
     public function create_client($org_id, $client_id, $client_name, $redirect_uri = null, $scopes = null, $grant_types = null)
     {
         $client_secret = md5(uniqid($client_id));
-        $grant_types = $grant_types ?? "password client_credentials authorization_code refresh_code";
+        $grant_types = $grant_types ?? "password client_credentials authorization_code refresh_token";
         $scopes = $scopes ?? "*";
 
         //Insert Client
