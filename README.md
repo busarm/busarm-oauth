@@ -5,10 +5,19 @@ Wecari Authorization server. Manages user authentication and authorization to ac
 
 ## Specification
 - PHP Version - Version >= 8.0
-- Framework - Custom MVC build on top of Bshaffer's Oauth 2 Server. https://bshaffer.github.io/oauth2-server-php-docs/
+- Framework - Custom MVC build on top of Bshaffer's Oauth 2.0 Server. https://bshaffer.github.io/oauth2-server-php-docs/
+- - Oauth 2.0 - See https://auth0.com/intro-to-iam/what-is-oauth-2/ and https://oauth.net/2/
 - MYSQL Version - Version >=  8.0
 - Docker / Docker Compose - Version >=  3.7 https://docs.docker.com/compose/compose-file/compose-file-v3/#short-syntax-3
 
+## Security
+### Authentication
+- All Resources (`/resources` endpoints) are protected
+- - Client Credentials `client_id` and `client_secret` should be present in header or body
+- - Client must have `system` scope
+- - Oauth Access Token is require for certain Resource routes. Should be present in `Authorization` header
+### Authorization 
+- Scope based authorization. Uses oauth jwt token scopes to grant access.
 
 ## Structure
 - `application` - Contains application files used to handle server requests. Follows Model View Controller (MVC) pattern
@@ -25,7 +34,6 @@ Wecari Authorization server. Manages user authentication and authorization to ac
 - - `CIPHER.php` - Encryption / Decryption helper class
 - - `Scopes.php` - Manage supported oauth scopes
 - - `Server.php` - Base controller class for Oauth Server. Processes Oauth requests.
-
 
 ## Deployemnt Steps
 ### Development (using Docker)
@@ -56,7 +64,6 @@ Wecari Authorization server. Manages user authentication and authorization to ac
 - - Run the database ddl sql scripts in the `database` folder to create database adn tables.
 - - Add neccesarry app configs to database. Refer to `application\libraries\utils\Configs.php` for list of db configs
 - Run command `php deploy --dev` for staging or `php deploy --prod` for production
-
 
 ## Console Application
 - Refer to `application/controllers/Console.php`

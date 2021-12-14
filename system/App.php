@@ -163,31 +163,20 @@ class App
 
 
     /**
-     * Re-Routing
+     * Re-Routing -  Inspired by Codeigniter
      * @param array $routes
      */
     private function reroute($routes)
     {
-        $controller = "";
-        $function = "";
-        $params = [];
-        foreach ($routes as $key => $route) {
-            if (!empty(trim($route, "\n\r'\"\\/&%!@#$*)(|<>{} "))) {
-                if ($key == 0) { //Route at section 0 = Controller
-                    $controller = basename(trim($this->controllerDir . $route));
-                } else if ($key == 1) { //Route at section 1 = Function
-                    $function = $route;
-                } else { //Every other section. = Url params
-                    $params[] = $route;
-                }
-            } else {
-                unset($routes[$key]);
-                $routes = array_values($routes);
-                return $this->reroute($routes);
-            }
-        }
+        $routes = array_values(array_filter($routes, function($route){
+            if(!empty(trim($route, "\n\r'\"\\/&%!@#$*)(|<>{} "))) return $route;
+        }));
+        $controller = isset($routes[0]) ? $routes[0] : null; // First path = controller
+        $function = isset($routes[1]) ? $routes[1] : null; // Second path = function (public)
+        $params = isset($routes[2]) ? array_slice($routes, 2, count($routes)) : []; // Subsequent paths = function parameters
 
-        if ($controller && $function) {  //Last
+        // Process route if available
+        if ($controller && $function) { 
             $this->processRoute($controller, $function, $params);
         } else {
             $this->showMessage(404, false, "Invalid Request", "Invalid Request Path");
@@ -494,13 +483,7 @@ class App
 
             // We're going to allow only certain domains access
             // Store the HTTP Origin header
-            $origin = env('HTTP_ORIGIN');
-            if ($origin === NULL) {
-                $origin = env('HTTP_REFERER');
-                if ($origin === NULL) {
-                    $origin = '';
-                }
-            }
+            $origin = env('HTTP_ORIGIN') ?? env('HTTP_REFERER') ?? '';
 
             $allowed_origins = Configs::ALLOWED_CORS_ORIGINS;
 

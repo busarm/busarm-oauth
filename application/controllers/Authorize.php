@@ -30,14 +30,12 @@ class Authorize extends Server
      * or Implicit Authorization request
      * @api authorize/request
      * @method GET
-     * @param user_id String Optional if email available 
-     * @param email String Optional if user_id available 
-     * @param state String Required
-     * @param redirect_uri String Required
-     * @param scope String Required (Space separated e.g 'user admin')
-     * @param username String Private - Required for user credentials authorization login
-     * @param password String Private - Required for user credentials authorization login
-     * @param csrf_token String Private - Required for user credentials authorization login
+     * @query email String Required for Email authorization
+     * @query client_id String Required
+     * @query state String Required
+     * @query redirect_uri String Required
+     * @query response_type String Required
+     * @query scope String Required (Space separated e.g 'user admin')
      */
     public function request()
     {
@@ -76,7 +74,13 @@ class Authorize extends Server
     /**
      * Login 
      *
-     * @return void
+     * @api authorize/login
+     * @method GET
+     * @body username String Private - Required
+     * @body password String Private - Required
+     * @body csrf_token String Private - Required
+     * @body recaptcha_token String Private - Required
+     * @body redirect_url String - Required
      */
     public function login()
     {
@@ -100,7 +104,9 @@ class Authorize extends Server
     /**
      * Login 
      *
-     * @return void
+     * @api authorize/logout
+     * @method GET
+     * @query redirect_url String - Required
      */
     public function logout()
     {
