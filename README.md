@@ -10,6 +10,21 @@ Wecari Authorization server. Manages user authentication and authorization to ac
 - MYSQL Version - Version >=  8.0
 - Docker / Docker Compose - Version >=  3.7 https://docs.docker.com/compose/compose-file/compose-file-v3/#short-syntax-3
 
+## External Services
+### Deployment (Staging/Production)
+- AWS VPC
+- AWS Lambda
+- AWS API Gateway
+- AWS RDS
+- AWS Secret Manager
+### Mailing
+- AWS SES (Can be replaced with any SMTP provider)
+### Error Monitoring / Logging
+- Bugsnag
+- AWS Cloudwatch
+### Security
+- Google Recaptcha V3
+
 ## Security
 ### Authentication
 - All Resources (`/resources` endpoints) are protected
@@ -64,6 +79,7 @@ Wecari Authorization server. Manages user authentication and authorization to ac
 - - Run the database ddl sql scripts in the `database` folder to create database adn tables.
 - - Add neccesarry app configs to database. Refer to `application\libraries\utils\Configs.php` for list of db configs
 - Run command `php deploy --dev` for staging or `php deploy --prod` for production
+- - Uses Severeless Framework under the hood. See https://serverless.com
 
 ## Console Application
 - Refer to `application/controllers/Console.php`
