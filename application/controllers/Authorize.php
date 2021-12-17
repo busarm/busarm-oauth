@@ -57,7 +57,7 @@ class Authorize extends Server
         //If Logged in
         else if ($user_id = App::getInstance()->getLoginUser()) {
             if ($this->processAuthRequest($user_id, $client_id, $redirect_uri, $state, $scope, $response_type)) {
-                $this->response = $this->get_oauth_server()->handleAuthorizeRequest($this->request, $this->response, true, $user_id);
+                $this->response = $this->getOauthServer()->handleAuthorizeRequest($this->request, $this->response, true, $user_id);
                 $this->response->send();
                 die();
             } else {
@@ -133,39 +133,23 @@ class Authorize extends Server
                 if ($count < $max_count) { // Max request count
                     $count += 1;
                     App::getInstance()->set_cookie('request_count', $count, $timeout);
-                    if ($userInfo = ($this->get_oauth_storage()->checkUserCredentials(@$data['username'], @$data['password']))) {
+                    if ($userInfo = ($this->getOauthStorage()->checkUserCredentials(@$data['username'], @$data['password']))) {
                         if (!empty($userInfo[@'user_id'])) {
                             return $userInfo;
                         } else {
                             $remaining_count = $max_count - $count;
-                            $this->response->setParameters(array(
-                                'success' => false,
-                                'error' => 'invalid_user',
-                                'error_description' => "Invalid Username or Password. $remaining_count tries left"
-                            ));
+                            $this->response->setParameters($this->error("Invalid Username or Password. $remaining_count tries left", 'invalid_user'));
                         }
                     } else {
                         $remaining_count = $max_count - $count;
-                        $this->response->setParameters(array(
-                            'success' => false,
-                            'error' => 'invalid_user',
-                            'error_description' => "Invalid Username or Password. $remaining_count tries left"
-                        ));
+                        $this->response->setParameters($this->error("Invalid Username or Password. $remaining_count tries left", 'invalid_user'));
                     }
                 } else {
                     $min = intval($timeout / 60);
-                    $this->response->setParameters(array(
-                        'success' => false,
-                        'error' => 'max_request',
-                        'error_description' => "Maximum attempt reached. Please try again in $min minute(s)"
-                    ));
+                    $this->response->setParameters($this->error('Maximum attempt reached. Please try again in $min minute(s)', 'max_request'));
                 }
             } else {
-                $this->response->setParameters(array(
-                    'success' => false,
-                    'error' => 'validation_error',
-                    'error_description' => "Session validation failed. Please try again"
-                ));
+                $this->response->setParameters($this->error('Session validation failed. Please try again', 'validation_error'));
             }
         }
         return false;
@@ -182,19 +166,19 @@ class Authorize extends Server
      */
     private function processEmailRequest($email, $redirect_uri, $state, $scope)
     {
-        if ($userInfo = $this->get_oauth_storage()->getUser($email)) {
+        if ($userInfo = $this->getOauthStorage()->getUser($email)) {
 
             $timeout = 600;
             $token = sha1(sprintf("%s:%s:%s:%s", $email, $redirect_uri, $state, $scope));
             if (App::getInstance()->get_cookie(self::EMAIL_REQ_TOKEN_PARAM) !== $token) {
 
                 $user_id = $userInfo['user_id'];
-                if ($this->get_oauth_storage()->scopeExistsForUser($scope, $user_id)) {
+                if ($this->getOauthStorage()->scopeExistsForUser($scope, $user_id)) {
 
-                    if ($is_authorized = $this->get_oauth_server()->validateAuthorizeRequest($this->request, $this->response)) {
+                    if ($is_authorized = $this->getOauthServer()->validateAuthorizeRequest($this->request, $this->response)) {
 
                         $this->response = new OAuth2\Response(); //reinitialize response
-                        $this->get_oauth_server()->handleAuthorizeRequest($this->request, $this->response, $is_authorized, $user_id);
+                        $this->getOauthServer()->handleAuthorizeRequest($this->request, $this->response, $is_authorized, $user_id);
                         $link = $this->response->getHttpHeader("Location");
                         $message = $this->getEmailAuthView($link);
 
@@ -246,10 +230,10 @@ class Authorize extends Server
         // Authorization approved
         if ($approve && $request_token == $token) {
 
-            $scope = !empty($scope) ? $scope : $this->get_oauth_server()->getScopeUtil()->getDefaultScope();
+            $scope = !empty($scope) ? $scope : $this->getOauthServer()->getScopeUtil()->getDefaultScope();
 
-            if ($this->get_oauth_storage()->scopeExistsForUser($scope, $user_id)) {
-                if ($this->get_oauth_server()->validateAuthorizeRequest($this->request, $this->response)) {
+            if ($this->getOauthStorage()->scopeExistsForUser($scope, $user_id)) {
+                if ($this->getOauthServer()->validateAuthorizeRequest($this->request, $this->response)) {
                     return true;
                 } else {
                     App::getInstance()->delete_cookie(self::AUTH_REQ_TOKEN_PARAM);
@@ -266,11 +250,11 @@ class Authorize extends Server
             $this->showError("authorization_declined", "Access declined by user", $redirect_uri);
         }
         // Client Id available
-        else if (!empty($client = $this->get_oauth_storage()->getClientDetails($client_id))) {
+        else if (!empty($client = $this->getOauthStorage()->getClientDetails($client_id))) {
 
             App::getInstance()->set_cookie(self::AUTH_REQ_TOKEN_PARAM, $token, 300);
-            $org = $this->get_oauth_storage()->getOrganizationDetails($client['org_id']);
-            $user = $this->get_oauth_storage()->getUser($user_id);
+            $org = $this->getOauthStorage()->getOrganizationDetails($client['org_id']);
+            $user = $this->getOauthStorage()->getUser($user_id);
             $scopes = Scopes::findScope($scope);
             return $this->showAuthorize([
                 'client_name' => $client['client_name'],
@@ -350,7 +334,7 @@ class Authorize extends Server
             try {
                 echo App::getInstance()->loadView("failed", [
                     "msg" => ucfirst(str_replace('_', ' ', $error)),
-                    "sub_msg" => $error_description
+                    "desc" => $error_description
                 ], true);
                 die;
             } catch (Exception $e) {

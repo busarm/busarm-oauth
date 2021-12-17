@@ -20,9 +20,9 @@ class Token extends Server
      * @api token/get
      * @method POST
      * */
-    public function get()
+    public function request()
     {
-        $result = $this->get_oauth_server()->grantAccessToken($this->request, $this->response);
+        $result = $this->getOauthServer()->grantAccessToken($this->request, $this->response);
         if ($result) {
             $this->response->setParameters($result);
         }
@@ -38,38 +38,49 @@ class Token extends Server
      * */
     public function verify()
     {
-        if ($this->get_oauth_server()->verifyResourceRequest($this->request, $this->response)) {
+        if ($this->validateAccessToken()) {
             $this->response->setParameters(array('success' => true, 'message' => 'Api access granted'));
-        }
-        else {
-            $this->response->setParameters(array('success' => false, 'message' => 'Unauthorized aceess'));
         }
         $this->response->send();
         die;
     }
 
+    /**
+     * Verify token and get info
+     * @api token/info
+     * @method GET|POST 
+     * */
+    public function info()
+    {
+        if ($this->validateAccessToken()) {
+            // Get user info
+            $user =  $this->getOauthStorage()->getSingleUserInfoForClaims($this->getTokenInfo('user_id'), array_keys(Scopes::findOpenIdScope($this->getTokenInfo('scope')) ?: []));
+            $token = $this->getTokenInfo();
+            $token['user'] = $user;
+            unset($token["user_id"]);
+            $this->response->setParameters(array('success' => true, 'data' => $token));
+        }
+        $this->response->send();
+        die;
+    }
 
     /**
      * Delete Access token and refresh token
      * @api token/invalidate
      * @method POST
-     * @param access_token String Required
      * @param refresh_token String Optional
      * */
     public function invalidate()
     {
         $done = false;
-        $access_token = null;
-        if ($token = $this->get_oauth_server()->getAccessTokenData($this->request)) {
-            $access_token = ($token['access_token'] ?? $token['id'] ?? $token['jti'] ?? null);
-        }
+        $access_token = $this->validateAccessToken() ? ($this->getTokenInfo('id') ?? $this->getTokenInfo('jti')) : null;
         $refresh_token = $this->request->request('refresh_token');
-        
+
         if (!empty($access_token)) {
-            $done = $this->get_oauth_storage()->unsetAccessToken($access_token);
+            $done = $this->getOauthStorage()->unsetAccessToken($access_token);
         }
         if (!empty($refresh_token)) {
-            $done = $this->get_oauth_storage()->unsetRefreshToken($refresh_token);
+            $done = $this->getOauthStorage()->unsetRefreshToken($refresh_token);
         }
 
         if ($done) {

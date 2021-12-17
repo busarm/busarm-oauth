@@ -23,6 +23,9 @@ class Scopes extends Scope
     const SCOPE_TESTER = 'tester';
     const SCOPE_PUBLIC = 'public';
     const SCOPE_OPENID = 'openid';
+    const SCOPE_OPENID_NAME = 'name';
+    const SCOPE_OPENID_EMAIL = 'email';
+    const SCOPE_OPENID_PHONE = 'phone';
 
     const DEFAULT_SCOPE = 'public';
 
@@ -37,9 +40,18 @@ class Scopes extends Scope
         self::SCOPE_DEVELOPER => "Access developer only resources",
         self::SCOPE_TESTER => "Perform tests and access test resources",
         self::SCOPE_PUBLIC => "Access any publicly available resource",
-        self::SCOPE_OPENID => "View user information. E.g name, email, phone number",
+        self::SCOPE_OPENID => "Get user information. E.g name, email, phone number",
+        self::SCOPE_OPENID_NAME => "Get user name",
+        self::SCOPE_OPENID_EMAIL => "Get user email",
+        self::SCOPE_OPENID_PHONE => "Get user name",
     ];
-  
+
+    const CLAIM_SCOPES = [
+        self::SCOPE_OPENID_NAME,
+        self::SCOPE_OPENID_EMAIL,
+        self::SCOPE_OPENID_PHONE
+    ];
+
     /**
      * Check if everything in required scope is contained in available scope.
      *
@@ -61,7 +73,7 @@ class Scopes extends Scope
 
         return (count(array_diff($required_scope, $available_scope)) == 0);
     }
-    
+
     /**
      * Find scope(s). Return with details if exists
      * @param string|array $scopes
@@ -75,12 +87,35 @@ class Scopes extends Scope
         $availableScopes =  array_keys(self::ALL_SCOPES);
 
         $found = [];
-        foreach($scopes as $scope) {
-            if(in_array(trim($scope), $availableScopes)) {
+        foreach ($scopes as $scope) {
+            if (in_array(trim($scope), $availableScopes)) {
                 $found[$scope] = self::ALL_SCOPES[$scope];
             }
         }
 
         return !empty($found) ? $found : false;
+    }
+
+    /**
+     * Find openid scope(s). Return with details if exists
+     * @param string|array $scopes
+     * @return bool|array Bool or Array of available scopes
+     */
+    public static function findOpenIdScope($scopes)
+    {
+        $scopes = !is_array($scopes) ? explode(' ', $scopes) : $scopes;
+        $scopes = in_array(Scopes::SCOPE_OWNER, $scopes) ? array_keys(Scopes::ALL_SCOPES) : $scopes;
+
+        if (!in_array(Scopes::SCOPE_OPENID, $scopes)) return false;
+
+        $found = [];
+        foreach ($scopes as $scope) {
+            if (in_array(trim($scope), self::CLAIM_SCOPES)) {
+                $found[$scope] = self::ALL_SCOPES[$scope];
+            }
+        }
+
+        return !empty($found) ? $found : false;
+        
     }
 }

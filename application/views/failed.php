@@ -3,7 +3,7 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
 
 /**
  * @var string $msg
- * @var string $sub_msg
+ * @var string $desc
  */
 
 defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
@@ -207,9 +207,9 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
                     <h3><?= $msg ?></h3>
                 <?php
                 }
-                if (isset($sub_msg)) {
+                if (isset($desc)) {
                 ?>
-                    <i>(<?= $sub_msg ?>)</i>
+                    <i>(<?= $desc ?>)</i>
                 <?php
                 }
                 ?>

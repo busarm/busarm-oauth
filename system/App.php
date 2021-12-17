@@ -125,7 +125,8 @@ class App
             if (empty($request_path)) {
                 $request_path = env('REQUEST_URI');
             }
-
+            $request_path = urldecode($request_path);
+            
             if (!empty($request_path)) {
                 if (preg_match('/\/ping(\/)?$/', $request_path)) {
                     $this->showMessage(200, true, "System Online", ENVIRONMENT);
@@ -177,7 +178,7 @@ class App
 
         // Process route if available
         if ($controller && $function) { 
-            $this->processRoute($controller, $function, $params);
+            $this->processRoute(trim($controller), trim($function), $params);
         } else {
             $this->showMessage(404, false, "Invalid Request", "Invalid Request Path");
         }
@@ -262,12 +263,12 @@ class App
             header('Access-Control-Allow-Methods: *', true);
         }
         if ($status) {
-            echo json_encode(['status' => true, 'msg' => $title, 'env' => ENVIRONMENT, 'ip' => IPADDRESS], JSON_PRETTY_PRINT);
+            echo json_encode(['success' => true, 'msg' => $title, 'env' => ENVIRONMENT, 'ip' => IPADDRESS], JSON_PRETTY_PRINT);
         } else {
             if (ENVIRONMENT != ENV_PROD) {
-                echo json_encode(['status' => false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT, 'ip' => IPADDRESS,  'line' =>  $errorLine,  'file_path' =>  $errorFile,  'backtrace' =>  $errorContext], JSON_PRETTY_PRINT);
+                echo json_encode(['success' => false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT, 'ip' => IPADDRESS,  'line' =>  $errorLine,  'file_path' =>  $errorFile,  'backtrace' =>  $errorContext], JSON_PRETTY_PRINT);
             } else {
-                echo json_encode(['status' => false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT, 'ip' => IPADDRESS], JSON_PRETTY_PRINT);
+                echo json_encode(['success' => false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT, 'ip' => IPADDRESS], JSON_PRETTY_PRINT);
             }
         }
         exit;

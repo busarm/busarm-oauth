@@ -201,6 +201,19 @@ class Configs
         'https://partner.staging.wecari.com/'
     ];
 
+    static function APP_VERSION($default = '0.1')
+    {
+        return env("APP_VERSION", $default);
+    }
+    static function APP_NAME()
+    {
+        return env("APP_NAME");
+    }
+    static function COMPANY_NAME()
+    {
+        return env("COMPANY_NAME");
+    }
+    
     # App Settings
     static function ENCRYPTION_KEY($default = null)
     {

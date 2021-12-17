@@ -38,7 +38,7 @@ class Console extends Server
      */
     public function create_org($org_name)
     {
-        $result = $this->get_oauth_storage()->setOrganizationDetails($org_name);
+        $result = $this->getOauthStorage()->setOrganizationDetails($org_name);
         if($result){
             $this->print("Successfully Added Organization");
             $this->print("Organizatoin ID = $result");
@@ -64,7 +64,7 @@ class Console extends Server
         $scopes = $scopes ?? "*";
 
         //Insert Client
-        $result = $this->get_oauth_storage()->setClientDetailsCustom($org_id, $client_id, $client_name, $client_secret, $redirect_uri, $grant_types, $scopes);
+        $result = $this->getOauthStorage()->setClientDetailsCustom($org_id, $client_id, $client_name, $client_secret, $redirect_uri, $grant_types, $scopes);
 
         //Insert jwt public keys for client
         if($result){
@@ -73,7 +73,7 @@ class Console extends Server
             $rsa = new phpseclib\Crypt\RSA();
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
-            if(!empty($keys) && $this->get_oauth_storage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")){
+            if(!empty($keys) && $this->getOauthStorage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")){
                 $this->print("Successfully Created Client");
                 $this->print("Client ID = $client_id");
                 $this->print("Client Secret = $client_secret");
@@ -111,7 +111,7 @@ class Console extends Server
             $rsa = new phpseclib\Crypt\RSA();
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
-            if(!empty($keys) && $this->get_oauth_storage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")){
+            if(!empty($keys) && $this->getOauthStorage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")){
                 $this->print("Successfully Updated Client Keys");
                 $this->print("Client Public Key = ".$keys['publickey']);
                 $this->print("Client Public Key ALGO = $algo"); 
@@ -144,7 +144,7 @@ class Console extends Server
         $scopes = "*";
 
         //Insert User
-        $result = $this->get_oauth_storage()->setUserCustom($user_id, $user_password, $email, $name, null, null, $scopes);
+        $result = $this->getOauthStorage()->setUserCustom($user_id, $user_password, $email, $name, null, null, $scopes);
         if($result){
             $this->print("Successfully Created User");
             $this->print("User ID = $user_id");

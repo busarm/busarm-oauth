@@ -11,15 +11,18 @@ use PHPMailer\PHPMailer\PHPMailer;
  */
 class Server
 {
+    const ACCESS_TYPE_CLIENT = 'client';
+    const ACCESS_TYPE_TOKEN = 'token';
+
     private $smtp_protocol = 'smtp';
     private $smtp_timeout = 10;
     private $smtp_charset = 'utf-8';
 
     /**@var OAuth2\Storage\Pdo */
-    private $oauth_storage;
+    private $oauthStorage;
 
     /**@var OAuth2\Server */
-    private $oauth_server;
+    private $oauthServer;
 
     /** @var \OAuth2\Request */
     protected $request;
@@ -27,129 +30,166 @@ class Server
     /** @var \OAuth2\Response */
     protected $response;
 
-    /**@var array Current client info*/
-    private $client_info;
+    /** @var array Current client info*/
+    private $clientInfo;
 
-    //TODO ADD Client settings
+    /** @var array Current client info*/
+    private $tokenInfo;
+
+    /** @var array Current acccess type */
+    private $accessType;
 
     /**
      * Server constructor.
-     * @param boolean $validateClient Validate client
+     * @param boolean $validateAccess Validate access to server
      * @param boolean $useJWT Use JWT Token
      * @param boolean $useOpenID Use OpenID Connect - issue id tokens
      */
-    protected function __construct($validateClient = false, $useJWT = false, $useOpenID = false)
+    protected function __construct($validateAccess = false, $useJWT = false, $useOpenID = false)
     {
 
         //Create request & response objects
         $this->request = \OAuth2\Request::createFromGlobals();
         $this->response = new \OAuth2\Response();
 
-        try {
+        //Load custom model
+        App::getInstance()->loadModel("OauthPdo");
 
-            //Load custom model
-            App::getInstance()->loadModel("OauthPdo");
+        //Create PDO - MYSQL DB Storage
+        $this->oauthStorage = new OauthPdo(array('dsn' => "mysql:dbname=13243546576879_oauth;host=" . Configs::DB_HOST(), 'username' => Configs::DB_USER(), 'password' => Configs::DB_PASS()));
 
-            //Create PDO - MYSQL DB Storage
-            $this->oauth_storage = new OauthPdo(array('dsn' => "mysql:dbname=13243546576879_oauth;host=" . Configs::DB_HOST(), 'username' => Configs::DB_USER(), 'password' => Configs::DB_PASS()));
+        //Create server without implicit
+        $this->oauthServer = new \OAuth2\Server($this->oauthStorage, array(
+            'access_lifetime' => 86400, //1 day
+            'refresh_token_lifetime' => 2419200, //28 days
+            'auth_code_lifetime' => 3600, //1 hour
+            'allow_credentials_in_request_body' => true,
+            'allow_implicit' => false,
+            'use_jwt_access_tokens' => $useJWT,
+            'store_encrypted_token_string' => false,
+            'use_openid_connect' => $useOpenID,
+            'issuer' => OAUTH_BASE_URL
+        ));
 
-            //Create server without implicit
-            $this->oauth_server = new \OAuth2\Server($this->oauth_storage, array(
-                'access_lifetime' => 86400, //1 day
-                'refresh_token_lifetime' => 2419200, //28 days
-                'auth_code_lifetime' => 3600, //1 hour
-                'allow_credentials_in_request_body' => true,
-                'allow_implicit' => false,
-                'use_jwt_access_tokens' => $useJWT,
-                'store_encrypted_token_string' => false,
-                'use_openid_connect' => $useOpenID,
-                'issuer' => OAUTH_BASE_URL
-            ));
+        // User Credentials grant type
+        $this->oauthServer->addGrantType(new OAuth2\GrantType\UserCredentials($this->oauthStorage));
 
-            /*User Credentials grant type*/
-            $this->oauth_server->addGrantType(new OAuth2\GrantType\UserCredentials($this->oauth_storage));
+        // Client Credentials grant type
+        $this->oauthServer->addGrantType(new OAuth2\GrantType\ClientCredentials($this->oauthStorage));
 
-            /*Client Credentials grant type*/
-            $this->oauth_server->addGrantType(new OAuth2\GrantType\ClientCredentials($this->oauth_storage));
+        // Authorization Code grant type
+        $this->oauthServer->addGrantType(new OAuth2\GrantType\AuthorizationCode($this->oauthStorage));
 
-            /*Authorization Code grant type*/
-            $this->oauth_server->addGrantType(new OAuth2\GrantType\AuthorizationCode($this->oauth_storage));
+        // Refresh Token grant type - the refresh token grant request will have a "refresh_token" field
+        $this->oauthServer->addGrantType(new OAuth2\GrantType\RefreshToken($this->oauthStorage, array(
+            'always_issue_new_refresh_token' => true
+        )));
 
-            /*Refresh Token grant type - the refresh token grant request will have a "refresh_token" field*/
-            $this->oauth_server->addGrantType(new OAuth2\GrantType\RefreshToken($this->oauth_storage, array(
-                'always_issue_new_refresh_token' => true
-            )));
+        // Set up Scopes
+        $this->oauthServer->setScopeUtil(new Scopes(new OAuth2\Storage\Memory(array(
+            'default_scope' => Scopes::DEFAULT_SCOPE,
+            'supported_scopes' => array_keys(Scopes::ALL_SCOPES)
+        ))));
 
-            /*Set up Scopes*/
-            $this->oauth_server->setScopeUtil(new Scopes(new OAuth2\Storage\Memory(array(
-                'default_scope' => Scopes::DEFAULT_SCOPE,
-                'supported_scopes' => array_keys(Scopes::ALL_SCOPES)
-            ))));
-            
-            /**Check if client is valid*/
-            if ($validateClient) {
-                if (!$this->validateClient(Scopes::SCOPE_SYSTEM)) {
-                    $this->response->send();
-                    die;
-                }
-            }
+        // Validate Access
+        if ($validateAccess && !$this->validateClient() && !$this->validateAccessToken()) {
+            $this->response->setStatusCode(401);
+            $this->response->send();
+            die;
+        }
+    }
 
-        } catch (Exception $e) {
-            $this->response->setParameters(['success' => false, 'error' => 'internal_error', 'error_description' => $e->getMessage()]);
+
+    /**
+     * Get oauth server
+     * @return OAuth2\Server
+     */
+    public function getOauthServer()
+    {
+        return $this->oauthServer;
+    }
+
+    /**
+     * Get oauth storage
+     * @return OauthPdo
+     */
+    protected function getOauthStorage()
+    {
+        return $this->oauthStorage;
+    }
+
+    /** 
+     * Validate Scope or Permission
+     * @param string|array $scope
+     * @return void
+     */
+    protected function validatePermission($scope = null)
+    {
+        $scope = is_array($scope) ? $this->implode($scope) : $scope;
+        if (($this->accessType === self::ACCESS_TYPE_TOKEN && !$this->getOauthServer()->getScopeUtil()->checkScope($scope, $this->getTokenInfo('scope')))) {
+            $this->response->setStatusCode(403);
+            $this->response->setParameters($this->error("Access denied. Token doesn't have required '$scope' scope(s)", 'invalid_scope'));
+            $this->response->send();
+            die();
+        }
+        else if (($this->accessType === self::ACCESS_TYPE_CLIENT && !$this->getOauthServer()->getScopeUtil()->checkScope($scope, $this->getClientInfo('scope')))) {
+            $this->response->setStatusCode(403);
+            $this->response->setParameters($this->error("Access denied. Client doesn't have required '$scope' scope(s)", 'invalid_scope'));
             $this->response->send();
             die();
         }
     }
 
-
-    /**get oauth server
-     * @return OAuth2\Server
-     */
-    public function get_oauth_server()
-    {
-        return $this->oauth_server;
-    }
-
-    /**get oauth storage
-     * @return OauthPdo
-     */
-    protected function get_oauth_storage()
-    {
-        return $this->oauth_storage;
-    }
-
-
-    /** Validate Client credentials
-     * @param string|array $scope
+    /** 
+     * Validate Access Token
      * @return bool
      */
-    protected function validateClient($scope = null)
+    protected function validateAccessToken()
     {
-        if ($this->get_oauth_storage()->checkClientCredentials(
-            !empty($client_id = $this->request->headers("client_id")) ? $client_id : ($client_id = $this->request->request("client_id")),
-            !empty($client_secret = $this->request->headers("client_secret")) ? $client_secret : ($client_secret = $this->request->request("client_secret"))
-        )) {
-            if (!empty($scope)) {
-                $scope = is_array($scope) ? $this->implode($scope) : $scope;
-                if (!$this->get_oauth_storage()->scopeExistsForClient($scope, $client_id)) {
-                    $this->response->setParameters(array('success' => false, 'error' => 'invalid_scope', 'error_description' => "'$scope' scope does not exist for client '$client_id'"));
-                    return false;
-                }
-            }
-
-            $this->client_info = $this->get_oauth_storage()->getClientDetails($client_id);
-            if (!empty($this->client_info)) {
-                return true;
-            } else {
-                $this->response->setParameters(array('success' => false, 'error' => 'invalid_client', 'error_description' => "Failed to get client details"));
-                return false;
-            }
-        } else {
-            $this->response->setParameters(array('success' => false, 'error' => 'invalid_client', 'error_description' => "Invalid Client Credentials"));
+        if ($result = $this->getOauthServer()->getAccessTokenData($this->request, $this->response)) {
+            $this->tokenInfo = $result;
+            $this->clientInfo = $this->getOauthStorage()->getClientDetails($this->getTokenInfo('client_id') ?? null);
+            $this->accessType = self::ACCESS_TYPE_TOKEN;
+            return true;
+        } else if (empty($this->response->getParameters())) {
+            $this->response->setParameters($this->error('Unauthorized aceess', 'invalid_token'));
             return false;
         }
     }
 
+    /** 
+     * Validate Client credentials
+     * @return bool
+     */
+    protected function validateClient()
+    {
+        // Get credentials from Authorization header
+        $authorization = $this->request->headers("authorization", '');
+        $credentials = strpos($authorization, 'Basic ') !== false ? $this->explode(base64_decode(str_replace('Basic ', '', $authorization)), ':') : [];
+        $client_id = count($credentials) == 2 ? $credentials[0] : null;
+        $client_secret = count($credentials) == 2 ? $credentials[1] : null;
+
+        // Get from header or body
+        if (empty($client_id) && empty($client_secret)) {
+            $client_id = $this->request->headers("client_id") ?? $this->request->request("client_id");
+            $client_secret = $this->request->headers("client_secret") ?? $this->request->request("client_secret");
+        }
+
+        if ($this->getOauthStorage()->checkClientCredentials($client_id, $client_secret)) {
+
+            $this->clientInfo = $this->getOauthStorage()->getClientDetails($client_id);
+            if (!empty($this->clientInfo)) {
+                $this->accessType = self::ACCESS_TYPE_CLIENT;
+                return true;
+            } else {
+                $this->response->setParameters($this->error('Failed to get client details', 'invalid_client'));
+                return false;
+            }
+        } else {
+            $this->response->setParameters($this->error('Unauthorized aceess', 'invalid_client'));
+            return false;
+        }
+    }
 
     /**Send Mail to an intended client
      * @param string $subject
@@ -189,8 +229,8 @@ class Server
 
             //Recipients
             $from = !empty($from) ? $from : Configs::EMAIL_INFO();
-            $mail->setFrom($from, 'Wecari');
-            $mail->addReplyTo($from, 'Wecari');
+            $mail->setFrom($from, Configs::COMPANY_NAME() ?? Configs::APP_NAME());
+            $mail->addReplyTo($from, Configs::COMPANY_NAME() ?? Configs::APP_NAME());
             $mail->addAddress($to);
 
             //Content
@@ -253,10 +293,38 @@ class Server
     }
 
     /**
-     * Get the value of client_info
+     * Get success response
      */
-    public function getClient_info()
+    public function success($data)
     {
-        return $this->client_info;
+        if (is_string($data)) {
+            return ['success' => true, 'message' => $data];
+        } else {
+            return ['success' => true, 'data' => $data];
+        }
+    }
+
+    /**
+     * Get success response
+     */
+    public function error($message, $type = 'unexpected_error')
+    {
+        return ['success' => false, 'error' => $type, 'error_description' => $message];
+    }
+
+    /**
+     * Get the value of clientInfo
+     */
+    public function getClientInfo($param = null)
+    {
+        return $this->clientInfo ? ($param ? $this->clientInfo[$param] ?? null : $this->clientInfo) : null;
+    }
+
+    /**
+     * Get the value of tokenInfo
+     */
+    public function getTokenInfo($param = null)
+    {
+        return $this->tokenInfo ? ($param ? $this->tokenInfo[$param] ?? null : $this->tokenInfo) : null;
     }
 }

@@ -52,6 +52,10 @@ class OauthPdo  extends Pdo
      */
     public function checkUserCredentials($unique, $password)
     {
+        if (!$unique) {
+            return false;
+        }
+        
         $stmt = $this->db->prepare(sprintf('SELECT * FROM %s WHERE (user_id=:unique OR email=:unique) AND password=sha2(CONCAT(user_id,\':\',salt,\':\',:password),256) LIMIT 1', $this->config['user_table']));
         $stmt->execute(array('unique' => $unique, 'password' => $password));
 
@@ -70,6 +74,10 @@ class OauthPdo  extends Pdo
      */
     public function getUser($unique)
     {
+        if (!$unique) {
+            return false;
+        }
+
         $stmt = $this->db->prepare(sprintf('SELECT * FROM %s WHERE (user_id=:unique OR email=:unique) LIMIT 1', $this->config['user_table']));
         $stmt->execute(array('unique' => $unique));
         if (!$userInfo = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -87,11 +95,14 @@ class OauthPdo  extends Pdo
      */
     public function getSingleUserInfo($unique, $excludeScopes = false)
     {
-        if($excludeScopes) {
-            $stmt = $this->db->prepare(sprintf('SELECT user_id, email, name, phone, dial_code, cred_updated_at  FROM %s WHERE (user_id=:unique OR email=:unique) LIMIT 1', $this->config['user_table']));
+        if (!$unique) {
+            return false;
         }
-        else {
-            $stmt = $this->db->prepare(sprintf('SELECT user_id, email, name, phone, dial_code, scope, cred_updated_at  FROM %s WHERE (user_id=:unique OR email=:unique) LIMIT 1', $this->config['user_table']));
+
+        if ($excludeScopes) {
+            $stmt = $this->db->prepare(sprintf('SELECT user_id AS id, email, name, phone, dial_code, cred_updated_at  FROM %s WHERE (user_id=:unique OR email=:unique) LIMIT 1', $this->config['user_table']));
+        } else {
+            $stmt = $this->db->prepare(sprintf('SELECT user_id AS id, email, name, phone, dial_code, scope, cred_updated_at  FROM %s WHERE (user_id=:unique OR email=:unique) LIMIT 1', $this->config['user_table']));
         }
         $stmt->execute(array('unique' => $unique));
         if (!$userInfo = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -100,7 +111,42 @@ class OauthPdo  extends Pdo
         return $userInfo;
     }
 
+    /**
+     * Get User for given claims
+     * @param $unique
+     * @param $excludeScopes
+     * @return array|bool
+     */
+    public function getSingleUserInfoForClaims($unique, $claims = [])
+    {
+        if (!$unique) {
+            return false;
+        }
 
+        $userClaims = [];
+        if (in_array(Scopes::SCOPE_OPENID_NAME, $claims)) {
+            $userClaims[] = 'name';
+        }
+        if (in_array(Scopes::SCOPE_OPENID_EMAIL, $claims)) {
+            $userClaims[] = 'email';
+        }
+        if (in_array(Scopes::SCOPE_OPENID_PHONE, $claims)) {
+            $userClaims[] = 'phone';
+            $userClaims[] = 'dial_code';
+        }
+
+        if (!empty($userClaims)) {
+            $stmt = $this->db->prepare(sprintf('SELECT user_id AS id, %s, cred_updated_at  FROM %s WHERE (user_id=:unique OR email=:unique) LIMIT 1', implode(',', $userClaims), $this->config['user_table']));
+        } else {
+            $stmt = $this->db->prepare(sprintf('SELECT user_id AS id, cred_updated_at  FROM %s WHERE (user_id=:unique OR email=:unique) LIMIT 1', $this->config['user_table']));
+        }
+
+        $stmt->execute(array('unique' => $unique));
+        if (!$userInfo = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            return false;
+        }
+        return $userInfo;
+    }
 
     /**
      * Get Users
@@ -113,7 +159,7 @@ class OauthPdo  extends Pdo
         if (!empty($uniques)) {
             $whereInUserIds = implode(',', array_fill(0, is_array($uniques) ? count($uniques) : 0, '?'));
             $stmt = $this->db->prepare(sprintf('SELECT user_id, email, name, phone, dial_code, scope, cred_updated_at FROM %s WHERE user_id IN (%s) OR email IN (%s);', $this->config['user_table'], $whereInUserIds, $whereInUserIds));
-            $stmt->execute(array_merge($uniques, $uniques, $uniques));
+            $stmt->execute(array_merge($uniques, $uniques));
             if ($result = $stmt->fetchAll(\PDO::FETCH_ASSOC)) {
                 $users = (array_merge($users, $result));
             }
