@@ -121,7 +121,7 @@ class Server
     /** 
      * Validate Scope or Permission
      * @param string|array $scope
-     * @return void
+     * @return bool
      */
     protected function validatePermission($scope = null)
     {
@@ -138,6 +138,7 @@ class Server
             $this->response->send();
             die();
         }
+        return true;
     }
 
     /** 

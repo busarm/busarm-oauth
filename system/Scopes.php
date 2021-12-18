@@ -23,9 +23,9 @@ class Scopes extends Scope
     const SCOPE_TESTER = 'tester';
     const SCOPE_PUBLIC = 'public';
     const SCOPE_OPENID = 'openid';
-    const SCOPE_OPENID_NAME = 'name';
-    const SCOPE_OPENID_EMAIL = 'email';
-    const SCOPE_OPENID_PHONE = 'phone';
+    const SCOPE_CLAIM_NAME = 'name';
+    const SCOPE_CLAIM_EMAIL = 'email';
+    const SCOPE_CLAIM_PHONE = 'phone';
 
     const DEFAULT_SCOPE = 'public';
 
@@ -41,15 +41,15 @@ class Scopes extends Scope
         self::SCOPE_TESTER => "Perform tests and access test resources",
         self::SCOPE_PUBLIC => "Access any publicly available resource",
         self::SCOPE_OPENID => "Get user information. E.g name, email, phone number",
-        self::SCOPE_OPENID_NAME => "Get user name",
-        self::SCOPE_OPENID_EMAIL => "Get user email",
-        self::SCOPE_OPENID_PHONE => "Get user name",
+        self::SCOPE_CLAIM_NAME => "Get user name",
+        self::SCOPE_CLAIM_EMAIL => "Get user email",
+        self::SCOPE_CLAIM_PHONE => "Get user name",
     ];
 
     const CLAIM_SCOPES = [
-        self::SCOPE_OPENID_NAME,
-        self::SCOPE_OPENID_EMAIL,
-        self::SCOPE_OPENID_PHONE
+        self::SCOPE_CLAIM_NAME,
+        self::SCOPE_CLAIM_EMAIL,
+        self::SCOPE_CLAIM_PHONE
     ];
 
     /**

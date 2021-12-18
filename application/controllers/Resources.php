@@ -22,7 +22,7 @@ class Resources extends Server
      * */
     public function scopes()
     {
-        if($this->validateAccessToken()) {
+        if ($this->validateAccessToken()) {
             $this->response->setParameters(array('success' => true, 'data' => Scopes::ALL_SCOPES));
         }
         $this->response->send();
@@ -67,17 +67,15 @@ class Resources extends Server
     public function getUser()
     {
         $user_id = $this->request->request('user_id') ?? $this->request->query('user_id');
-        if(!empty($user_id)) {
-
-            // Validate permission if specific user is requested
+        if (!empty($user_id)) {
+            // Validate permission
             $this->validatePermission([Scopes::SCOPE_SYSTEM, Scopes::SCOPE_ADMIN]);
-        }
-        else {
-            $user_id = $this->getTokenInfo('user_id');
+            $user = $this->getOauthStorage()->getSingleUserInfo($user_id);
+        } else {
+            $user =  $this->getOauthStorage()->getSingleUserInfoForClaims($this->getTokenInfo('user_id'), array_keys(Scopes::findOpenIdScope($this->getTokenInfo('scope')) ?: []));
         }
 
-        $user = $this->getOauthStorage()->getSingleUserInfo($user_id);
-        if ($user) {
+        if (!empty($user)) {
             $this->response->setParameters($this->success($user));
         } else {
             $this->response->setStatusCode(404);
@@ -142,7 +140,7 @@ class Resources extends Server
         $user_id = sha1(uniqid($prefix));
 
         // Validate Parameters
-        if(!$email || !$phone || !$dial_code || !$password || !$scope) {
+        if (!$email || !$phone || !$dial_code || !$password || !$scope) {
             $this->response->setStatusCode(400);
             $this->response->setParameters($this->error('Invalid Parameters', 'invalid_request'));
             $this->response->send();
@@ -151,11 +149,15 @@ class Resources extends Server
 
         //Check if scope is valid
         $scope = array_keys(Scopes::findScope($scope) ?: []);
-        if(empty($scope)) {
+        if (empty($scope)) {
             $this->response->setStatusCode(400);
             $this->response->setParameters($this->error('Invalid requested scope(s)', 'invalid_scopes'));
             $this->response->send();
             die;
+        }
+        // Add claim scopes if openid scope is included
+        else if(in_array(Scopes::SCOPE_OPENID, $scope)) {
+            array_merge($scope, Scopes::CLAIM_SCOPES);
         }
 
         //Check if user exists
@@ -165,15 +167,13 @@ class Resources extends Server
             } else {
                 $this->response->setParameters($this->success(['user_id' => $user['user_id'], 'existing' => true]));
             }
-        }
-        else if ($user = $this->getOauthStorage()->getUser($user_id)) {
+        } else if ($user = $this->getOauthStorage()->getUser($user_id)) {
             if ($force) {
                 $this->response->setParameters($this->error('User already exists', 'duplicate_user'));
             } else {
                 $this->response->setParameters($this->success(['user_id' => $user['user_id'], 'existing' => true]));
             }
-        } 
-        else {
+        } else {
             //Insert User
             $scope = $this->implode($scope);
             $result = $this->getOauthStorage()->setUserCustom($user_id, $password, $email, $name, $phone, $dial_code, $scope);
@@ -201,12 +201,10 @@ class Resources extends Server
     public function updateUser()
     {
         $user_id = $this->request->request('user_id') ?? $this->request->query('user_id');
-        if(!empty($user_id)) {
-
+        if (!empty($user_id)) {
             // Validate permission if specific user is requested
             $this->validatePermission([Scopes::SCOPE_SYSTEM, Scopes::SCOPE_ADMIN]);
-        }
-        else {
+        } else {
             $user_id = $this->getTokenInfo('user_id');
         }
 
@@ -265,7 +263,7 @@ class Resources extends Server
     {
         // Validate permission
         $this->validatePermission([Scopes::SCOPE_SYSTEM, Scopes::SCOPE_ADMIN]);
-        
+
         $client_id = $this->request->request('client_id');
         $client_name = $this->request->request('client_name');
         $org_id = $this->request->request('org_id');
@@ -334,7 +332,7 @@ class Resources extends Server
             $rsa = new phpseclib\Crypt\RSA();
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
-            
+
             if (!empty($keys) && $this->getOauthStorage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
                 $this->response->setParameters($this->success([
                     'client_id' => $client_id,
@@ -362,12 +360,10 @@ class Resources extends Server
     public function getPublicKey()
     {
         $client_id = $this->request->request('client_id') ?? $this->request->query('client_id');
-        if(!empty($client_id)) {
-
+        if (!empty($client_id)) {
             // Validate permission if specific client is requested
             $this->validatePermission([Scopes::SCOPE_SYSTEM, Scopes::SCOPE_ADMIN]);
-        }
-        else {
+        } else {
             $client_id = $this->getClientInfo('client_id');
         }
 
