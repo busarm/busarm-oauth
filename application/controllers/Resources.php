@@ -116,9 +116,11 @@ class Resources extends Server
      * Insert New Oauth User
      * @api resources/createUser
      * @method POST
-     * @param user_id String Required
+     * @param name String Required
      * @param email String Required
      * @param password String Required
+     * @param phone String Required
+     * @param dial_code String Required
      * @param scope Array Required 
      * @param force Boolean Optional
      *  */
@@ -134,10 +136,6 @@ class Resources extends Server
         $password = $this->request->request('password');
         $scope = $this->request->request('scope');
         $force = $this->request->request('force');
-
-        //Create user id
-        $prefix = !empty($email) ? $email : (!empty($phone) ? $phone : "");
-        $user_id = sha1(uniqid($prefix));
 
         // Validate Parameters
         if (!$email || !$phone || !$dial_code || !$password || !$scope) {
@@ -156,9 +154,13 @@ class Resources extends Server
             die;
         }
         // Add claim scopes if openid scope is included
-        else if(in_array(Scopes::SCOPE_OPENID, $scope)) {
+        else if (in_array(Scopes::SCOPE_OPENID, $scope)) {
             array_merge($scope, Scopes::CLAIM_SCOPES);
         }
+
+        // Process params
+        $scope = $this->implode($scope);
+        $user_id = sha1(uniqid(!empty($email) ? $email : (!empty($phone) ? $phone : $name)));
 
         //Check if user exists
         if ($email && ($user = $this->getOauthStorage()->getUser($email))) {
@@ -175,7 +177,6 @@ class Resources extends Server
             }
         } else {
             //Insert User
-            $scope = $this->implode($scope);
             $result = $this->getOauthStorage()->setUserCustom($user_id, $password, $email, $name, $phone, $dial_code, $scope);
             if ($result) {
                 $this->response->setParameters($this->success(['user_id' => $user_id, 'existing' => false]));
@@ -193,8 +194,12 @@ class Resources extends Server
      * Update Existing Oauth User
      * @api resources/updateUser
      * @method POST
+     * @param user_id String Optional
+     * @param name String Optional
      * @param email String Optional
      * @param password String Optional
+     * @param phone String Optional
+     * @param dial_code String Optional
      * @param scope Array Optional
      * @param remove_scope Array Optional
      */
@@ -210,9 +215,9 @@ class Resources extends Server
 
         if (!empty($user_id)) {
 
-            $password = $this->request->request('password');
             $name = $this->request->request('name');
             $email = $this->request->request('email');
+            $password = $this->request->request('password');
             $phone = $this->request->request('phone');
             $dial_code = $this->request->request('dial_code');
             $scope = $this->request->request('scope');
@@ -222,17 +227,25 @@ class Resources extends Server
             $scope = array_keys(Scopes::findScope($scope) ?: []);
 
             //Check if user exists
-            $userInfo = $this->getOauthStorage()->getUser(!empty($user_id) ? $user_id : $email);
-            if (!empty($userInfo)) {
+            $user = $this->getOauthStorage()->getUser(!empty($user_id) ? $user_id : $email);
+            if (!empty($user)) {
 
                 //Merge current scope with new scopes
-                $mergedScopes = array_unique(array_merge($this->explode($userInfo["scope"]), $scope ?: []));
+                $mergedScopes = array_unique(array_merge($this->explode($user["scope"]), $scope ?: []));
 
                 //Remove Scopes
                 $newScopes = array_diff($mergedScopes, $this->explode($remove_scope));
 
                 //Update User
-                $result = $this->getOauthStorage()->setUserCustom($user_id, $password, $email, $name, $phone, $dial_code, $this->implode($newScopes));
+                $result = $this->getOauthStorage()->setUserCustom(
+                    $user_id,
+                    $password,
+                    $email ?? $user["email"],
+                    $name ?? $user["name"],
+                    $phone ?? $user["phone"],
+                    $dial_code ?? $user["dial_code"],
+                    $this->implode($newScopes)
+                );
                 if ($result) {
                     $this->response->setParameters($this->success('Update Successful'));
                 } else {
@@ -253,7 +266,8 @@ class Resources extends Server
      * Insert new oauth client credentials
      * @api resources/createClient
      * @method POST
-     * @param client_id String Required
+     * @param client_name String Required
+     * @param org_id String Required
      * @param redirect_url String Required
      * @param grant_types Array|String Required
      * @param scope Array Required
@@ -264,29 +278,46 @@ class Resources extends Server
         // Validate permission
         $this->validatePermission([Scopes::SCOPE_SYSTEM, Scopes::SCOPE_ADMIN]);
 
-        $client_id = $this->request->request('client_id');
         $client_name = $this->request->request('client_name');
         $org_id = $this->request->request('org_id');
         $redirect_uri = $this->request->request('redirect_url');
         $grant_types = $this->request->request('grant_types');
-        $scope = $this->request->request('scope');
         $user_id = $this->request->request('user_id');
+        $scope = $this->request->request('scope');
 
+        // Validate Parameters
+        if (!$client_name || !$org_id || !$grant_types || !$scope) {
+            $this->response->setStatusCode(400);
+            $this->response->setParameters($this->error('Invalid Parameters', 'invalid_request'));
+            $this->response->send();
+            die;
+        }
+
+        //Check if scope is valid
+        $scope = array_keys(Scopes::findScope($scope) ?: []);
+        if (empty($scope)) {
+            $this->response->setStatusCode(400);
+            $this->response->setParameters($this->error('Invalid requested scope(s)', 'invalid_scopes'));
+            $this->response->send();
+            die;
+        }
+        // Add claim scopes if openid scope is included
+        else if (in_array(Scopes::SCOPE_OPENID, $scope)) {
+            array_merge($scope, Scopes::CLAIM_SCOPES);
+        }
+
+        // Process params
+        $client_id = str_replace(' ', '_', strtolower($client_name)) . '_' . crc32(uniqid($client_name));
         $client_secret = md5(uniqid($client_id));
-
         $grant_types = $this->implode($grant_types);
         $scope = $this->implode($scope);
         $redirect_uri = $this->implode($redirect_uri);
 
-        //Check if scope is valid
-        $scopes = $this->getOauthServer()->getScopeUtil()->scopeExists($scope) ? $scope : $this->getOauthServer()->getScopeUtil()->getDefaultScope();
-
         //Insert Client
-        $result = $this->getOauthStorage()->setClientDetailsCustom($org_id, $client_id, $client_name, $client_secret, $redirect_uri, $grant_types, $scopes, $user_id);
-
-        //Insert jwt public keys for client
+        $result = $this->getOauthStorage()->setClientDetailsCustom($org_id, $client_id, $client_name, $client_secret, $redirect_uri, $grant_types, $scope, $user_id);
         if ($result) {
 
+            //Insert jwt public keys for client
             $algo = 'sha256';
             $rsa = new phpseclib\Crypt\RSA();
             $rsa->setHash($algo);
@@ -313,6 +344,81 @@ class Resources extends Server
         die;
     }
 
+    /**
+     * Update Existing Oauth Client
+     * @api resources/updateClient
+     * @method POST
+     * @param client_id String Optional
+     * @param client_name String Optional
+     * @param client_secret String Optional
+     * @param redirect_uri String Optional
+     * @param grant_types String Optional
+     * @param scope Array Optional
+     * @param remove_scope Array Optional
+     */
+    public function updateClient()
+    {
+        $client_id = $this->request->request('client_id') ?? $this->request->query('client_id');
+        if (!empty($client_id)) {
+            // Validate permission if specific user is requested
+            $this->validatePermission([Scopes::SCOPE_SYSTEM, Scopes::SCOPE_ADMIN]);
+        } else {
+            $client_id = $this->getTokenInfo('client_id');
+        }
+
+        if (!empty($client_id)) {
+
+            $client_name = $this->request->request('client_name');
+            $client_secret = $this->request->request('client_secret');
+            $redirect_uri = $this->request->request('redirect_url');
+            $grant_types = $this->request->request('grant_types');
+            $scope = $this->request->request('scope');
+            $remove_scope = $this->request->request('remove_scope');
+
+            //Check if scope is valid if it's available
+            $scope = array_keys(Scopes::findScope($scope) ?: []);
+
+            //Check if user exists
+            $client = $this->getOauthStorage()->getClientDetailsCustom($client_id);
+            if (!empty($client)) {
+
+                //Merge current scope with new scopes
+                $mergedScopes = array_unique(array_merge($this->explode($client["scope"]), $scope ?: []));
+
+                //Remove Scopes
+                $newScopes = array_diff($mergedScopes, $this->explode($remove_scope));
+
+                // Process params
+                $grant_types = $this->implode($grant_types);
+                $newScopes = $this->implode($newScopes);
+                $redirect_uri = $this->implode($redirect_uri);
+
+                //Update User
+                $result = $this->getOauthStorage()->setClientDetailsCustom(
+                    $client["org_id"],
+                    $client["client_id"],
+                    !empty($client_name) ? $client_name : $client["client_name"],
+                    !empty($client_secret) ? $client_secret : $client["client_secret"],
+                    !empty($redirect_uri) ? $redirect_uri : $client["redirect_uri"],
+                    !empty($grant_types) ? $grant_types : $client["grant_types"],
+                    $newScopes
+                );
+                
+                if ($result) {
+                    $this->response->setParameters($this->success('Update Successful'));
+                } else {
+                    $this->response->setParameters($this->error('Failed to update client', 'invalid_client'));
+                }
+            } else {
+                $this->response->setParameters($this->error('Client does not exist', 'invalid_client'));
+            }
+        } else {
+            $this->response->setStatusCode(400);
+            $this->response->setParameters($this->error('Invalid Client Request', 'invalid_request'));
+        }
+        $this->response->send();
+        die;
+    }
 
     /**
      * Update client's Public and Private Key pair

@@ -1,5 +1,5 @@
 <?php
-defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
+defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
 
 /**
  * Created by PhpStorm.
@@ -10,26 +10,27 @@ defined('OAUTH_BASE_PATH') OR exit('No direct script access allowed');
 
 class Console extends Server
 {
-    public function __construct(){
-        if(is_cli()){
+    public function __construct()
+    {
+        if (is_cli()) {
             parent::__construct(false, true, true);
-        }
-        else {
+        } else {
             exit('Unauthorized Request');
         }
     }
-    
+
     /**
      * Print to console
      *
      * @param mixed $msg
      * @return void
      */
-    private function print($msg){
+    private function print($msg)
+    {
         print_r($msg);
         print_r(PHP_EOL);
     }
-    
+
     /**
      * Create Admin Client
      *
@@ -39,7 +40,7 @@ class Console extends Server
     public function create_org($org_name)
     {
         $result = $this->getOauthStorage()->setOrganizationDetails($org_name);
-        if($result){
+        if ($result) {
             $this->print("Successfully Added Organization");
             $this->print("Organizatoin ID = $result");
         }
@@ -50,40 +51,38 @@ class Console extends Server
      * Create Admin Client
      *
      * @param string $org_id
-     * @param string $client_id
      * @param string $client_name
      * @param string $redirect_uri
      * @param string $scopes
      * @param string $grant_types
      * @return void
      */
-    public function create_client($org_id, $client_id, $client_name, $redirect_uri = null, $scopes = null, $grant_types = null)
+    public function create_client($org_id, $client_name, $redirect_uri = null, $scopes = null, $grant_types = null)
     {
+        $client_id = str_replace(' ', '_', strtolower($client_name)) . '_' . crc32(uniqid($client_name));
         $client_secret = md5(uniqid($client_id));
-        $grant_types = $grant_types ?? "password client_credentials authorization_code refresh_token";
-        $scopes = $scopes ?? "*";
+        $grant_types = !empty($grant_types) ? $grant_types : $this->implode(array_keys($this->getOauthServer()->getGrantTypes()));
+        $scopes = !empty($scopes) ? $scopes : Scopes::DEFAULT_SCOPE;
 
         //Insert Client
         $result = $this->getOauthStorage()->setClientDetailsCustom($org_id, $client_id, $client_name, $client_secret, $redirect_uri, $grant_types, $scopes);
+        if ($result) {
 
-        //Insert jwt public keys for client
-        if($result){
-
+            //Insert jwt public keys for client
             $algo = 'sha256';
             $rsa = new phpseclib\Crypt\RSA();
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
-            if(!empty($keys) && $this->getOauthStorage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")){
+            if (!empty($keys) && $this->getOauthStorage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
                 $this->print("Successfully Created Client");
                 $this->print("Client ID = $client_id");
                 $this->print("Client Secret = $client_secret");
                 $this->print("Client Grant_types = $grant_types");
                 $this->print("Client Scopes = $scopes");
                 $this->print("Client Redirect Url = $redirect_uri");
-                $this->print("Client Public Key = ".$keys['publickey']);
-                $this->print("Client Public Key ALGO = $algo"); 
-            }
-            else {
+                $this->print("Client Public Key = " . $keys['publickey']);
+                $this->print("Client Public Key ALGO = $algo");
+            } else {
                 $this->print("Successfully Created Client");
                 $this->print("Client ID = $client_id");
                 $this->print("Client Secret = $client_secret");
@@ -92,9 +91,8 @@ class Console extends Server
                 $this->print("Client Redirect Url = $redirect_uri");
             }
             die;
-        }
-        else {
-            exit ("Failed to create client");
+        } else {
+            exit("Failed to create client");
         }
     }
 
@@ -106,26 +104,24 @@ class Console extends Server
      */
     public function update_client_key($client_id)
     {
-        if(!empty($client_id)){
+        if (!empty($client_id)) {
             $algo = 'sha256';
             $rsa = new phpseclib\Crypt\RSA();
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
-            if(!empty($keys) && $this->getOauthStorage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")){
+            if (!empty($keys) && $this->getOauthStorage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
                 $this->print("Successfully Updated Client Keys");
-                $this->print("Client Public Key = ".$keys['publickey']);
-                $this->print("Client Public Key ALGO = $algo"); 
+                $this->print("Client Public Key = " . $keys['publickey']);
+                $this->print("Client Public Key ALGO = $algo");
                 die;
+            } else {
+                exit("Failed to update client keys");
             }
-            else {
-                exit ("Failed to update client keys");
-            }
-        }
-        else {
-            exit ("Invalid Client");
+        } else {
+            exit("Invalid Client");
         }
     }
-    
+
     /**
      * Create Admin User
      *
@@ -135,29 +131,34 @@ class Console extends Server
      * @param string $scopes
      * @return void
      */
-    public function create_user($name, $email, $password = null, $scopes = "*")
+    public function create_user($name, $email, $password = null, $scopes = null)
     {
         //Create user id
-        $prefix = !empty($email)?$email:(!empty($phone)?$phone:"");
+        $prefix = !empty($email) ? $email : (!empty($phone) ? $phone : "");
         $user_id = sha1(uniqid($prefix));
         $user_password = !empty($password) ? $password : bin2hex(random_bytes(5));
-        $scopes = "*";
+        $scopes = !empty($scopes) ? $scopes : $this->implode([
+            Scopes::DEFAULT_SCOPE,
+            Scopes::SCOPE_OPENID,
+            Scopes::SCOPE_CLAIM_NAME,
+            Scopes::SCOPE_CLAIM_EMAIL,
+            Scopes::SCOPE_CLAIM_PHONE,
+        ]);
 
         //Insert User
         $result = $this->getOauthStorage()->setUserCustom($user_id, $user_password, $email, $name, null, null, $scopes);
-        if($result){
+        if ($result) {
             $this->print("Successfully Created User");
             $this->print("User ID = $user_id");
             $this->print("User Name = $name");
             $this->print("User Email = $email");
-            if(empty($password)){
+            if (empty($password)) {
                 $this->print("User Password = $user_password");
             }
             $this->print("User Scopes = $scopes");
             die;
-        }
-        else {
-            exit ("Failed to create user");
+        } else {
+            exit("Failed to create user");
         }
     }
 }

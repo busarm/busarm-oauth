@@ -27,7 +27,7 @@ class Scopes extends Scope
     const SCOPE_CLAIM_EMAIL = 'email';
     const SCOPE_CLAIM_PHONE = 'phone';
 
-    const DEFAULT_SCOPE = 'public';
+    const DEFAULT_SCOPE = self::SCOPE_PUBLIC;
 
     const ALL_SCOPES = [
         self::SCOPE_OWNER => "Access everything",
