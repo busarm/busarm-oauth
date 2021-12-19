@@ -72,7 +72,7 @@ class Resources extends Server
             $this->validatePermission([Scopes::SCOPE_SYSTEM, Scopes::SCOPE_ADMIN]);
             $user = $this->getOauthStorage()->getSingleUserInfo($user_id);
         } else {
-            $user =  $this->getOauthStorage()->getSingleUserInfoForClaims($this->getTokenInfo('user_id'), array_keys(Scopes::findOpenIdScope($this->getTokenInfo('scope')) ?: []));
+            $user =  $this->getOauthStorage()->getSingleUserInfoForClaims($this->getTokenInfo('user_id'), array_keys(Scopes::findOpenIdScope($this->getTokenInfo('scope')) ?: []), false);
         }
 
         if (!empty($user)) {

@@ -114,29 +114,33 @@ class OauthPdo  extends Pdo
     /**
      * Get User for given claims
      * @param $unique
+     * @param $claims
      * @param $excludeScopes
      * @return array|bool
      */
-    public function getSingleUserInfoForClaims($unique, $claims = [])
+    public function getSingleUserInfoForClaims($unique, $claims = [], $excludeScopes = true)
     {
         if (!$unique) {
             return false;
         }
 
-        $userClaims = [];
+        $fields = [];
         if (in_array(Scopes::SCOPE_CLAIM_NAME, $claims)) {
-            $userClaims[] = 'name';
+            $fields[] = 'name';
         }
         if (in_array(Scopes::SCOPE_CLAIM_EMAIL, $claims)) {
-            $userClaims[] = 'email';
+            $fields[] = 'email';
         }
         if (in_array(Scopes::SCOPE_CLAIM_PHONE, $claims)) {
-            $userClaims[] = 'phone';
-            $userClaims[] = 'dial_code';
+            $fields[] = 'phone';
+            $fields[] = 'dial_code';
+        }
+        if(!$excludeScopes) {
+            $fields[] = 'scope';
         }
 
-        if (!empty($userClaims)) {
-            $stmt = $this->db->prepare(sprintf('SELECT user_id AS id, %s, cred_updated_at  FROM %s WHERE (user_id=:unique OR email=:unique) LIMIT 1', implode(',', $userClaims), $this->config['user_table']));
+        if (!empty($fields)) {
+            $stmt = $this->db->prepare(sprintf('SELECT user_id AS id, %s, cred_updated_at  FROM %s WHERE (user_id=:unique OR email=:unique) LIMIT 1', implode(',', $fields), $this->config['user_table']));
         } else {
             $stmt = $this->db->prepare(sprintf('SELECT user_id AS id, cred_updated_at  FROM %s WHERE (user_id=:unique OR email=:unique) LIMIT 1', $this->config['user_table']));
         }
