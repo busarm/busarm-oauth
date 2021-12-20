@@ -135,7 +135,7 @@ class Resources extends Server
         $dial_code = $this->request->request('dial_code');
         $password = $this->request->request('password');
         $scope = $this->request->request('scope');
-        $force = $this->request->request('force');
+        $force = $this->request->request('force') ?: false;
 
         // Validate Parameters
         if (!$email || !$phone || !$dial_code || !$password || !$scope) {
@@ -215,13 +215,13 @@ class Resources extends Server
 
         if (!empty($user_id)) {
 
-            $name = $this->request->request('name');
-            $email = $this->request->request('email');
-            $password = $this->request->request('password');
-            $phone = $this->request->request('phone');
-            $dial_code = $this->request->request('dial_code');
-            $scope = $this->request->request('scope');
-            $remove_scope = $this->request->request('remove_scope');
+            $name = $this->request->request('name') ?: null;
+            $email = $this->request->request('email') ?: null;
+            $password = $this->request->request('password') ?: null;
+            $phone = $this->request->request('phone') ?: null;
+            $dial_code = $this->request->request('dial_code') ?: null;
+            $scope = $this->request->request('scope') ?: null;
+            $remove_scope = $this->request->request('remove_scope') ?: null;
 
             //Check if scope is valid if it's available
             $scope = array_keys(Scopes::findScope($scope) ?: []);
@@ -282,7 +282,7 @@ class Resources extends Server
         $org_id = $this->request->request('org_id');
         $redirect_uri = $this->request->request('redirect_url');
         $grant_types = $this->request->request('grant_types');
-        $user_id = $this->request->request('user_id');
+        $user_id = $this->request->request('user_id') ?: null;
         $scope = $this->request->request('scope');
 
         // Validate Parameters
@@ -308,7 +308,7 @@ class Resources extends Server
 
         // Process params
         $client_id = str_replace(' ', '_', strtolower($client_name)) . '_' . crc32(uniqid($client_name));
-        $client_secret = md5(uniqid($client_id));
+        $client_secret = sha1(uniqid($client_id));
         $grant_types = $this->implode($grant_types);
         $scope = $this->implode($scope);
         $redirect_uri = $this->implode($redirect_uri);
@@ -326,6 +326,9 @@ class Resources extends Server
                 $this->response->setParameters($this->success([
                     'client_id' => $client_id,
                     'client_secret' => $client_secret,
+                    'grant_types' => $grant_types,
+                    'redirect_uri' => $redirect_uri,
+                    'scope' => $scope,
                     'public_key' => base64_encode($keys['publickey']),
                     'algorithm' => $algo,
                     'encode' => 'base64'
@@ -333,7 +336,10 @@ class Resources extends Server
             } else {
                 $this->response->setParameters($this->success([
                     'client_id' => $client_id,
-                    'client_secret' => $client_secret
+                    'client_secret' => $client_secret,
+                    'grant_types' => $grant_types,
+                    'redirect_uri' => $redirect_uri,
+                    'scope' => $scope
                 ]));
             }
         } else {
@@ -348,7 +354,7 @@ class Resources extends Server
      * Update Existing Oauth Client
      * @api resources/updateClient
      * @method POST
-     * @param client_id String Optional
+     * @param client_id String Required
      * @param client_name String Optional
      * @param client_secret String Optional
      * @param redirect_uri String Optional
@@ -368,12 +374,12 @@ class Resources extends Server
 
         if (!empty($client_id)) {
 
-            $client_name = $this->request->request('client_name');
-            $client_secret = $this->request->request('client_secret');
-            $redirect_uri = $this->request->request('redirect_url');
-            $grant_types = $this->request->request('grant_types');
+            $client_name = $this->request->request('client_name') ?: null;
+            $client_secret = $this->request->request('client_secret') ?: null;
+            $redirect_uri = $this->request->request('redirect_url') ?: null;
+            $grant_types = $this->request->request('grant_types') ?: null;
             $scope = $this->request->request('scope');
-            $remove_scope = $this->request->request('remove_scope');
+            $remove_scope = $this->request->request('remove_scope') ?: null;
 
             //Check if scope is valid if it's available
             $scope = array_keys(Scopes::findScope($scope) ?: []);
