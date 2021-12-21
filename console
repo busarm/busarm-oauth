@@ -4,12 +4,12 @@ if ($argv && ($function = $argv[1] ?? null)) {
     // Get params
     $params = [];
     for ($i = 2; $i < count($argv); $i++) {
-        $params[] = trim($argv[$i]);
+        $params[] = strip_tags(trim($argv[$i]));
     }
 
     // Set the current directory correctly for CLI requests
     if (defined('STDIN')) {
-        chdir(dirname(dirname(__FILE__)));
+        chdir(dirname(__FILE__));
     }
 
     // Path to the front controller (this file) directory

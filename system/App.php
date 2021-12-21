@@ -126,10 +126,10 @@ class App
                 $request_path = env('REQUEST_URI');
             }
             $request_path = urldecode($request_path);
-            
+
             if (!empty($request_path)) {
                 if (preg_match('/\/ping(\/)?$/', $request_path)) {
-                    $this->showMessage(200, true, "System Online", ENVIRONMENT);
+                    $this->showMessage(200, true, "System Online");
                 } else {
                     $routes = explode('/', explode('?', $request_path)[0]);
                     if (!empty($routes)) {
@@ -157,7 +157,7 @@ class App
         } else {
             if (strtolower(env("REQUEST_METHOD")) === 'options') {
                 // kill the response and send it to the client
-                $this->showMessage(200, true, "Preflight Ok", ENVIRONMENT);
+                $this->showMessage(200, true, "Preflight Ok");
             }
         }
     }
@@ -169,15 +169,15 @@ class App
      */
     private function reroute($routes)
     {
-        $routes = array_values(array_filter($routes, function($route){
-            if(!empty(trim($route, "\n\r'\"\\/&%!@#$*)(|<>{} "))) return $route;
+        $routes = array_values(array_filter($routes, function ($route) {
+            if (!empty(trim($route, "\n\r'\"\\/&%!@#$*)(|<>{} "))) return $route;
         }));
         $controller = isset($routes[0]) ? $routes[0] : null; // First path = controller
         $function = isset($routes[1]) ? $routes[1] : null; // Second path = function (public)
         $params = isset($routes[2]) ? array_slice($routes, 2, count($routes)) : []; // Subsequent paths = function parameters
 
         // Process route if available
-        if ($controller && $function) { 
+        if ($controller && $function) {
             $this->processRoute(trim($controller), trim($function), $params);
         } else {
             $this->showMessage(404, false, "Invalid Request", "Invalid Request Path");
@@ -254,7 +254,7 @@ class App
      * @param string $title itle
      * @param string $msg Message
      */
-    public function showMessage($code, $status, $title, $msg, $errorLine = null, $errorFile = null, $errorContext = [])
+    public function showMessage($code, $status, $title, $msg = null, $errorLine = null, $errorFile = null, $errorContext = [])
     {
         if (!is_cli() && !headers_sent()) {
             header(HTTP_VERSION . ' ' . $code . ' ' . $title, TRUE, $code);
@@ -263,15 +263,22 @@ class App
             header('Access-Control-Allow-Methods: *', true);
         }
         if ($status) {
-            echo json_encode(['success' => true, 'msg' => $title, 'env' => ENVIRONMENT, 'ip' => IPADDRESS], JSON_PRETTY_PRINT);
+            if (is_cli()) {
+                echo "success - true" . PHP_EOL . "message - " . $msg ?? $title;
+            } else {
+                echo json_encode(['success' => true, 'msg' => $title, 'env' => ENVIRONMENT, 'ip' => IPADDRESS], JSON_PRETTY_PRINT);
+            }
+            exit(1);
         } else {
-            if (ENVIRONMENT != ENV_PROD) {
+            if (is_cli()) {
+                echo "success - false" . PHP_EOL . "message - " . ($msg ?? $title) . PHP_EOL . "line - $errorLine" . PHP_EOL . "file path - $errorFile" . PHP_EOL;
+            } else if (ENVIRONMENT != ENV_PROD) {
                 echo json_encode(['success' => false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT, 'ip' => IPADDRESS,  'line' =>  $errorLine,  'file_path' =>  $errorFile,  'backtrace' =>  $errorContext], JSON_PRETTY_PRINT);
             } else {
                 echo json_encode(['success' => false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT, 'ip' => IPADDRESS], JSON_PRETTY_PRINT);
             }
+            exit;
         }
-        exit;
     }
 
 
@@ -343,7 +350,7 @@ class App
      */
     public function loadLibrary($path, $vars = array())
     {
-        if ($filePath = $this->fileExists(FCPATH .$this->libraryDir . $path . ".php")) {
+        if ($filePath = $this->fileExists(FCPATH . $this->libraryDir . $path . ".php")) {
             if (!empty($vars))
                 extract($vars);
             require_once $filePath;
@@ -360,7 +367,7 @@ class App
      */
     public function loadModel($path, $vars = array())
     {
-        if ($filePath = $this->fileExists(FCPATH .$this->modelDir . $path . ".php")) {
+        if ($filePath = $this->fileExists(FCPATH . $this->modelDir . $path . ".php")) {
             if (!empty($vars))
                 extract($vars);
             require_once $filePath;

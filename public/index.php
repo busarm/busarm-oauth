@@ -1,8 +1,8 @@
 <?php
 
-// Set the current directory correctly for CLI requests
-if (defined('STDIN')) {
-    chdir(dirname(dirname(__FILE__)));
+// Prevent cli - use ../console.php for cli
+if (PHP_SAPI === 'cli' or defined('STDIN')) {
+    exit(1);
 } 
 
 // Path to the front controller (this file) directory
