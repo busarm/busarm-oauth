@@ -229,6 +229,10 @@ class Configs
     }
 
     # Database
+    static function DB_NAME()
+    {
+        return env("DB_NAME");
+    }
     static function DB_HOST()
     {
         return env("DB_HOST");

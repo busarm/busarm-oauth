@@ -56,7 +56,7 @@ class Server
         App::getInstance()->loadModel("OauthPdo");
 
         //Create PDO - MYSQL DB Storage
-        $this->oauthStorage = new OauthPdo(array('dsn' => "mysql:dbname=13243546576879_oauth;host=" . Configs::DB_HOST(), 'username' => Configs::DB_USER(), 'password' => Configs::DB_PASS()));
+        $this->oauthStorage = new OauthPdo(array('dsn' => sprintf("mysql:dbname=%s;host=%s", Configs::DB_NAME(), Configs::DB_HOST()), 'username' => Configs::DB_USER(), 'password' => Configs::DB_PASS()));
 
         //Create server without implicit
         $this->oauthServer = new \OAuth2\Server($this->oauthStorage, array(

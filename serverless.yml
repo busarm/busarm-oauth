@@ -25,6 +25,7 @@ provider:
         EMAIL_INFO: "info@wecari.com"
         EMAIL_SUPPORT: "support@wecari.com"
         # Databse
+        DB_NAME: 13243546576879_oauth
         DB_HOST: ${self:custom.secret.db_host}
         DB_PORT: ${self:custom.secret.db_port}
         DB_USER: ${self:custom.secret.db_username}
