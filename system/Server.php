@@ -60,8 +60,8 @@ class Server
 
         //Create server without implicit
         $this->oauthServer = new \OAuth2\Server($this->oauthStorage, array(
-            'access_lifetime' => 86400, //1 day
-            'refresh_token_lifetime' => 2419200, //28 days
+            'access_lifetime' => ENVIRONMENT == ENV_DEV ? 86400 * 30 : 86400,
+            'refresh_token_lifetime' => ENVIRONMENT == ENV_DEV ? 86400 * 90 : 86400 * 30,
             'auth_code_lifetime' => 3600, //1 hour
             'allow_credentials_in_request_body' => true,
             'allow_implicit' => false,
