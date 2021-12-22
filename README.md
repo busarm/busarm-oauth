@@ -70,11 +70,13 @@ Wecari Authorization server. Manages user authentication and authorization to ac
 ### Development (using Docker)
 
 - Install Docker on system. Visit https://docs.docker.com/get-docker/
-- Start Local Server (Wecari Oauth)
+- Set up Environment Variables
 - - Ensure `.env` file exists. If not run copy `.env.example` to `.env`
 - - Ensure `.env` file is populated with the corrent details
+- Start Local Server (Wecari Oauth)
 - - Run `docker-compose up` or `docker-compose up --scale oauth-php=<NUMBER_OF_INSTANCES>`
 - For First time Deployment:
+- Set up database (After Starting Local Server)
 - - Before Starting Server - Generate Oauth Client Credentials for Wecari API and add to the `.env` file. Use `Wecari Oauth` console commands.
 - - After Starting Server - Login to the database using the default mysql credentials in the `docker-compose.yml` file.
 - - After Starting Server - If database ddl hasn't been automaticaly deployed, run the database ddl sql scripts in the `database` folder.
@@ -82,6 +84,7 @@ Wecari Authorization server. Manages user authentication and authorization to ac
 ### Staging / Production (using Serverlsess)
 
 - For First time Deployment:
+- Set up Cloud environment (AWS):
 - - Set up VPC
 - - Ensure VPC has a private subnet which the RDS database is connected to
 - - Set up RDS database.
@@ -89,6 +92,7 @@ Wecari Authorization server. Manages user authentication and authorization to ac
 - - Add app related credentials on Secret manager
 - - Set up Domain and add domain to API Gateway custom domain
 - - Add VPC's Private Subnet IDs and Security Group to `serverless.yml` file
+- Set up database
 - - Login to the database using the db credentials.
 - - Run the database ddl sql scripts in the `database` folder to create database adn tables.
 - Run command `php deploy --dev` for staging or `php deploy --prod` for production
