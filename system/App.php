@@ -31,7 +31,7 @@ class App
 
     public function __construct()
     {
-        self::$instance = $this;
+        self::$instance =& $this;
 
         if ($key = Configs::BUGSNAG_KEY()) {
             $this->bugsnag = Bugsnag\Client::make($key);
@@ -66,7 +66,7 @@ class App
      *
      * @return App
      */
-    public static function getInstance()
+    public static function &getInstance()
     {
         return self::$instance;
     }
