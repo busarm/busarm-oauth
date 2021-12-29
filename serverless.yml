@@ -4,7 +4,10 @@
 
 service: Wecari-Oauth
 
+variablesResolutionMode: 20210326
+
 provider:
+    lambdaHashingVersion: 20201221
     name: aws
     runtime: provided.al2
     profile: wecari
@@ -13,6 +16,7 @@ provider:
     stackName: Wecari-Oauth-${self:provider.stage}
     apiName: Wecari-Oauth-${self:provider.stage}
     role: ${self:custom.roleName}
+    logRetentionInDays: ${self:custom.logRetentionInDays}
     environment: # define service wide environment variables here
         ENV: ${self:provider.stage} # Environment variable
         BREF_BINARY_RESPONSES: '1' # For bref to return binary responses. Bref will automatically encode responses to base64
@@ -20,24 +24,24 @@ provider:
         # App
         APP_NAME: 'Wecari Oauth'
         COMPANY_NAME: 'Wecari'
-        ENCRYPTION_KEY: ${self:custom.secret.oauth_encryption_key} 
-        BUGSNAG_KEY: ${self:custom.secret.oauth_bugsnag_key} 
+        ENCRYPTION_KEY: ${self:custom.secret}.oauth_encryption_key 
+        BUGSNAG_KEY: ${self:custom.secret}.oauth_bugsnag_key 
         EMAIL_INFO: "info@wecari.com"
         EMAIL_SUPPORT: "support@wecari.com"
         # Databse
         DB_NAME: 13243546576879_oauth
-        DB_HOST: ${self:custom.secret.db_host}
-        DB_PORT: ${self:custom.secret.db_port}
-        DB_USER: ${self:custom.secret.db_username}
-        DB_PASS: ${self:custom.secret.db_password}
+        DB_HOST: ${self:custom.secret}.db_host
+        DB_PORT: ${self:custom.secret}.db_port
+        DB_USER: ${self:custom.secret}.db_username
+        DB_PASS: ${self:custom.secret}.db_password
         # SMTP
-        SMTP_HOST: ${self:custom.secret.smtp_host}
-        SMTP_PORT: ${self:custom.secret.smtp_port}
-        SMTP_KEY: ${self:custom.secret.smtp_username}
-        SMTP_SECRET: ${self:custom.secret.smtp_password}
+        SMTP_HOST: ${self:custom.secret}.smtp_host
+        SMTP_PORT: ${self:custom.secret}.smtp_port
+        SMTP_KEY: ${self:custom.secret}.smtp_username
+        SMTP_SECRET: ${self:custom.secret}.smtp_password
         # Google
-        RECAPTCHA_SECRET_KEY: ${self:custom.secret.recaptcha_secret_key}
-        RECAPTCHA_CLIENT_KEY: ${self:custom.secret.recaptcha_client_key}
+        RECAPTCHA_SECRET_KEY: ${self:custom.secret}.recaptcha_secret_key
+        RECAPTCHA_CLIENT_KEY: ${self:custom.secret}.recaptcha_client_key
     apiGateway:
         binaryMediaTypes:
             - '*/*'
@@ -52,6 +56,7 @@ provider:
 plugins:
   - ./vendor/bref/bref
   - serverless-plugin-log-retention
+
 package:
     exclude:
         - composer.json 
@@ -60,6 +65,37 @@ package:
         - .serverless/**
         - .htaccess
         - node_modules/**
+      
+custom:
+    bref:
+        separateVendor: 0 
+    maxMem:
+        Dev: 2048
+        Prod: 4096 
+    superMem:
+        Dev: 1024
+        Prod: 2048
+    highMem:
+        Dev: 512
+        Prod: 1024
+    avgMem:
+        Dev: 256
+        Prod: 512
+    lowMem:
+        Dev: 128
+        Prod: 256
+    logRetentionInDays: 30
+    secret: ${ssm:/aws/reference/secretsmanager/prod/wecari}
+    roleName: WecariOauthLambdaRole
+    corsHeaders: 
+      - Content-Type
+      - Authorization
+      - Access-Token
+      - X-Requested-With
+      - X-Api-Key
+      - X-Access-Token
+      - X-Amz-Date
+      - X-Amz-User-Agent
        
 functions:
     Authorize:
@@ -67,7 +103,6 @@ functions:
         description: 'Allow user to authorize access to their account'
         memorySize: ${self:custom.avgMem.${self:provider.stage}}
         timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
-        logRetentionInDays: ${self:custom.logRetentionInDays} 
         layers:
             - ${bref:layer.php-80-fpm}
         events:
@@ -85,7 +120,6 @@ functions:
         description: 'Retrieve oauth resources e.g user details with client credentials and access token'
         memorySize: ${self:custom.highMem.${self:provider.stage}}
         timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
-        logRetentionInDays: ${self:custom.logRetentionInDays} 
         layers:
             - ${bref:layer.php-80-fpm}
         events:
@@ -107,7 +141,6 @@ functions:
         description: 'Generate and verify oauth access tokens'
         memorySize: ${self:custom.highMem.${self:provider.stage}}
         timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
-        logRetentionInDays: ${self:custom.logRetentionInDays} 
         layers:
             - ${bref:layer.php-80-fpm}
         events:
@@ -124,38 +157,6 @@ functions:
                 input:
                     warmer: true
 
-custom:
-    bref:
-        separateVendor: 0 
-    maxMem:
-        Dev: 2048
-        Prod: 4096 
-    superMem:
-        Dev: 1024
-        Prod: 2048
-    highMem:
-        Dev: 512
-        Prod: 1024
-    avgMem:
-        Dev: 256
-        Prod: 512
-    lowMem:
-        Dev: 128
-        Prod: 256
-    logRetentionInDays: 30
-    secret: ${ssm:/aws/reference/secretsmanager/prod/wecari~true}
-    roleName: WecariOauthLambdaRole
-    corsHeaders: 
-      - Content-Type
-      - Authorization
-      - Access-Token
-      - X-Requested-With
-      - X-Api-Key
-      - X-Access-Token
-      - X-Amz-Date
-      - X-Amz-User-Agent
-      
- 
 resources:
   Resources:  
     WecariOauthLambdaRole:
