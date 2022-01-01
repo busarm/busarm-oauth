@@ -190,7 +190,7 @@ class OauthPdo  extends Pdo
         $salt = sha1(uniqid($user_id));
 
         // if it exists, update it.
-        if ($this->getUser($user_id)) {
+        if ($this->getUser($user_id) || $this->getUser($email)) {
             $done = false;
             if (!empty($password)) {
                 $stmt = $this->db->prepare(sprintf('UPDATE %s SET password=sha2(CONCAT(:user_id,\':\',:salt,\':\',:password),256), salt=:salt, cred_updated_at=NOW() where user_id=:user_id', $this->config['user_table']));
