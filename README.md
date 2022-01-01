@@ -80,7 +80,9 @@ Wecari Authorization server. Manages user authentication and authorization to ac
 	- Before Starting Server - Generate Oauth Client Credentials for Wecari API and add to the `.env` file. Use `Wecari Oauth` console commands.
 	- After Starting Server - Login to the database using the default mysql credentials in the `docker-compose.yml` file.
 	- After Starting Server - If database ddl hasn't been automaticaly deployed, run the database ddl sql scripts in the `database` folder.
-
+- Set Up Local Server
+	- Access php container. Run `docker-compose exec api-php bash`
+	- Install composer. Run `composer install`
 ### Staging / Production (using Serverlsess)
 
 - For First time Deployment:
