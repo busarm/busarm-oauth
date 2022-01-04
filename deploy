@@ -1,17 +1,6 @@
 <?php
 
-// Get Command Args
-$commandArgs = [];
-if(!empty($argv)){
-    unset($argv[0]);
-    foreach ($argv as $arg) {
-        $e=explode("=",$arg);
-        if(count($e)==2)
-            $commandArgs[$e[0]]=$e[1];
-        else   
-            $commandArgs[$e[0]]=0;
-    }
-}
+$args = parseArgs($argv);
 
 echo PHP_EOL;
 echo "---------------------------------";
@@ -23,7 +12,77 @@ echo PHP_EOL;
 
 
 // Help
-if(isset($commandArgs['--help'])){
+if(isset($args['--help'])){
+    showHints();
+    exit(0);
+}
+else {
+        
+    // Environment
+    if(isset($args['--all'])){
+        deploy('Dev', $args);
+        deploy('Prod', $args);
+    }
+    else if(isset($args['--prod'])){
+        deploy('Prod', $args);
+    }
+    else if(isset($args['--dev'])){
+        deploy('Dev', $args);
+    }
+    else {
+        showHints();
+    }
+    exit(0);
+}
+
+/**
+ * Process serverless deployment
+ *
+ * @param string $stage
+ * @return void
+ */
+function deploy($stage = 'Dev', $params = []){
+    $args = [];
+    $function = $params['--function'] ?? $params['-f'] ?? '';
+    if(isset($params['--conceal'])){
+        $args[] = '--conceal';
+    }
+    if(isset($params['--force'])){
+        $args[] = '--force';
+    }
+    if(isset($params['--verbose']) || isset($params['-v'])){
+        $args[] = '--verbose';
+    }
+    passthru("sls deploy --stage=$stage ".implode(' ', $args).' '.$function);
+}
+
+/**
+ * Parse Command Args
+ *
+ * @return array
+ */
+function parseArgs($args){
+    $params = [];
+    if(!empty($args)){
+        unset($args[0]);
+        foreach ($args as $arg) {
+            $e=explode("=",$arg);
+            if(count($e)==2)
+                $params[$e[0]]=$e[1];
+            else   
+                $params[$e[0]]=1;
+        }
+    }
+    return $params;
+}
+
+/**
+ * Show Hints
+ *
+ * @return void
+ */
+function showHints(){
+    
     echo "php deploy [options]";
     echo PHP_EOL;
     echo PHP_EOL;
@@ -37,31 +96,11 @@ if(isset($commandArgs['--help'])){
     echo PHP_EOL;
     echo "--all             =     Deployment to All ENV - Development and Production";
     echo PHP_EOL;
-    exit(0);
+    echo "--conceal         =     Hide secrets from the output (e.g. API Gateway key values)";
+    echo PHP_EOL;
+    echo "--verbose         =     Show all stack events during deployment";
+    echo PHP_EOL;
+    echo "--function=<VAL>  =     Function name. Deploys a single function";
+    echo PHP_EOL;
+    echo PHP_EOL;
 }
-else {
-        
-    $allEnv = false;
-    $env = 'Dev';
-
-    // Environment
-    if(isset($commandArgs['--dev'])){
-        $env = 'Dev';
-    }
-    else if(isset($commandArgs['--prod'])){
-        $env = 'Prod';
-    }
-    else if(isset($commandArgs['--all'])){
-        $allEnv = true;
-    }
-
-    // Process
-    if($allEnv){
-        passthru("sls deploy --stage=Dev && sls deploy --stage=Prod");
-    }
-    else {
-        passthru("sls deploy --stage=$env");
-    }
-    exit(0);
-}
-

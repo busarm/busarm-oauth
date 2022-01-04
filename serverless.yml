@@ -1,7 +1,3 @@
-# TODO
-# -------
-# Decrease heatbeat rate to 10 minutes for production
-
 service: Wecari-Oauth
 
 variablesResolutionMode: 20210326
@@ -24,24 +20,24 @@ provider:
         # App
         APP_NAME: 'Wecari Oauth'
         COMPANY_NAME: 'Wecari'
-        ENCRYPTION_KEY: ${self:custom.secret}.oauth_encryption_key 
-        BUGSNAG_KEY: ${self:custom.secret}.oauth_bugsnag_key 
+        ENCRYPTION_KEY: ${self:custom.secret.oauth_encryption_key} 
+        BUGSNAG_KEY: ${self:custom.secret.oauth_bugsnag_key} 
         EMAIL_INFO: "info@wecari.com"
         EMAIL_SUPPORT: "support@wecari.com"
         # Databse
         DB_NAME: 13243546576879_oauth
-        DB_HOST: ${self:custom.secret}.db_host
-        DB_PORT: ${self:custom.secret}.db_port
-        DB_USER: ${self:custom.secret}.db_username
-        DB_PASS: ${self:custom.secret}.db_password
+        DB_HOST: ${self:custom.secret.db_host}
+        DB_PORT: ${self:custom.secret.db_port}
+        DB_USER: ${self:custom.secret.db_username}
+        DB_PASS: ${self:custom.secret.db_password}
         # SMTP
-        SMTP_HOST: ${self:custom.secret}.smtp_host
-        SMTP_PORT: ${self:custom.secret}.smtp_port
-        SMTP_KEY: ${self:custom.secret}.smtp_username
-        SMTP_SECRET: ${self:custom.secret}.smtp_password
+        SMTP_HOST: ${self:custom.secret.smtp_host}
+        SMTP_PORT: ${self:custom.secret.smtp_port}
+        SMTP_KEY: ${self:custom.secret.smtp_username}
+        SMTP_SECRET: ${self:custom.secret.smtp_password}
         # Google
-        RECAPTCHA_SECRET_KEY: ${self:custom.secret}.recaptcha_secret_key
-        RECAPTCHA_CLIENT_KEY: ${self:custom.secret}.recaptcha_client_key
+        RECAPTCHA_SECRET_KEY: ${self:custom.secret.recaptcha_secret_key}
+        RECAPTCHA_CLIENT_KEY: ${self:custom.secret.recaptcha_client_key}
     apiGateway:
         binaryMediaTypes:
             - '*/*'
