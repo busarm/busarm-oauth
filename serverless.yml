@@ -3,159 +3,159 @@ service: Wecari-Oauth
 variablesResolutionMode: 20210326
 
 provider:
-    lambdaHashingVersion: 20201221
-    name: aws
-    runtime: provided.al2
-    profile: wecari
-    region: ${opt:region, 'eu-west-2'} # e.g serverless delopy --region eu-west-2 (default = 'eu-west-2')
-    stage: ${opt:stage, 'Dev'} # e.g serverless delopy --stage dev (default = 'dev')
-    stackName: Wecari-Oauth-${self:provider.stage}
-    apiName: Wecari-Oauth-${self:provider.stage}
-    role: ${self:custom.roleName}
-    logRetentionInDays: ${self:custom.logRetentionInDays}
-    environment: # define service wide environment variables here
-        ENV: ${self:provider.stage} # Environment variable
-        BREF_BINARY_RESPONSES: '1' # For bref to return binary responses. Bref will automatically encode responses to base64
-        SEPARATE_VENDOR: '0'
-        # App
-        APP_NAME: 'Wecari Oauth'
-        COMPANY_NAME: 'Wecari'
-        ENCRYPTION_KEY: ${self:custom.secret.${self:provider.stage}.oauth_encryption_key} 
-        BUGSNAG_KEY: ${self:custom.secret.${self:provider.stage}.oauth_bugsnag_key} 
-        EMAIL_INFO: "info@wecari.com"
-        EMAIL_SUPPORT: "support@wecari.com"
-        # Databse
-        DB_NAME: 13243546576879_oauth
-        DB_HOST: ${self:custom.secret.${self:provider.stage}.db_host}
-        DB_PORT: ${self:custom.secret.${self:provider.stage}.db_port}
-        DB_USER: ${self:custom.secret.${self:provider.stage}.db_username}
-        DB_PASS: ${self:custom.secret.${self:provider.stage}.db_password}
-        # SMTP
-        SMTP_HOST: ${self:custom.secret.${self:provider.stage}.smtp_host}
-        SMTP_PORT: ${self:custom.secret.${self:provider.stage}.smtp_port}
-        SMTP_KEY: ${self:custom.secret.${self:provider.stage}.smtp_username}
-        SMTP_SECRET: ${self:custom.secret.${self:provider.stage}.smtp_password}
-        # Google
-        RECAPTCHA_SECRET_KEY: ${self:custom.secret.${self:provider.stage}.recaptcha_secret_key}
-        RECAPTCHA_CLIENT_KEY: ${self:custom.secret.${self:provider.stage}.recaptcha_client_key}
-    apiGateway:
-        binaryMediaTypes:
-            - '*/*'
-    vpc:
-        securityGroupIds:
-            - sg-0f8d9dd9d6c8486db
-        subnetIds:
-            - subnet-00c055bcb994cd571
-            - subnet-0effe477213b0ed11
+  lambdaHashingVersion: 20201221
+  name: aws
+  runtime: provided.al2
+  profile: wecari
+  region: ${opt:region, 'eu-west-2'} # e.g serverless delopy --region eu-west-2 (default = 'eu-west-2')
+  stage: ${opt:stage, 'Dev'} # e.g serverless delopy --stage dev (default = 'dev')
+  stackName: Wecari-Oauth-${self:provider.stage}
+  apiName: Wecari-Oauth-${self:provider.stage}
+  role: ${self:custom.roleName}
+  logRetentionInDays: ${self:custom.logRetentionInDays}
+  environment: # define service wide environment variables here
+    ENV: ${self:provider.stage} # Environment variable
+    BREF_BINARY_RESPONSES: "1" # For bref to return binary responses. Bref will automatically encode responses to base64
+    SEPARATE_VENDOR: "0"
+    # App
+    APP_NAME: "Wecari Oauth"
+    COMPANY_NAME: "Wecari"
+    ENCRYPTION_KEY: ${self:custom.secret.${self:provider.stage}.oauth_encryption_key}
+    BUGSNAG_KEY: ${self:custom.secret.${self:provider.stage}.oauth_bugsnag_key}
+    EMAIL_INFO: "info@wecari.com"
+    EMAIL_SUPPORT: "support@wecari.com"
+    # Databse
+    DB_NAME: 13243546576879_oauth
+    DB_HOST: ${self:custom.secret.${self:provider.stage}.db_host}
+    DB_PORT: ${self:custom.secret.${self:provider.stage}.db_port}
+    DB_USER: ${self:custom.secret.${self:provider.stage}.db_username}
+    DB_PASS: ${self:custom.secret.${self:provider.stage}.db_password}
+    # SMTP
+    SMTP_HOST: ${self:custom.secret.${self:provider.stage}.smtp_host}
+    SMTP_PORT: ${self:custom.secret.${self:provider.stage}.smtp_port}
+    SMTP_KEY: ${self:custom.secret.${self:provider.stage}.smtp_username}
+    SMTP_SECRET: ${self:custom.secret.${self:provider.stage}.smtp_password}
+    # Google
+    RECAPTCHA_SECRET_KEY: ${self:custom.secret.${self:provider.stage}.recaptcha_secret_key}
+    RECAPTCHA_CLIENT_KEY: ${self:custom.secret.${self:provider.stage}.recaptcha_client_key}
+  apiGateway:
+    binaryMediaTypes:
+      - "*/*"
+  vpc:
+    securityGroupIds:
+      - sg-0f8d9dd9d6c8486db
+    subnetIds:
+      - subnet-00c055bcb994cd571
+      - subnet-0effe477213b0ed11
 
 plugins:
   - ./vendor/bref/bref
   - serverless-plugin-log-retention
 
 package:
-    exclude:
-        - composer.json 
-        - composer.lock
-        - .git/**
-        - .serverless/**
-        - .htaccess
-        - node_modules/**
-      
+  exclude:
+    - composer.json
+    - composer.lock
+    - .git/**
+    - .serverless/**
+    - .htaccess
+    - node_modules/**
+
 custom:
-    bref:
-        separateVendor: 0 
-    maxMem:
-        Dev: 2048
-        Prod: 4096 
-    superMem:
-        Dev: 1024
-        Prod: 2048
-    highMem:
-        Dev: 512
-        Prod: 1024
-    avgMem:
-        Dev: 256
-        Prod: 512
-    lowMem:
-        Dev: 128
-        Prod: 256
-    logRetentionInDays: 30
-    secret: 
-        Dev: ${ssm:/aws/reference/secretsmanager/dev/wecari}
-        Prod: ${ssm:/aws/reference/secretsmanager/prod/wecari}
-    roleName: WecariOauthLambdaRole
-    corsHeaders: 
-      - Content-Type
-      - Authorization
-      - Access-Token
-      - X-Requested-With
-      - X-Api-Key
-      - X-Access-Token
-      - X-Amz-Date
-      - X-Amz-User-Agent
-       
+  bref:
+    separateVendor: 0
+  maxMem:
+    Dev: 2048
+    Prod: 4096
+  superMem:
+    Dev: 1024
+    Prod: 2048
+  highMem:
+    Dev: 512
+    Prod: 1024
+  avgMem:
+    Dev: 256
+    Prod: 512
+  lowMem:
+    Dev: 128
+    Prod: 256
+  logRetentionInDays: 30
+  secret:
+    Dev: ${ssm:/aws/reference/secretsmanager/dev/wecari}
+    Prod: ${ssm:/aws/reference/secretsmanager/prod/wecari}
+  roleName: WecariOauthLambdaRole
+  corsHeaders:
+    - Content-Type
+    - Authorization
+    - Access-Token
+    - X-Requested-With
+    - X-Api-Key
+    - X-Access-Token
+    - X-Amz-Date
+    - X-Amz-User-Agent
+
 functions:
-    Authorize:
-        handler: 'public/index.php'
-        description: 'Allow user to authorize access to their account'
-        memorySize: ${self:custom.avgMem.${self:provider.stage}}
-        timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
-        layers:
-            - ${bref:layer.php-80-fpm}
-        events:
-            - http:  
-                path: '/authorize/{any+}'
-                method: ANY
-                cors:         
-                    origin: '*'
-                    headers: ${self:custom.corsHeaders} 
-                    allowCredentials: false
-                    cacheControl: 'max-age=600, s-maxage=600, proxy-revalidate' 
-                    
-    Resources:
-        handler: 'public/index.php'
-        description: 'Retrieve oauth resources e.g user details with client credentials and access token'
-        memorySize: ${self:custom.highMem.${self:provider.stage}}
-        timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
-        layers:
-            - ${bref:layer.php-80-fpm}
-        events:
-            - http:  
-                path: '/resources/{any+}'
-                method: ANY
-                cors:         
-                    origin: '*'
-                    headers: ${self:custom.corsHeaders} 
-                    allowCredentials: false
-                    cacheControl: 'max-age=600, s-maxage=600, proxy-revalidate' 
-            - schedule:
-                rate: rate(5 minutes)
-                input:
-                    warmer: true
-                    
-    Token:
-        handler: 'public/index.php'
-        description: 'Generate and verify oauth access tokens'
-        memorySize: ${self:custom.highMem.${self:provider.stage}}
-        timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
-        layers:
-            - ${bref:layer.php-80-fpm}
-        events:
-            - http:  
-                path: '/token/{any+}'
-                method: ANY
-                cors:         
-                    origin: '*'
-                    headers: ${self:custom.corsHeaders} 
-                    allowCredentials: false
-                    cacheControl: 'max-age=600, s-maxage=600, proxy-revalidate' 
-            - schedule:
-                rate: rate(5 minutes)
-                input:
-                    warmer: true
+  Authorize:
+    handler: "public/index.php"
+    description: "Allow user to authorize access to their account"
+    memorySize: ${self:custom.avgMem.${self:provider.stage}}
+    timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
+    layers:
+      - ${bref:layer.php-80-fpm}
+    events:
+      - http:
+          path: "/authorize/{any+}"
+          method: ANY
+          cors:
+            origin: "*"
+            headers: ${self:custom.corsHeaders}
+            allowCredentials: false
+            cacheControl: "max-age=600, s-maxage=600, proxy-revalidate"
+
+  Resources:
+    handler: "public/index.php"
+    description: "Retrieve oauth resources e.g user details with client credentials and access token"
+    memorySize: ${self:custom.highMem.${self:provider.stage}}
+    timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
+    layers:
+      - ${bref:layer.php-80-fpm}
+    events:
+      - http:
+          path: "/resources/{any+}"
+          method: ANY
+          cors:
+            origin: "*"
+            headers: ${self:custom.corsHeaders}
+            allowCredentials: false
+            cacheControl: "max-age=600, s-maxage=600, proxy-revalidate"
+      - schedule:
+          rate: rate(5 minutes)
+          input:
+            warmer: true
+
+  Token:
+    handler: "public/index.php"
+    description: "Generate and verify oauth access tokens"
+    memorySize: ${self:custom.highMem.${self:provider.stage}}
+    timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
+    layers:
+      - ${bref:layer.php-80-fpm}
+    events:
+      - http:
+          path: "/token/{any+}"
+          method: ANY
+          cors:
+            origin: "*"
+            headers: ${self:custom.corsHeaders}
+            allowCredentials: false
+            cacheControl: "max-age=600, s-maxage=600, proxy-revalidate"
+      - schedule:
+          rate: rate(5 minutes)
+          input:
+            warmer: true
 
 resources:
-  Resources:  
+  Resources:
     WecariOauthLambdaRole:
       Type: AWS::IAM::Role
       Properties:
@@ -185,8 +185,8 @@ resources:
                     - ec2:DescribeSecurityGroups
                     - ec2:DescribeSubnets
                     - ec2:DescribeVpcs
-                  Resource: "*" 
-        
+                  Resource: "*"
+
   Outputs:
     RoleName:
       Value: ${self:custom.roleName}
