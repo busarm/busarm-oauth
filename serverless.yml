@@ -20,34 +20,33 @@ provider:
         # App
         APP_NAME: 'Wecari Oauth'
         COMPANY_NAME: 'Wecari'
-        ENCRYPTION_KEY: ${self:custom.secret.oauth_encryption_key} 
-        BUGSNAG_KEY: ${self:custom.secret.oauth_bugsnag_key} 
+        ENCRYPTION_KEY: ${self:custom.secret.${self:provider.stage}.oauth_encryption_key} 
+        BUGSNAG_KEY: ${self:custom.secret.${self:provider.stage}.oauth_bugsnag_key} 
         EMAIL_INFO: "info@wecari.com"
         EMAIL_SUPPORT: "support@wecari.com"
         # Databse
         DB_NAME: 13243546576879_oauth
-        DB_HOST: ${self:custom.secret.db_host}
-        DB_PORT: ${self:custom.secret.db_port}
-        DB_USER: ${self:custom.secret.db_username}
-        DB_PASS: ${self:custom.secret.db_password}
+        DB_HOST: ${self:custom.secret.${self:provider.stage}.db_host}
+        DB_PORT: ${self:custom.secret.${self:provider.stage}.db_port}
+        DB_USER: ${self:custom.secret.${self:provider.stage}.db_username}
+        DB_PASS: ${self:custom.secret.${self:provider.stage}.db_password}
         # SMTP
-        SMTP_HOST: ${self:custom.secret.smtp_host}
-        SMTP_PORT: ${self:custom.secret.smtp_port}
-        SMTP_KEY: ${self:custom.secret.smtp_username}
-        SMTP_SECRET: ${self:custom.secret.smtp_password}
+        SMTP_HOST: ${self:custom.secret.${self:provider.stage}.smtp_host}
+        SMTP_PORT: ${self:custom.secret.${self:provider.stage}.smtp_port}
+        SMTP_KEY: ${self:custom.secret.${self:provider.stage}.smtp_username}
+        SMTP_SECRET: ${self:custom.secret.${self:provider.stage}.smtp_password}
         # Google
-        RECAPTCHA_SECRET_KEY: ${self:custom.secret.recaptcha_secret_key}
-        RECAPTCHA_CLIENT_KEY: ${self:custom.secret.recaptcha_client_key}
+        RECAPTCHA_SECRET_KEY: ${self:custom.secret.${self:provider.stage}.recaptcha_secret_key}
+        RECAPTCHA_CLIENT_KEY: ${self:custom.secret.${self:provider.stage}.recaptcha_client_key}
     apiGateway:
         binaryMediaTypes:
             - '*/*'
     vpc:
         securityGroupIds:
-            - sg-eaba578b
+            - sg-0f8d9dd9d6c8486db
         subnetIds:
-            - subnet-6c499c20
-            - subnet-a9880ed3
-            - subnet-e453298d
+            - subnet-00c055bcb994cd571
+            - subnet-0effe477213b0ed11
 
 plugins:
   - ./vendor/bref/bref
@@ -81,7 +80,9 @@ custom:
         Dev: 128
         Prod: 256
     logRetentionInDays: 30
-    secret: ${ssm:/aws/reference/secretsmanager/prod/wecari}
+    secret: 
+        Dev: ${ssm:/aws/reference/secretsmanager/dev/wecari}
+        Prod: ${ssm:/aws/reference/secretsmanager/prod/wecari}
     roleName: WecariOauthLambdaRole
     corsHeaders: 
       - Content-Type
