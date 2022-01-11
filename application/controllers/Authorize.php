@@ -146,7 +146,7 @@ class Authorize extends Server
                     }
                 } else {
                     $min = intval($timeout / 60);
-                    $this->response->setParameters($this->error('Maximum attempt reached. Please try again in $min minute(s)', 'max_request'));
+                    $this->response->setParameters($this->error("Maximum attempt reached. Please try again in $min minute(s)', 'max_request"));
                 }
             } else {
                 $this->response->setParameters($this->error('Session validation failed. Please try again', 'validation_error'));

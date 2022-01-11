@@ -82,6 +82,7 @@ Wecari Authorization server. Manages user authentication and authorization to ac
 	- After Starting Server - If database ddl hasn't been automaticaly deployed, run the database ddl sql scripts in the `database` folder.
 - Set Up Local Server
 	- Access php container. Run `docker-compose exec api-php bash`
+	- Go to app folder. Run `cd /var/www`
 	- Install composer. Run `composer install`
 ### Staging / Production (using Serverlsess)
 
