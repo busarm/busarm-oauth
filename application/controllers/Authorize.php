@@ -166,14 +166,14 @@ class Authorize extends Server
      */
     private function processEmailRequest($email, $redirect_uri, $state, $scope)
     {
-        if ($userInfo = $this->getOauthStorage()->getUser($email)) {
+        if ($user = $this->getOauthStorage()->getUser($email)) {
 
             $timeout = 600;
             $token = sha1(sprintf("%s:%s:%s:%s", $email, $redirect_uri, $state, $scope));
             if (App::getInstance()->get_cookie(self::EMAIL_REQ_TOKEN_PARAM) !== $token) {
 
-                $user_id = $userInfo['user_id'];
-                if ($this->getOauthStorage()->scopeExistsForUser($scope, $user_id)) {
+                $user_id = $user['user_id'];
+                if (empty($scope) || $this->getOauthStorage()->scopeExistsForUser($scope, $user_id)) {
 
                     if ($is_authorized = $this->getOauthServer()->validateAuthorizeRequest($this->request, $this->response)) {
 
@@ -185,7 +185,7 @@ class Authorize extends Server
                         if ($this->sendMail("Email Authorization", $message, $email)) {
                             try {
                                 App::getInstance()->set_cookie(self::EMAIL_REQ_TOKEN_PARAM, $token, $timeout); //Save to cookie to prevent duplicate 
-                                return $userInfo;
+                                return $user;
                             } catch (Exception $e) {
                                 App::reportException($e); // Report
                                 $this->showError("authorization_failed", sprintf("Unknown error. Please contact <a href='%s' target='_blank'>support</a> for assistance", App::getAppUrl('support')), $redirect_uri);
