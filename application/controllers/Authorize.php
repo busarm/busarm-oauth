@@ -187,6 +187,7 @@ class Authorize extends Server
                                 App::getInstance()->set_cookie(self::EMAIL_REQ_TOKEN_PARAM, $token, $timeout); //Save to cookie to prevent duplicate 
                                 return $userInfo;
                             } catch (Exception $e) {
+                                App::reportException($e); // Report
                                 $this->showError("authorization_failed", sprintf("Unknown error. Please contact <a href='%s' target='_blank'>support</a> for assistance", App::getAppUrl('support')), $redirect_uri);
                             }
                         } else {
@@ -280,6 +281,7 @@ class Authorize extends Server
             ]), true);
             die;
         } catch (Exception $e) {
+            App::reportException($e); // Report
             echo $e->getMessage();
             die;
         }
@@ -294,6 +296,7 @@ class Authorize extends Server
             echo App::getInstance()->loadView("authorize", $vars, true);
             die;
         } catch (Exception $e) {
+            App::reportException($e); // Report
             echo $e->getMessage();
             die;
         }
@@ -312,6 +315,7 @@ class Authorize extends Server
             echo App::getInstance()->loadView("success", $userInfo, true);
             die;
         } catch (Exception $e) {
+            App::reportException($e); // Report
             echo $e->getMessage();
             die;
         }
@@ -325,6 +329,9 @@ class Authorize extends Server
      */
     private function showError($error, $error_description = '', $redirect_uri = '')
     {
+        // Report
+        App::reportError(ucfirst(str_replace('_', ' ', $error)), $error_description);
+
         if (!empty($redirect_uri)) {
             App::getInstance()->redirect(App::parseUrl($redirect_uri, [
                 "error" => $error,
@@ -338,6 +345,7 @@ class Authorize extends Server
                 ], true);
                 die;
             } catch (Exception $e) {
+                App::reportException($e); // Report
                 echo $e->getMessage();
                 die;
             }
@@ -392,6 +400,7 @@ class Authorize extends Server
         try {
             return App::getInstance()->loadView("simple_mail", ["content" => $content], true);
         } catch (Exception $e) {
+            App::reportException($e); // Report
             return $content;
         }
     }

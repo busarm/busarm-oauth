@@ -241,6 +241,7 @@ class Server
 
             return $mail->send();
         } catch (Exception $e) {
+            App::reportException($e); // Report
         }
 
         return false;

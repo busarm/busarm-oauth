@@ -643,4 +643,42 @@ class App
         }
         return $url;
     }
+    
+    /**
+     * Report Error
+     *
+     * @param string $heading
+     * @param string $message
+     * @return void
+     */
+    public static function reportError($heading, $message){
+        if(!empty(self::getInstance()->bugsnag)){
+			self::getInstance()->bugsnag->notifyError($heading, $message);
+        }
+    }
+    
+    /**
+     * Report Exception
+     *
+     * @param \Throwable $exception
+     * @return void
+     */
+    public static function reportException($exception){
+        if(!empty(self::getInstance()->bugsnag)){
+			self::getInstance()->bugsnag->notifyException($exception);
+        }
+    }
+    
+    /**
+     * Leave breadcrumbs for issue tracking
+     *
+     * @param \Throwable $exception
+     * @param string $type @see \Bugsnag\Breadcrumbs\Breadcrumb::getTypes
+     * @return void
+     */
+    public static function leaveBreadcrumbs($crumb, $type = null, array $metadata = []){
+        if(!empty(self::getInstance()->bugsnag)){
+			self::getInstance()->bugsnag->leaveBreadcrumb($crumb, $type, $metadata);
+        }
+    }
 }
