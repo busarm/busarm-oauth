@@ -14,9 +14,9 @@ class Server
     const ACCESS_TYPE_CLIENT = 'client';
     const ACCESS_TYPE_TOKEN = 'token';
 
-    private $smtp_protocol = 'smtp';
-    private $smtp_timeout = 10;
-    private $smtp_charset = 'utf-8';
+    private $mail_protocol = 'smtp';
+    private $mail_timeout = 10;
+    private $mail_charset = 'utf-8';
 
     /**@var OAuth2\Storage\Pdo */
     private $oauthStorage;
@@ -211,11 +211,11 @@ class Server
             $mail = new PHPMailer(true);
 
             //Server settings
-            if ($this->smtp_protocol == "mail") {
+            if ($this->mail_protocol == "mail") {
                 $mail->isMail();
-            } else if ($this->smtp_protocol == "smtp") {
+            } else if ($this->mail_protocol == "smtp") {
                 $mail->isSMTP();
-            } else if ($this->smtp_protocol == "sendmail") {
+            } else if ($this->mail_protocol == "sendmail") {
                 $mail->isSendmail();
             }
 
@@ -225,8 +225,8 @@ class Server
             $mail->Port = Configs::SMTP_PORT();
             $mail->SMTPAuth = true;
             $mail->SMTPSecure = 'tls';
-            $mail->Timeout = $this->smtp_timeout;
-            $mail->CharSet = $this->smtp_charset;
+            $mail->Timeout = $this->mail_timeout;
+            $mail->CharSet = $this->mail_charset;
 
             //Recipients
             $from = !empty($from) ? $from : Configs::EMAIL_INFO();
