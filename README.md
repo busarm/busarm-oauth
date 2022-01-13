@@ -12,6 +12,10 @@ Wecari Authorization server. Manages user authentication and authorization to ac
 - MYSQL Version - Version >= 8.0
 - Docker / Docker Compose - Version >= 3.7 https://docs.docker.com/compose/compose-file/compose-file-v3/#short-syntax-3
 
+## Documentation
+### API
+https://documenter.getpostman.com/view/17090468/UVXhqbvf
+
 ## External Services
 
 ### Deployment (Staging/Production)
