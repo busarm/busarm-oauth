@@ -135,7 +135,7 @@ functions:
 
   Token:
     handler: "public/index.php"
-    description: "Generate and verify oauth access tokens"
+    description: "Generate and manage oauth access tokens"
     memorySize: ${self:custom.highMem.${self:provider.stage}}
     timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
     layers:
@@ -153,6 +153,22 @@ functions:
           rate: rate(5 minutes)
           input:
             warmer: true
+  Misc:
+    handler: "public/index.php"
+    description: "Perform Miscellaneous tasks"
+    memorySize: ${self:custom.avgMem.${self:provider.stage}}
+    timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
+    layers:
+      - ${bref:layer.php-80-fpm}
+    events:
+      - http:
+          path: "/misc/{any+}"
+          method: ANY
+          cors:
+            origin: "*"
+            headers: ${self:custom.corsHeaders}
+            allowCredentials: false
+            cacheControl: "max-age=600, s-maxage=600, proxy-revalidate"
 
 resources:
   Resources:

@@ -31,7 +31,7 @@ class App
 
     public function __construct()
     {
-        self::$instance =& $this;
+        self::$instance = &$this;
 
         if ($key = Configs::BUGSNAG_KEY()) {
             $this->bugsnag = Bugsnag\Client::make($key);
@@ -562,7 +562,7 @@ class App
     public function redirect($uri, $method = 'auto', $code = NULL)
     {
         if (!preg_match('#^(\w+:)?//#i', $uri)) {
-            $uri = trim(OAUTH_BASE_URL, '/') . '/' . $uri;
+            $uri = $this->baseUrl($uri);
         }
 
         // IIS environment likely? Use 'refresh' for better compatibility
@@ -587,6 +587,21 @@ class App
                 break;
         }
         exit;
+    }
+
+    /**
+     * Get base url
+     *
+     * @param string $path
+     * @return string
+     */
+    public function baseUrl($path = '', $params = [])
+    {
+        $url = trim(OAUTH_BASE_URL, '/') . '/' . $path;
+        if (!empty($params)) {
+            $url .= '?' . ((function_exists('http_build_query')) ? http_build_query($params) : self::buildUrlParams($params));
+        }
+        return $url;
     }
 
     /**
@@ -643,7 +658,7 @@ class App
         }
         return $url;
     }
-    
+
     /**
      * Report Error
      *
@@ -651,24 +666,26 @@ class App
      * @param string $message
      * @return void
      */
-    public static function reportError($heading, $message){
-        if(!empty(self::getInstance()->bugsnag)){
-			self::getInstance()->bugsnag->notifyError($heading, $message);
+    public static function reportError($heading, $message)
+    {
+        if (!empty(self::getInstance()->bugsnag)) {
+            self::getInstance()->bugsnag->notifyError($heading, $message);
         }
     }
-    
+
     /**
      * Report Exception
      *
      * @param \Throwable $exception
      * @return void
      */
-    public static function reportException($exception){
-        if(!empty(self::getInstance()->bugsnag)){
-			self::getInstance()->bugsnag->notifyException($exception);
+    public static function reportException($exception)
+    {
+        if (!empty(self::getInstance()->bugsnag)) {
+            self::getInstance()->bugsnag->notifyException($exception);
         }
     }
-    
+
     /**
      * Leave breadcrumbs for issue tracking
      *
@@ -676,9 +693,10 @@ class App
      * @param string $type @see \Bugsnag\Breadcrumbs\Breadcrumb::getTypes
      * @return void
      */
-    public static function leaveBreadcrumbs($crumb, $type = null, array $metadata = []){
-        if(!empty(self::getInstance()->bugsnag)){
-			self::getInstance()->bugsnag->leaveBreadcrumb($crumb, $type, $metadata);
+    public static function leaveBreadcrumbs($crumb, $type = null, array $metadata = [])
+    {
+        if (!empty(self::getInstance()->bugsnag)) {
+            self::getInstance()->bugsnag->leaveBreadcrumb($crumb, $type, $metadata);
         }
     }
 }

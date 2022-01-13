@@ -23,7 +23,6 @@ class Authorize extends Server
         parent::__construct(false, true, true);
     }
 
-
     /**
      * Authorize token request
      * (If using authorization_code grant type)
@@ -179,9 +178,9 @@ class Authorize extends Server
 
                         $this->response = new OAuth2\Response(); //reinitialize response
                         $this->getOauthServer()->handleAuthorizeRequest($this->request, $this->response, $is_authorized, $user_id);
-                        $link = $this->response->getHttpHeader("Location");
-                        $message = $this->getEmailAuthView($link);
-
+                        
+                        $message = $this->getEmailAuthView($this->generateSecureLink($this->response->getHttpHeader("Location")));
+                        
                         if ($this->sendMail("Email Authorization", $message, $email)) {
                             try {
                                 App::getInstance()->set_cookie(self::EMAIL_REQ_TOKEN_PARAM, $token, $timeout); //Save to cookie to prevent duplicate 
@@ -379,28 +378,9 @@ class Authorize extends Server
      */
     private function getEmailAuthView($link)
     {
-        $content = `<table style='max-width:500px;' border='0'>
-                      <tr width='350'>
-                        <td style='text-align: center;'><h2>Click 'Login' to access your account</h2></td>
-                      </tr>
-                      <tr width='350'>
-                        <td style='padding: 10px; display: flex; align-content: center; justify-content: center; text-align: center;'>
-                            <div style='margin:auto; text-align: center;'><a href='$link' style='background-color:#3F5F44;border-radius:4px;color:#ffffff;display:inline-block;font-family:sans-serif;font-size:16px;font-weight:bold;line-height:40px;text-align:center;text-decoration:none;width:200px;-webkit-text-size-adjust:none;mso-hide:all;' rel='noreferrer'>Login</a></div>
-                        </td>
-                      </tr>
-                      <tr width='350'> 
-                        <br/>
-                        <br/>
-                      </tr>
-                      <tr width='350'>
-                        <td align='center'><span style='font-size:14px !important; color: #0b2e13;'>This link can only be used <strong>ONCE</strong> and will expire in <strong>AN HOUR</strong></span></td>
-                      </tr>
-                      <tr width='350'>
-                        <td align='center'><strong style='font-size:12px !important;; color: #9d223c;'>(Please ignore this message if it wasn't triggered or requested by you)</strong></td>
-                      </tr>
-                    </table>`;
         try {
-            return App::getInstance()->loadView("simple_mail", ["content" => $content], true);
+            $content = App::getInstance()->loadView("email/auth", ["link" => $link], true);
+            return App::getInstance()->loadView("email/template/simple_mail", ["content" => $content], true);
         } catch (Exception $e) {
             App::reportException($e); // Report
             return $content;
@@ -429,5 +409,22 @@ class Authorize extends Server
             }
         }
         return false;
+    }
+
+    /**
+     * Generate secure link
+     *
+     * @param string $link
+     * @return string
+     */
+    private function generateSecureLink($link)
+    {
+        if ($link) {
+            $data = CIPHER::encrypt(Configs::ENCRYPTION_KEY(), $link);
+            if ($data) {
+                return App::getInstance()->baseUrl('misc/link', ['data' => $data]);
+            }
+        }
+        return null;
     }
 }
