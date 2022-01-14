@@ -12,7 +12,7 @@ class Token extends Server
 {
     public function __construct()
     {
-        parent::__construct(false, true, true);
+        parent::__construct(false, true, false);
     }
 
     /**

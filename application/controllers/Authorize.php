@@ -20,7 +20,7 @@ class Authorize extends Server
 
     public function __construct()
     {
-        parent::__construct(false, true, true);
+        parent::__construct(false, true, false);
     }
 
     /**
@@ -179,7 +179,7 @@ class Authorize extends Server
                         $this->response = new OAuth2\Response(); //reinitialize response
                         $this->getOauthServer()->handleAuthorizeRequest($this->request, $this->response, $is_authorized, $user_id);
                         
-                        $message = $this->getEmailAuthView($this->generateSecureLink($this->response->getHttpHeader("Location")));
+                        $message = $this->getEmailAuthView($this->response->getHttpHeader("Location"));
                         
                         if ($this->sendMail("Email Authorization", $message, $email)) {
                             try {

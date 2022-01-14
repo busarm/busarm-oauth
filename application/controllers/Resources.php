@@ -12,7 +12,7 @@ class Resources extends Server
 
     public function __construct()
     {
-        parent::__construct(true, true, true);
+        parent::__construct(true, true, false);
     }
 
     /**
