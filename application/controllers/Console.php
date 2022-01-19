@@ -149,7 +149,7 @@ class Console extends Server
         $result = $this->getOauthStorage()->setUserCustom($user_id, $user_password, $email, $name, null, null, $scopes);
         if ($result) {
             $this->print("Successfully Created User");
-            $this->print("User ID = $user_id");
+            $this->print("User ID = $result");
             $this->print("User Name = $name");
             $this->print("User Email = $email");
             if (empty($password)) {

@@ -182,7 +182,7 @@ class OauthPdo  extends Pdo
      * @param string $phone
      * @param string $dial_code
      * @param string $scope
-     * @return bool
+     * @return string|false - User ID or false if failed
      */
     public function setUserCustom($user_id, $password, $email, $name, $phone, $dial_code, $scope)
     {
@@ -190,8 +190,9 @@ class OauthPdo  extends Pdo
         $salt = sha1(uniqid($user_id));
 
         // if it exists, update it.
-        if ($this->getUser($user_id) || $this->getUser($email)) {
+        if (!empty($user = $this->getUser($user_id)) || !empty($user = $this->getUser($email))) {
             $done = false;
+            $user_id = $user['user_id'];
             if (!empty($password)) {
                 $stmt = $this->db->prepare(sprintf('UPDATE %s SET password=sha2(CONCAT(:user_id,\':\',:salt,\':\',:password),256), salt=:salt, cred_updated_at=NOW() where user_id=:user_id', $this->config['user_table']));
                 $done = $stmt->execute(compact('user_id', 'password', 'salt')) ? true : $done;
@@ -216,11 +217,11 @@ class OauthPdo  extends Pdo
                 $stmt = $this->db->prepare(sprintf('UPDATE %s SET scope=:scope where user_id=:user_id', $this->config['user_table']));
                 $done = $stmt->execute(compact('user_id', 'scope')) ? true : $done;
             }
-
-            return $done;
+            return $done ? $user_id : false;
         } else {
             $stmt = $this->db->prepare(sprintf('INSERT INTO %s (user_id, password, salt, email, name, phone, dial_code, scope) VALUES (:user_id, sha2(CONCAT(:user_id,\':\',:salt,\':\',:password),256), :salt, :email, :name, :phone, :dial_code, :scope)', $this->config['user_table']));
-            return $stmt->execute(compact('user_id', 'password', 'salt', 'email', 'name', 'phone', 'dial_code', 'scope'));
+            $done = $stmt->execute(compact('user_id', 'password', 'salt', 'email', 'name', 'phone', 'dial_code', 'scope'));
+            return $done ? $user_id : false;
         }
     }
 
