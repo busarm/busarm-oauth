@@ -93,6 +93,7 @@ custom:
     - X-Access-Token
     - X-Amz-Date
     - X-Amz-User-Agent
+  corsCache: "max-age=3600"
 
 functions:
   Authorize:
@@ -110,7 +111,7 @@ functions:
             origin: "*"
             headers: ${self:custom.corsHeaders}
             allowCredentials: false
-            cacheControl: "max-age=600, s-maxage=600, proxy-revalidate"
+            cacheControl: ${self:custom.corsCache}
 
   Resources:
     handler: "public/index.php"
@@ -127,7 +128,7 @@ functions:
             origin: "*"
             headers: ${self:custom.corsHeaders}
             allowCredentials: false
-            cacheControl: "max-age=600, s-maxage=600, proxy-revalidate"
+            cacheControl: ${self:custom.corsCache}
       - schedule:
           rate: rate(5 minutes)
           input:
@@ -148,7 +149,7 @@ functions:
             origin: "*"
             headers: ${self:custom.corsHeaders}
             allowCredentials: false
-            cacheControl: "max-age=600, s-maxage=600, proxy-revalidate"
+            cacheControl: ${self:custom.corsCache}
       - schedule:
           rate: rate(5 minutes)
           input:
@@ -168,7 +169,7 @@ functions:
             origin: "*"
             headers: ${self:custom.corsHeaders}
             allowCredentials: false
-            cacheControl: "max-age=600, s-maxage=600, proxy-revalidate"
+            cacheControl: ${self:custom.corsCache}
 
 resources:
   Resources:
