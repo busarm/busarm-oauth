@@ -1,9 +1,6 @@
 service: Wecari-Oauth
 
-variablesResolutionMode: 20210326
-
 provider:
-  lambdaHashingVersion: 20201221
   name: aws
   runtime: provided.al2
   profile: wecari
