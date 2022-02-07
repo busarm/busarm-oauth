@@ -12,7 +12,7 @@ class Token extends Server
 {
     public function __construct()
     {
-        parent::__construct(false, true, false);
+        parent::__construct(false, true);
     }
 
     /**
@@ -53,12 +53,7 @@ class Token extends Server
     public function info()
     {
         if ($this->validateAccessToken()) {
-            // Get user info
-            $user =  $this->getOauthStorage()->getSingleUserInfoForClaims($this->getTokenInfo('user_id'), array_keys(Scopes::findOpenIdScope($this->getTokenInfo('scope')) ?: []));
-            $token = $this->getTokenInfo();
-            $token['user'] = $user;
-            unset($token["user_id"]);
-            $this->response->setParameters(array('success' => true, 'data' => $token));
+            $this->response->setParameters(array('success' => true, 'data' => $this->getTokenInfo()));
         }
         $this->response->send();
         die;

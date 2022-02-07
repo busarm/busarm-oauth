@@ -13,9 +13,9 @@ class Console extends Server
     public function __construct()
     {
         if (is_cli()) {
-            parent::__construct(false, true, false);
+            parent::__construct(false, true);
         } else {
-            exit('Unauthorized Request');
+            exit('Unauthorized request');
         }
     }
 

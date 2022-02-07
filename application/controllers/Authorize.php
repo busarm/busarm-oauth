@@ -1,6 +1,7 @@
 <?php
 
 use GuzzleHttp\RequestOptions;
+use OAuth2\Scope;
 
 defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
 
@@ -20,7 +21,7 @@ class Authorize extends Server
 
     public function __construct()
     {
-        parent::__construct(false, true, false);
+        parent::__construct(false, true);
     }
 
     /**
@@ -44,6 +45,13 @@ class Authorize extends Server
         $scope = $this->request->query("scope");
         $response_type = $this->request->query("response_type");
 
+        // Use openId and implicit grant if requested
+        if(!$this->getOauthServer()->getScopeUtil()->checkScope($scope, Scopes::SCOPE_OPENID) 
+            && str_contains($response_type, 'id_token')) {
+            $this->getOauthServer()->setConfig('allow_implicit', true);
+            $this->getOauthServer()->setConfig('use_openid_connect', true);
+        }
+        
         // If email request - Validate and Send authorization url
         if (!empty($email = $this->request->query("email"))) {
             if ($userInfo = $this->processEmailRequest($email, $redirect_uri, $state, $scope)) {

@@ -43,9 +43,8 @@ class Server
      * Server constructor.
      * @param boolean $validateAccess Validate access to server
      * @param boolean $useJWT Use JWT Token
-     * @param boolean $useOpenID Use OpenID Connect - issue id tokens
      */
-    protected function __construct($validateAccess = false, $useJWT = false, $useOpenID = false)
+    protected function __construct($validateAccess = false, $useJWT = false)
     {
 
         //Create request & response objects
@@ -67,7 +66,6 @@ class Server
             'allow_implicit' => false,
             'use_jwt_access_tokens' => $useJWT,
             'store_encrypted_token_string' => false,
-            'use_openid_connect' => $useOpenID,
             'issuer' => OAUTH_BASE_URL
         ));
 

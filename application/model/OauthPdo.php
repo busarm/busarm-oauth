@@ -125,15 +125,23 @@ class OauthPdo  extends Pdo
         }
 
         $fields = [];
-        if (in_array(Scopes::SCOPE_CLAIM_NAME, $claims)) {
+        if (in_array(Scopes::SCOPE_CLAIM_PROFILE, $claims)) {
             $fields[] = 'name';
-        }
-        if (in_array(Scopes::SCOPE_CLAIM_EMAIL, $claims)) {
             $fields[] = 'email';
-        }
-        if (in_array(Scopes::SCOPE_CLAIM_PHONE, $claims)) {
             $fields[] = 'phone';
             $fields[] = 'dial_code';
+        }
+        else {
+            if (in_array(Scopes::SCOPE_CLAIM_NAME, $claims)) {
+                $fields[] = 'name';
+            }
+            if (in_array(Scopes::SCOPE_CLAIM_EMAIL, $claims)) {
+                $fields[] = 'email';
+            }
+            if (in_array(Scopes::SCOPE_CLAIM_PHONE, $claims)) {
+                $fields[] = 'phone';
+                $fields[] = 'dial_code';
+            }
         }
         if(!$excludeScopes) {
             $fields[] = 'scope';

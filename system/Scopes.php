@@ -26,6 +26,7 @@ class Scopes extends Scope
     const SCOPE_CLAIM_NAME = 'name';
     const SCOPE_CLAIM_EMAIL = 'email';
     const SCOPE_CLAIM_PHONE = 'phone';
+    const SCOPE_CLAIM_PROFILE = 'profile';
 
     const DEFAULT_SCOPE = self::SCOPE_PUBLIC;
 
@@ -40,16 +41,18 @@ class Scopes extends Scope
         self::SCOPE_DEVELOPER => "Access developer only resources",
         self::SCOPE_TESTER => "Perform tests and access test resources",
         self::SCOPE_PUBLIC => "Access any publicly available resource",
-        self::SCOPE_OPENID => "Get user information. E.g name, email, phone number",
+        self::SCOPE_OPENID => "Request access to private user information",
         self::SCOPE_CLAIM_NAME => "Get user name",
         self::SCOPE_CLAIM_EMAIL => "Get user email",
         self::SCOPE_CLAIM_PHONE => "Get user name",
+        self::SCOPE_CLAIM_PROFILE => "Get user profile information",
     ];
 
     const CLAIM_SCOPES = [
         self::SCOPE_CLAIM_NAME,
         self::SCOPE_CLAIM_EMAIL,
-        self::SCOPE_CLAIM_PHONE
+        self::SCOPE_CLAIM_PHONE,
+        self::SCOPE_CLAIM_PROFILE,
     ];
 
     /**

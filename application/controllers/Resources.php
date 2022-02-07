@@ -12,7 +12,7 @@ class Resources extends Server
 
     public function __construct()
     {
-        parent::__construct(true, true, false);
+        parent::__construct(true, true);
     }
 
     /**
@@ -67,9 +67,9 @@ class Resources extends Server
     public function getUser()
     {
         $user_id = $this->request->request('user_id') ?? $this->request->query('user_id');
-        if (!empty($user_id)) {
-            // Validate permission
-            $this->validatePermission([Scopes::SCOPE_SYSTEM, Scopes::SCOPE_ADMIN]);
+
+        // If user_id requested - Validate permission
+        if (!empty($user_id) && $this->validatePermission([Scopes::SCOPE_SYSTEM, Scopes::SCOPE_ADMIN])) {
             $user = $this->getOauthStorage()->getSingleUserInfo($user_id);
         } else {
             $user =  $this->getOauthStorage()->getSingleUserInfoForClaims($this->getTokenInfo('user_id'), array_keys(Scopes::findOpenIdScope($this->getTokenInfo('scope')) ?: []), false);
@@ -162,7 +162,7 @@ class Resources extends Server
         $scope = $this->implode($scope);
         $user_id = sha1(uniqid(!empty($email) ? $email : (!empty($phone) ? $phone : $name)));
 
-        //Check if user exists
+        // Check if user exists
         if ($email && ($user = $this->getOauthStorage()->getUser($email))) {
             if ($force) {
                 $this->response->setParameters($this->error(sprintf("User with email %s already exists", $email), 'duplicate_user'));
@@ -176,7 +176,7 @@ class Resources extends Server
                 $this->response->setParameters($this->success(['user_id' => $user['user_id'], 'existing' => true]));
             }
         } else {
-            //Insert User
+            // Insert User
             $result = $this->getOauthStorage()->setUserCustom($user_id, $password, $email, $name, $phone, $dial_code, $scope);
             if ($result) {
                 $this->response->setParameters($this->success(['user_id' => $user_id, 'existing' => false]));
@@ -409,7 +409,7 @@ class Resources extends Server
                     !empty($grant_types) ? $grant_types : $client["grant_types"],
                     $newScopes
                 );
-                
+
                 if ($result) {
                     $this->response->setParameters($this->success('Update Successful'));
                 } else {
