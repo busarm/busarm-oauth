@@ -129,8 +129,7 @@ class Server
             $this->response->setParameters($this->error("Access denied. Token doesn't have required '$scope' scope(s)", 'invalid_scope'));
             $this->response->send();
             die();
-        }
-        else if (($this->accessType === self::ACCESS_TYPE_CLIENT && !$this->getOauthServer()->getScopeUtil()->checkScope($scope, $this->getClientInfo('scope')))) {
+        } else if (($this->accessType === self::ACCESS_TYPE_CLIENT && !$this->getOauthServer()->getScopeUtil()->checkScope($scope, $this->getClientInfo('scope')))) {
             $this->response->setStatusCode(403);
             $this->response->setParameters($this->error("Access denied. Client doesn't have required '$scope' scope(s)", 'invalid_scope'));
             $this->response->send();

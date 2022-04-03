@@ -6,7 +6,6 @@
  * Date: 3/18/2018
  * Time: 1:40 AM
  *
- * @var $this MY_Controller
  * @var string $content
  */
 if (empty($content)) {
@@ -56,7 +55,7 @@ if (empty($content)) {
         padding: 5px;
         font-size: 30px !important;
         font-weight: bolder;
-        color: #3f5f44
+        color: #267272
     }
 
     h2 {
@@ -64,7 +63,7 @@ if (empty($content)) {
         padding: 5px;
         font-size: 28px !important;
         font-weight: bolder;
-        color: #3f5f44 !important;
+        color: #267272 !important;
     }
 
     h3 {
@@ -379,7 +378,7 @@ if (empty($content)) {
             -moz-box-shadow: 0px 2px 2px 0px rgba(85, 85, 85, 0.2);
             box-shadow: 0px 2px 2px 0px rgba(85, 85, 85, 0.2)">
         <!--Header-->
-        <tr align="center" style="height: auto !important;background: #3F5F44;">
+        <tr align="center" style="height: auto !important;background: #267272;">
             <td height="40" align="center" style="padding:10px;display: flex; align-content: center; justify-content: center;">
                 <img style="height:40px !important;margin:auto;object-fit: contain;user-select: none;image-rendering:auto;" src="<?= App::getCDNUrl('public/images/logo/white/logo_txt_512px.png') ?>" alt="Wecari Logo" />
             </td>
@@ -391,7 +390,7 @@ if (empty($content)) {
             </td>
         </tr>
         <!--Footer-->
-        <tr style="height: auto !important;background: #3F5F44;">
+        <tr style="height: auto !important;background: #267272;">
             <td align="center" style="display: flex; align-content: center; justify-content: center;">
                 <table style="margin:auto;display: flex; align-content: center; justify-content: center;">
                     <tr>

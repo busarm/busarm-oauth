@@ -20,12 +20,15 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
     <link rel="icon" type="image/png" href="<?= App::getCDNUrl('public/images/favicon/dark/favicon-32x32.png') ?>" sizes="32x32" />
     <link rel="icon" type="image/png" href="<?= App::getCDNUrl('public/images/favicon/dark/favicon-64x64.png') ?>" sizes="64x64" />
     <link rel="icon" type="image/png" href="<?= App::getCDNUrl('public/images/favicon/dark/favicon-96x96.png') ?>" sizes="96x96" />
-    <title>Login</title>
+    
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Arima+Madurai:wght@500&display=swap" />
+
+    <title>Authentication - Failed</title>
     <style>
         body {
             margin: auto !important;
             user-select: none;
-            background: #335038 !important;
+            background: #267272 !important;
         }
 
         oauth-failed body,
@@ -35,12 +38,13 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
         h4,
         h5,
         p,
+        span,
         div,
         input,
         button,
         textarea,
         li {
-            font-family: "Palatino Linotype", sans-serif !important;
+            font-family: "Arima Madurai", "Palatino Linotype", "Georgia", sans-serif, cursive !important;
         }
 
         oauth-failed h1 {
@@ -150,7 +154,7 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
 
         oauth-failed .failed-page .form button {
             outline: 0;
-            background: #3F5F44;
+            background: #267272;
             width: 100%;
             border: 0;
             padding: 15px;
@@ -180,7 +184,7 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
         }
 
         oauth-failed .failed-page .form .message a {
-            color: #3F5F44;
+            color: #267272;
             text-decoration: none;
         }
     </style>
