@@ -140,7 +140,7 @@ class Resources extends Server
         // Validate Parameters
         if (!$email || !$phone || !$dial_code || !$password || !$scope) {
             $this->response->setStatusCode(400);
-            $this->response->setParameters($this->error('Invalid Parameters', 'invalid_request'));
+            $this->response->setParameters($this->error("Invalid Parameters. 'email', 'phone', 'dial_code', 'password', and 'scope' are required", 'invalid_request'));
             $this->response->send();
             die;
         }
@@ -166,12 +166,6 @@ class Resources extends Server
         if ($email && ($user = $this->getOauthStorage()->getUser($email))) {
             if ($force) {
                 $this->response->setParameters($this->error(sprintf("User with email %s already exists", $email), 'duplicate_user'));
-            } else {
-                $this->response->setParameters($this->success(['user_id' => $user['user_id'], 'existing' => true]));
-            }
-        } else if ($user = $this->getOauthStorage()->getUser($user_id)) {
-            if ($force) {
-                $this->response->setParameters($this->error('User already exists', 'duplicate_user'));
             } else {
                 $this->response->setParameters($this->success(['user_id' => $user['user_id'], 'existing' => true]));
             }
