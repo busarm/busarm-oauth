@@ -16,7 +16,7 @@ Busarm Authorization server. Manages user authentication and authorization to ac
 
 ### API
 
-https://documenter.getpostman.com/view/17090468/UVXhqbvf
+https://documenter.getpostman.com/view/20461972/UVyytYJ5
 
 ## External Services
 
