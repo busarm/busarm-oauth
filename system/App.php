@@ -11,9 +11,9 @@ require_once "Scopes.php";
  * Date: 10/14/2018
  * Time: 12:34 AM
  *
- * Mini Framework for Wecari
+ * Mini Framework for Busarm
  *
- * @copyright wecari.com
+ * @copyright busarm.com
  */
 
 class App
@@ -80,9 +80,9 @@ class App
     public static function getAppUrl($path = '')
     {
         if (ENVIRONMENT == ENV_PROD)
-            return "https://wecari.com/" . $path;
+            return "https://busarm.com/" . $path;
         else  if (ENVIRONMENT == ENV_TEST)
-            return "https://staging.wecari.com/" . $path;
+            return "https://staging.busarm.com/" . $path;
         else
             return "http://localhost/" . $path;
     }
@@ -96,11 +96,11 @@ class App
     public static function getCDNUrl($path = '')
     {
         if (ENVIRONMENT == ENV_PROD)
-            return "https://cdn.wecari.com/" . $path;
+            return "https://cdn.busarm.com/" . $path;
         else  if (ENVIRONMENT == ENV_TEST)
-            return "https://cdn.staging.wecari.com/" . $path;
+            return "https://cdn.staging.busarm.com/" . $path;
         else
-            return "https://cdn.staging.wecari.com/" . $path;
+            return "https://cdn.staging.busarm.com/" . $path;
     }
 
     /**

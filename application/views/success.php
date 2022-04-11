@@ -217,7 +217,7 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
                 <li style="min-width: 100px;"><a href="<?= App::getAppUrl('terms') ?>" target="_blank">Terms & Conditions</a></li>
             </ul>
             <ul class="copyright">
-                <li>&copy; Wecari All rights reserved.</li>
+                <li>&copy; Busarm All rights reserved.</li>
             </ul>
         </footer>
     </oauth-success>

@@ -1,13 +1,13 @@
-service: Wecari-Oauth
+service: Busarm-Oauth
 
 provider:
   name: aws
   runtime: provided.al2
-  profile: wecari
+  profile: busarm
   region: ${opt:region, 'eu-west-2'} # e.g serverless delopy --region eu-west-2 (default = 'eu-west-2')
   stage: ${opt:stage, 'Dev'} # e.g serverless delopy --stage dev (default = 'dev')
-  stackName: Wecari-Oauth-${self:provider.stage}
-  apiName: Wecari-Oauth-${self:provider.stage}
+  stackName: Busarm-Oauth-${self:provider.stage}
+  apiName: Busarm-Oauth-${self:provider.stage}
   role: ${self:custom.roleName}
   logRetentionInDays: ${self:custom.logRetentionInDays}
   environment: # define service wide environment variables here
@@ -15,14 +15,14 @@ provider:
     BREF_BINARY_RESPONSES: "1" # For bref to return binary responses. Bref will automatically encode responses to base64
     SEPARATE_VENDOR: "0"
     # App
-    APP_NAME: "Wecari Oauth"
+    APP_NAME: "Busarm Oauth"
     APP_THEME_PRIMARY_COLOR: '#267272'
     APP_THEME_SECONDARY_COLOR: '#e9ffb7'
-    COMPANY_NAME: "Wecari"
+    COMPANY_NAME: "Busarm"
     ENCRYPTION_KEY: ${self:custom.secret.${self:provider.stage}.oauth_encryption_key}
     BUGSNAG_KEY: ${self:custom.secret.${self:provider.stage}.oauth_bugsnag_key}
-    EMAIL_INFO: "info@wecari.com"
-    EMAIL_SUPPORT: "support@wecari.com"
+    EMAIL_INFO: "info@busarm.com"
+    EMAIL_SUPPORT: "support@busarm.com"
     # Databse
     DB_NAME: 13243546576879_oauth
     DB_HOST: ${self:custom.secret.${self:provider.stage}.db_host}
@@ -80,9 +80,9 @@ custom:
     Prod: 256
   logRetentionInDays: 30
   secret:
-    Dev: ${ssm:/aws/reference/secretsmanager/dev/wecari}
-    Prod: ${ssm:/aws/reference/secretsmanager/prod/wecari}
-  roleName: WecariOauthLambdaRole
+    Dev: ${ssm:/aws/reference/secretsmanager/dev/busarm}
+    Prod: ${ssm:/aws/reference/secretsmanager/prod/busarm}
+  roleName: BusarmOauthLambdaRole
   corsHeaders:
     - Content-Type
     - Authorization
@@ -172,10 +172,10 @@ functions:
 
 resources:
   Resources:
-    WecariOauthLambdaRole:
+    BusarmOauthLambdaRole:
       Type: AWS::IAM::Role
       Properties:
-        RoleName: WecariOauthLambdaRole${self:provider.stage}-${self:provider.region}
+        RoleName: BusarmOauthLambdaRole${self:provider.stage}-${self:provider.region}
         Path: /
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
@@ -186,7 +186,7 @@ resources:
                   - lambda.amazonaws.com
               Action: sts:AssumeRole
         Policies:
-          - PolicyName: WecariOauthLambdaPolicy${self:provider.stage}
+          - PolicyName: BusarmOauthLambdaPolicy${self:provider.stage}
             PolicyDocument:
               Version: "2012-10-17"
               Statement:

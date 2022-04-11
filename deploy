@@ -5,7 +5,7 @@ $args = parseArgs($argv);
 echo PHP_EOL;
 echo "---------------------------------";
 echo PHP_EOL;
-echo "Wecari PHP Serverless Deployment";
+echo "Busarm PHP Serverless Deployment";
 echo PHP_EOL;
 echo "---------------------------------";
 echo PHP_EOL;

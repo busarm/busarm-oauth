@@ -1,8 +1,8 @@
-# Wecari Oauth
+# Busarm Oauth
 
 ## Description
 
-Wecari Authorization server. Manages user authentication and authorization to access Wecari resources
+Busarm Authorization server. Manages user authentication and authorization to access Busarm resources
 
 ## Specification
 
@@ -79,11 +79,11 @@ https://documenter.getpostman.com/view/17090468/UVXhqbvf
 - Set up Environment Variables
   - Ensure `.env` file exists. If not run copy `.env.example` to `.env`
   - Ensure `.env` file is populated with the corrent details
-- Start Local Server (Wecari Oauth)
+- Start Local Server (Busarm Oauth)
   - Run `docker-compose up` or `docker-compose up --scale oauth-php=<NUMBER_OF_INSTANCES>`
 - For First time Deployment:
 - Set up database (After Starting Local Server)
-  - Before Starting Server - Generate Oauth Client Credentials for Wecari API and add to the `.env` file. Use `Wecari Oauth` console commands.
+  - Before Starting Server - Generate Oauth Client Credentials for Busarm API and add to the `.env` file. Use `Busarm Oauth` console commands.
   - After Starting Server - Login to the database using the default mysql credentials in the `docker-compose.yml` file.
   - After Starting Server - If database ddl hasn't been automaticaly deployed, run the database ddl sql scripts in the `database` folder.
 - Set Up Local Server
@@ -103,7 +103,7 @@ https://documenter.getpostman.com/view/17090468/UVXhqbvf
     - Set up Domain and add domain to API Gateway custom domain
     - Add VPC's Private Subnet IDs and Security Group to `serverless.yml` file
   - Set up Serverless on PC. Visit https://serverless.com
-    - Configure Serverless credentials with profile name `wecari`
+    - Configure Serverless credentials with profile name `busarm`
 - Set up database
   - Login to the database using the db credentials.
   - Run the database ddl sql scripts in the `database` folder to create database adn tables.
@@ -118,7 +118,7 @@ https://documenter.getpostman.com/view/17090468/UVXhqbvf
 
 - `create_org` - Create an Organization. E.g `create_org <org_name>`
 - `create_client` - Create an Oauth Client. E.g `create_client <org_id> <client_name> <redirect_uri> <scopes> <grant_types>`
-  - E.g create_client 2 "Wecari Partner" "https://partner.wecari.com/hooks/authorize" "user agent partner" "password authorization_code refresh_token"
+  - E.g create_client 2 "Busarm Partner" "https://partner.busarm.com/hooks/authorize" "user agent partner" "password authorization_code refresh_token"
   - [CAUTION] Use Principle of Least Privilege Access when assigning scopes, as scopes are also used to define permissions.
   - [CAUTION] Assign specific grant type only if needed. E.g If the client will only be allowing user login, then it won't require, `client_credentials` grant type.
 - `update_client_key` - Update an Oauth Client key pair. E.g `update_client_key <client_id>`

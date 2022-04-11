@@ -2,7 +2,7 @@ CREATE DATABASE  IF NOT EXISTS `13243546576879_oauth` /*!40100 DEFAULT CHARACTER
 USE `13243546576879_oauth`;
 -- MySQL dump 10.13  Distrib 8.0.21, for Win64 (x86_64)
 --
--- Host: wecari-prod.czxrcl7gwax1.eu-west-2.rds.amazonaws.com    Database: 13243546576879_oauth
+-- Host: busarm-prod.czxrcl7gwax1.eu-west-2.rds.amazonaws.com    Database: 13243546576879_oauth
 -- ------------------------------------------------------
 -- Server version	8.0.17
 
