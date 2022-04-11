@@ -28,7 +28,7 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
         body {
             margin: auto !important;
             user-select: none;
-            background: #267272 !important;
+            background: <?= Configs::APP_THEME_PRIMARY_COLOR() ?> !important;
         }
 
         oauth-success body,
@@ -154,7 +154,7 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
 
         oauth-success .success-page .form button {
             outline: 0;
-            background: #267272;
+            background: <?= Configs::APP_THEME_PRIMARY_COLOR() ?>;
             width: 100%;
             border: 0;
             padding: 15px;
@@ -184,7 +184,7 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
         }
 
         oauth-success .success-page .form .message a {
-            color: #267272;
+            color: <?= Configs::APP_THEME_PRIMARY_COLOR() ?>;
             text-decoration: none;
         }
     </style>

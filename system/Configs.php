@@ -209,6 +209,14 @@ class Configs
     {
         return env("APP_NAME");
     }
+    static function APP_THEME_PRIMARY_COLOR()
+    {
+        return env("APP_THEME_PRIMARY_COLOR");
+    }
+    static function APP_THEME_SECONDARY_COLOR()
+    {
+        return env("APP_THEME_SECONDARY_COLOR");
+    }
     static function COMPANY_NAME()
     {
         return env("COMPANY_NAME");

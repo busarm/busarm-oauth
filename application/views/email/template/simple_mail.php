@@ -55,7 +55,7 @@ if (empty($content)) {
         padding: 5px;
         font-size: 30px !important;
         font-weight: bolder;
-        color: #267272
+        color: <?= Configs::APP_THEME_PRIMARY_COLOR() ?>
     }
 
     h2 {
@@ -63,7 +63,7 @@ if (empty($content)) {
         padding: 5px;
         font-size: 28px !important;
         font-weight: bolder;
-        color: #267272 !important;
+        color: <?= Configs::APP_THEME_PRIMARY_COLOR() ?> !important;
     }
 
     h3 {
@@ -378,7 +378,7 @@ if (empty($content)) {
             -moz-box-shadow: 0px 2px 2px 0px rgba(85, 85, 85, 0.2);
             box-shadow: 0px 2px 2px 0px rgba(85, 85, 85, 0.2)">
         <!--Header-->
-        <tr align="center" style="height: auto !important;background: #267272;">
+        <tr align="center" style="height: auto !important;background: <?= Configs::APP_THEME_PRIMARY_COLOR() ?>;">
             <td height="40" align="center" style="padding:10px;display: flex; align-content: center; justify-content: center;">
                 <img style="height:40px !important;margin:auto;object-fit: contain;user-select: none;image-rendering:auto;" src="<?= App::getCDNUrl('public/images/logo/white/logo_txt_512px.png') ?>" alt="Wecari Logo" />
             </td>
@@ -390,7 +390,7 @@ if (empty($content)) {
             </td>
         </tr>
         <!--Footer-->
-        <tr style="height: auto !important;background: #267272;">
+        <tr style="height: auto !important;background: <?= Configs::APP_THEME_PRIMARY_COLOR() ?>;">
             <td align="center" style="display: flex; align-content: center; justify-content: center;">
                 <table style="margin:auto;display: flex; align-content: center; justify-content: center;">
                     <tr>

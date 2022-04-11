@@ -22,7 +22,7 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
     <link rel="icon" type="image/png" href="<?= App::getCDNUrl('public/images/favicon/dark/favicon-32x32.png') ?>" sizes="32x32" />
     <link rel="icon" type="image/png" href="<?= App::getCDNUrl('public/images/favicon/dark/favicon-64x64.png') ?>" sizes="64x64" />
     <link rel="icon" type="image/png" href="<?= App::getCDNUrl('public/images/favicon/dark/favicon-96x96.png') ?>" sizes="96x96" />
-    
+
     <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Arima+Madurai:wght@500&display=swap" />
 
     <title>Authorize Access</title>
@@ -30,7 +30,7 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
         body {
             margin: auto !important;
             user-select: none;
-            background: #267272 !important;
+            background: <?= Configs::APP_THEME_PRIMARY_COLOR() ?> !important;
         }
 
         oauth-authorize body,
@@ -154,7 +154,7 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
 
         oauth-authorize .auth-page .form .auth-buttons .auth-button {
             outline: 0;
-            background: #267272;
+            background: <?= Configs::APP_THEME_PRIMARY_COLOR() ?>;
             width: 100%;
             border: 0;
             padding: 15px;
@@ -186,7 +186,7 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
         }
 
         oauth-authorize .auth-page .form .message a {
-            color: #267272;
+            color: <?= Configs::APP_THEME_PRIMARY_COLOR() ?>;
             text-decoration: none;
         }
     </style>
