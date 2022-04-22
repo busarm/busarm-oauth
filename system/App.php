@@ -221,7 +221,8 @@ class App
     }
 
 
-    /**Case Insensitive search
+    /**
+     * Case Insensitive search
      * @param $fileName string
      * @param $caseSensitive bool
      * @return mixed
