@@ -4,8 +4,8 @@ provider:
     name: aws
     runtime: provided.al2
     profile: busarm
-    region: ${opt:region, 'eu-west-2'} # e.g serverless delopy --region eu-west-2 (default = 'eu-west-2')
-    stage: ${opt:stage, 'Dev'} # e.g serverless delopy --stage dev (default = 'dev')
+    region: ${opt:region, ''}
+    stage: ${opt:stage, ''}
     stackName: Busarm-Oauth-${self:provider.stage}
     apiName: Busarm-Oauth-${self:provider.stage}
     role: ${self:custom.roleName}
