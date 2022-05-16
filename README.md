@@ -107,8 +107,8 @@ https://documenter.getpostman.com/view/20461972/UVyytYJ5
 - Set up database
   - Login to the database using the db credentials.
   - Run the database ddl sql scripts in the `database` folder to create database adn tables.
-- Run command `php deploy --dev` or `sls deploy --stage=Dev` for staging
-- Run command `php deploy --prod` or `sls deploy --stage=Prod` for production
+- Run command `php deploy --dev` for staging
+- Run command `php deploy --prod` for production
 
 ## Console Application
 
