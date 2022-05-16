@@ -148,7 +148,6 @@ functions:
         layers:
             - ${bref:layer.php-80}
             - ${bref:layer.console} # Console layer
-            - ${bref-extra:gd-php-80}
         package:
             exclude:
                 - "public/**"
