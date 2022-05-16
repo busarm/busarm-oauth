@@ -103,6 +103,12 @@ custom:
         - X-Amz-Date
         - X-Amz-User-Agent
     corsCache: "max-age=3600"
+    startTime:
+        Dev: "08:00"
+        Prod: ""
+    stopTime:
+        Dev: "22:00"
+        Prod: ""
     # Git vars to show in ENV
     gitVariablesEnvWhitelist:
         [
