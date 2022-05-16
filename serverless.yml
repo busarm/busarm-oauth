@@ -132,6 +132,23 @@ custom:
         number: 3 # Max versions allowed
 
 functions:
+    # Console
+    Console:
+        handler: console
+        description: "Busarm Console & Cron Job Scheduler"
+        memorySize: ${self:custom.avgMem.${self:provider.stage}}
+        timeout: 28
+        layers:
+            - ${bref:layer.php-80}
+            - ${bref:layer.console} # Console layer
+            - ${bref-extra:gd-php-80}
+        package:
+            exclude:
+                - "public/**"
+        deploymentSettings:
+            type: Linear10PercentEvery1Minute
+            alias: Live
+
     Authorize:
         handler: "public/index.php"
         description: "Allow user to authorize access to their account"
