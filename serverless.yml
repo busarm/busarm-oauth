@@ -55,6 +55,7 @@ plugins:
   - ./vendor/bref/bref
   - serverless-plugin-log-retention
   - serverless-plugin-git-variables
+  - serverless-plugin-canary-deployments
   - serverless-prune-plugin
 package:
     exclude:
