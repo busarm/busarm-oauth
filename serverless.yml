@@ -1,209 +1,258 @@
 service: Busarm-Oauth
 
 provider:
-  name: aws
-  runtime: provided.al2
-  profile: busarm
-  region: ${opt:region, 'eu-west-2'} # e.g serverless delopy --region eu-west-2 (default = 'eu-west-2')
-  stage: ${opt:stage, 'Dev'} # e.g serverless delopy --stage dev (default = 'dev')
-  stackName: Busarm-Oauth-${self:provider.stage}
-  apiName: Busarm-Oauth-${self:provider.stage}
-  role: ${self:custom.roleName}
-  logRetentionInDays: ${self:custom.logRetentionInDays}
-  environment: # define service wide environment variables here
-    ENV: ${self:provider.stage} # Environment variable
-    BREF_BINARY_RESPONSES: "1" # For bref to return binary responses. Bref will automatically encode responses to base64
-    SEPARATE_VENDOR: "0"
-    # App
-    APP_NAME: "Busarm Oauth"
-    APP_THEME_PRIMARY_COLOR: '#267272'
-    APP_THEME_SECONDARY_COLOR: '#e9ffb7'
-    COMPANY_NAME: "Busarm"
-    ENCRYPTION_KEY: ${self:custom.secret.${self:provider.stage}.oauth_encryption_key}
-    BUGSNAG_KEY: ${self:custom.secret.${self:provider.stage}.oauth_bugsnag_key}
-    EMAIL_INFO: "info@busarm.com"
-    EMAIL_SUPPORT: "support@busarm.com"
-    # Databse
-    DB_NAME: 13243546576879_oauth
-    DB_HOST: ${self:custom.secret.${self:provider.stage}.db_host}
-    DB_PORT: ${self:custom.secret.${self:provider.stage}.db_port}
-    DB_USER: ${self:custom.secret.${self:provider.stage}.db_username}
-    DB_PASS: ${self:custom.secret.${self:provider.stage}.db_password}
-    # SMTP
-    SMTP_HOST: ${self:custom.secret.${self:provider.stage}.smtp_host}
-    SMTP_PORT: ${self:custom.secret.${self:provider.stage}.smtp_port}
-    SMTP_KEY: ${self:custom.secret.${self:provider.stage}.smtp_username}
-    SMTP_SECRET: ${self:custom.secret.${self:provider.stage}.smtp_password}
-    # Google
-    RECAPTCHA_SECRET_KEY: ${self:custom.secret.${self:provider.stage}.recaptcha_secret_key}
-    RECAPTCHA_CLIENT_KEY: ${self:custom.secret.${self:provider.stage}.recaptcha_client_key}
-  apiGateway:
-    binaryMediaTypes:
-      - "*/*"
-  vpc:
-    securityGroupIds:
-      - sg-0f8d9dd9d6c8486db
-    subnetIds:
-      - subnet-00c055bcb994cd571
-      - subnet-0effe477213b0ed11
+    name: aws
+    runtime: provided.al2
+    profile: busarm
+    region: ${opt:region, 'eu-west-2'} # e.g serverless delopy --region eu-west-2 (default = 'eu-west-2')
+    stage: ${opt:stage, 'Dev'} # e.g serverless delopy --stage dev (default = 'dev')
+    stackName: Busarm-Oauth-${self:provider.stage}
+    apiName: Busarm-Oauth-${self:provider.stage}
+    role: ${self:custom.roleName}
+    logRetentionInDays: ${self:custom.logRetentionInDays}
+    environment: # define service wide environment variables here
+        ENV: ${self:provider.stage} # Environment variable
+        BREF_BINARY_RESPONSES: "1" # For bref to return binary responses. Bref will automatically encode responses to base64
+        SEPARATE_VENDOR: "0"
+        # App
+        APP_VERSION: ${git:describe}
+        APP_NAME: "Busarm Oauth"
+        APP_THEME_PRIMARY_COLOR: "#267272"
+        APP_THEME_SECONDARY_COLOR: "#e9ffb7"
+        COMPANY_NAME: "Busarm"
+        ENCRYPTION_KEY: ${self:custom.secret.${self:provider.stage}.oauth_encryption_key}
+        BUGSNAG_KEY: ${self:custom.secret.${self:provider.stage}.oauth_bugsnag_key}
+        EMAIL_INFO: "info@busarm.com"
+        EMAIL_SUPPORT: "support@busarm.com"
+        SYSTEM_SHUT_DOWN_TIME: ${self:custom.stopTime.${self:provider.stage}}
+        SYSTEM_START_UP_TIME: ${self:custom.startTime.${self:provider.stage}}
+        MAINTENANCE_MODE: "0"
+        # Databse
+        DB_NAME: 13243546576879_oauth
+        DB_HOST: ${self:custom.secret.${self:provider.stage}.db_host}
+        DB_PORT: ${self:custom.secret.${self:provider.stage}.db_port}
+        DB_USER: ${self:custom.secret.${self:provider.stage}.db_username}
+        DB_PASS: ${self:custom.secret.${self:provider.stage}.db_password}
+        # SMTP
+        SMTP_HOST: ${self:custom.secret.${self:provider.stage}.smtp_host}
+        SMTP_PORT: ${self:custom.secret.${self:provider.stage}.smtp_port}
+        SMTP_KEY: ${self:custom.secret.${self:provider.stage}.smtp_username}
+        SMTP_SECRET: ${self:custom.secret.${self:provider.stage}.smtp_password}
+        # Google
+        RECAPTCHA_SECRET_KEY: ${self:custom.secret.${self:provider.stage}.recaptcha_secret_key}
+        RECAPTCHA_CLIENT_KEY: ${self:custom.secret.${self:provider.stage}.recaptcha_client_key}
+    apiGateway:
+        binaryMediaTypes:
+            - "*/*"
+    vpc:
+        securityGroupIds:
+            - sg-0f8d9dd9d6c8486db
+        subnetIds:
+            - subnet-00c055bcb994cd571
+            - subnet-0effe477213b0ed11
 
 plugins:
   - ./vendor/bref/bref
   - serverless-plugin-log-retention
-
+  - serverless-plugin-git-variables
+  - serverless-prune-plugin
 package:
-  exclude:
-    - composer.json
-    - composer.lock
-    - .git/**
-    - .serverless/**
-    - .htaccess
-    - node_modules/**
+    exclude:
+        - composer.json
+        - composer.lock
+        - .git/**
+        - .vscode/**
+        - .serverless/**
+        - .uploads/**
+        - .cache/**
+        - .logs/**
+        - .htaccess
+        - node_modules/**
 
 custom:
-  bref:
-    separateVendor: 0
-  maxMem:
-    Dev: 2048
-    Prod: 4096
-  superMem:
-    Dev: 1024
-    Prod: 2048
-  highMem:
-    Dev: 512
-    Prod: 1024
-  avgMem:
-    Dev: 256
-    Prod: 512
-  lowMem:
-    Dev: 128
-    Prod: 256
-  logRetentionInDays: 30
-  secret:
-    Dev: ${ssm:/aws/reference/secretsmanager/dev/busarm}
-    Prod: ${ssm:/aws/reference/secretsmanager/prod/busarm}
-  roleName: BusarmOauthLambdaRole
-  corsHeaders:
-    - Content-Type
-    - Authorization
-    - Access-Token
-    - X-Requested-With
-    - X-Api-Key
-    - X-Access-Token
-    - X-Amz-Date
-    - X-Amz-User-Agent
-  corsCache: "max-age=3600"
+    bref:
+        separateVendor: 0
+    maxMem:
+        Dev: 2048
+        Prod: 4096
+    superMem:
+        Dev: 1024
+        Prod: 2048
+    highMem:
+        Dev: 512
+        Prod: 1024
+    avgMem:
+        Dev: 256
+        Prod: 512
+    lowMem:
+        Dev: 128
+        Prod: 256
+    logRetentionInDays: 30
+    secret:
+        Dev: ${ssm:/aws/reference/secretsmanager/dev/busarm}
+        Prod: ${ssm:/aws/reference/secretsmanager/prod/busarm}
+    roleName: BusarmOauthLambdaRole
+    corsHeaders:
+        - Content-Type
+        - Authorization
+        - Access-Token
+        - X-Requested-With
+        - X-Api-Key
+        - X-Access-Token
+        - X-Amz-Date
+        - X-Amz-User-Agent
+    corsCache: "max-age=3600"
+    # Git vars to show in ENV
+    gitVariablesEnvWhitelist:
+        [
+            "GIT_COMMIT_SHORT",
+            "GIT_COMMIT_LONG",
+            "GIT_BRANCH",
+            "GIT_IS_DIRTY",
+            "GIT_REPOSITORY",
+            "GIT_TAGS",
+        ]
+    # Git vars to show in AWS Tags
+    gitVariablesTagsWhitelist:
+        [
+            "GIT_COMMIT_SHORT",
+            "GIT_COMMIT_LONG",
+            "GIT_BRANCH",
+            "GIT_IS_DIRTY",
+            "GIT_REPOSITORY",
+        ]
+    # Trafic shifting Deployment
+    deploymentSettings:
+        stages:
+            - Prod # Only use blue/green deployment for production
+    # Previous version prunning
+    prune:
+        automatic: true
+        includeLayers: true
+        number: 3 # Max versions allowed
 
 functions:
-  Authorize:
-    handler: "public/index.php"
-    description: "Allow user to authorize access to their account"
-    memorySize: ${self:custom.avgMem.${self:provider.stage}}
-    timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
-    layers:
-      - ${bref:layer.php-80-fpm}
-    events:
-      - http:
-          path: "/authorize/{any+}"
-          method: ANY
-          cors:
-            origin: "*"
-            headers: ${self:custom.corsHeaders}
-            allowCredentials: false
-            cacheControl: ${self:custom.corsCache}
+    Authorize:
+        handler: "public/index.php"
+        description: "Allow user to authorize access to their account"
+        memorySize: ${self:custom.avgMem.${self:provider.stage}}
+        timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
+        layers:
+            - ${bref:layer.php-80-fpm}
+        events:
+            - http:
+                  path: "/authorize/{any+}"
+                  method: ANY
+                  cors:
+                      origin: "*"
+                      headers: ${self:custom.corsHeaders}
+                      allowCredentials: false
+                      cacheControl: ${self:custom.corsCache}
+        deploymentSettings:
+            type: Linear10PercentEvery1Minute
+            alias: Live
 
-  Resources:
-    handler: "public/index.php"
-    description: "Retrieve oauth resources e.g user details with client credentials and access token"
-    memorySize: ${self:custom.highMem.${self:provider.stage}}
-    timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
-    layers:
-      - ${bref:layer.php-80-fpm}
-    events:
-      - http:
-          path: "/resources/{any+}"
-          method: ANY
-          cors:
-            origin: "*"
-            headers: ${self:custom.corsHeaders}
-            allowCredentials: false
-            cacheControl: ${self:custom.corsCache}
-      - schedule:
-          rate: rate(5 minutes)
-          input:
-            warmer: true
+    Resources:
+        handler: "public/index.php"
+        description: "Retrieve oauth resources e.g user details with client credentials and access token"
+        memorySize: ${self:custom.highMem.${self:provider.stage}}
+        timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
+        layers:
+            - ${bref:layer.php-80-fpm}
+        events:
+            - http:
+                  path: "/resources/{any+}"
+                  method: ANY
+                  cors:
+                      origin: "*"
+                      headers: ${self:custom.corsHeaders}
+                      allowCredentials: false
+                      cacheControl: ${self:custom.corsCache}
+            - schedule:
+                  rate: rate(5 minutes)
+                  input:
+                      warmer: true
+        deploymentSettings:
+            type: Linear10PercentEvery1Minute
+            alias: Live
 
-  Token:
-    handler: "public/index.php"
-    description: "Generate and manage oauth access tokens"
-    memorySize: ${self:custom.highMem.${self:provider.stage}}
-    timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
-    layers:
-      - ${bref:layer.php-80-fpm}
-    events:
-      - http:
-          path: "/token/{any+}"
-          method: ANY
-          cors:
-            origin: "*"
-            headers: ${self:custom.corsHeaders}
-            allowCredentials: false
-            cacheControl: ${self:custom.corsCache}
-      - schedule:
-          rate: rate(5 minutes)
-          input:
-            warmer: true
-  Misc:
-    handler: "public/index.php"
-    description: "Perform Miscellaneous tasks"
-    memorySize: ${self:custom.avgMem.${self:provider.stage}}
-    timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
-    layers:
-      - ${bref:layer.php-80-fpm}
-    events:
-      - http:
-          path: "/misc/{any+}"
-          method: ANY
-          cors:
-            origin: "*"
-            headers: ${self:custom.corsHeaders}
-            allowCredentials: false
-            cacheControl: ${self:custom.corsCache}
+    Token:
+        handler: "public/index.php"
+        description: "Generate and manage oauth access tokens"
+        memorySize: ${self:custom.highMem.${self:provider.stage}}
+        timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
+        layers:
+            - ${bref:layer.php-80-fpm}
+        events:
+            - http:
+                  path: "/token/{any+}"
+                  method: ANY
+                  cors:
+                      origin: "*"
+                      headers: ${self:custom.corsHeaders}
+                      allowCredentials: false
+                      cacheControl: ${self:custom.corsCache}
+            - schedule:
+                  rate: rate(5 minutes)
+                  input:
+                      warmer: true
+        deploymentSettings:
+            type: Linear10PercentEvery1Minute
+            alias: Live
+    Misc:
+        handler: "public/index.php"
+        description: "Perform Miscellaneous tasks"
+        memorySize: ${self:custom.avgMem.${self:provider.stage}}
+        timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
+        layers:
+            - ${bref:layer.php-80-fpm}
+        events:
+            - http:
+                  path: "/misc/{any+}"
+                  method: ANY
+                  cors:
+                      origin: "*"
+                      headers: ${self:custom.corsHeaders}
+                      allowCredentials: false
+                      cacheControl: ${self:custom.corsCache}
+        deploymentSettings:
+            type: Linear10PercentEvery1Minute
+            alias: Live
 
 resources:
-  Resources:
-    BusarmOauthLambdaRole:
-      Type: AWS::IAM::Role
-      Properties:
-        RoleName: BusarmOauthLambdaRole${self:provider.stage}-${self:provider.region}
-        Path: /
-        AssumeRolePolicyDocument:
-          Version: "2012-10-17"
-          Statement:
-            - Effect: Allow
-              Principal:
-                Service:
-                  - lambda.amazonaws.com
-              Action: sts:AssumeRole
-        Policies:
-          - PolicyName: BusarmOauthLambdaPolicy${self:provider.stage}
-            PolicyDocument:
-              Version: "2012-10-17"
-              Statement:
-                - Effect: Allow # note that these rights are given in the default policy and are required if you want logs out of your lambda(s)
-                  Action:
-                    - logs:CreateLogGroup
-                    - logs:CreateLogStream
-                    - logs:PutLogEvents
-                    - ec2:CreateNetworkInterface
-                    - ec2:DeleteNetworkInterface
-                    - ec2:DescribeNetworkInterfaces
-                    - ec2:DescribeSecurityGroups
-                    - ec2:DescribeSubnets
-                    - ec2:DescribeVpcs
-                  Resource: "*"
+    Resources:
+        BusarmOauthLambdaRole:
+            Type: AWS::IAM::Role
+            Properties:
+                RoleName: BusarmOauthLambdaRole${self:provider.stage}-${self:provider.region}
+                Path: /
+                AssumeRolePolicyDocument:
+                    Version: "2012-10-17"
+                    Statement:
+                        - Effect: Allow
+                          Principal:
+                              Service:
+                                  - lambda.amazonaws.com
+                          Action: sts:AssumeRole
+                Policies:
+                    - PolicyName: BusarmOauthLambdaPolicy${self:provider.stage}
+                      PolicyDocument:
+                          Version: "2012-10-17"
+                          Statement:
+                              - Effect: Allow # note that these rights are given in the default policy and are required if you want logs out of your lambda(s)
+                                Action:
+                                    - logs:CreateLogGroup
+                                    - logs:CreateLogStream
+                                    - logs:PutLogEvents
+                                    - ec2:CreateNetworkInterface
+                                    - ec2:DeleteNetworkInterface
+                                    - ec2:DescribeNetworkInterfaces
+                                    - ec2:DescribeSecurityGroups
+                                    - ec2:DescribeSubnets
+                                    - ec2:DescribeVpcs
+                                Resource: "*"
 
-  Outputs:
-    RoleName:
-      Value: ${self:custom.roleName}
-      Description: Name of the created Amazon Role.
+    Outputs:
+        RoleName:
+            Value: ${self:custom.roleName}
+            Description: Name of the created Amazon Role.

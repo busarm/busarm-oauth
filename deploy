@@ -1,35 +1,66 @@
 <?php
 
+// Regions
+const REGION_DEV = "eu-west-2";
+const REGION_PROD = "eu-west-2";
+// Stages
+const STAGE_DEV = "Dev";
+const STAGE_PROD = "Prod";
+// Allowed Branches
+const BRANCHES_PROD = [
+    'master',
+    'main',
+    'production',
+    'release-*',
+];
+const BRANCHES_DEV = [
+    'staging',
+    'develop',
+    'development',
+    '*-develop',
+    '*-dev',
+];
+
+// Get Arguments
 $args = parseArgs($argv);
 
-echo PHP_EOL;
-echo "---------------------------------";
-echo PHP_EOL;
-echo "Busarm PHP Serverless Deployment";
-echo PHP_EOL;
-echo "---------------------------------";
-echo PHP_EOL;
+// Get current branch name
+$branch = branchName();
 
+echo PHP_EOL;
+echo "---------------------------------";
+echo PHP_EOL;
+echo "Wecari PHP Serverless Deployment";
+echo PHP_EOL;
+echo "Branch - $branch";
+echo PHP_EOL;
+echo "---------------------------------";
+echo PHP_EOL;
 
 // Help
-if(isset($args['--help'])){
+if (isset($args['--help'])) {
     showHints();
     exit(0);
-}
-else {
-        
-    // Environment
-    if(isset($args['--all'])){
-        deploy('Dev', $args);
-        deploy('Prod', $args);
+} else {
+
+    // Check commit status
+    if (!checkCommit()) {
+        exit("Please commit files to git before deploying") . PHP_EOL;
     }
-    else if(isset($args['--prod'])){
-        deploy('Prod', $args);
+
+    // If --all requested, ensure that branch is production
+    if (isset($args['--all']) && (isBranchMatch($branch, BRANCHES_PROD))) {
+        deploy(STAGE_DEV, REGION_DEV, $args);
+        deploy(STAGE_PROD, REGION_PROD, $args);
     }
-    else if(isset($args['--dev'])){
-        deploy('Dev', $args);
+    // If --all requested, ensure branch is production
+    else if (isset($args['--prod']) && (isBranchMatch($branch, BRANCHES_PROD))) {
+        deploy(STAGE_PROD, REGION_PROD, $args);
     }
-    else {
+    // If --all requested, ensure branch is staging or development
+    else if (isset($args['--dev']) && (isBranchMatch($branch, BRANCHES_DEV))) {
+        deploy(STAGE_DEV, REGION_DEV, $args);
+    } else {
         showHints();
     }
     exit(0);
@@ -39,38 +70,43 @@ else {
  * Process serverless deployment
  *
  * @param string $stage
+ * @param string $region
+ * @param array $params
  * @return void
  */
-function deploy($stage = 'Dev', $params = []){
+function deploy($stage = STAGE_DEV, $region = REGION_DEV, $params = [])
+{
     $args = [];
     $function = $params['--function'] ?? $params['-f'] ?? '';
-    if(isset($params['--conceal'])){
+    if (isset($params['--conceal'])) {
         $args[] = '--conceal';
     }
-    if(isset($params['--force'])){
+    if (isset($params['--force'])) {
         $args[] = '--force';
     }
-    if(isset($params['--verbose']) || isset($params['-v'])){
+    if (isset($params['--verbose']) || isset($params['-v'])) {
         $args[] = '--verbose';
     }
-    passthru("sls deploy --stage=$stage ".implode(' ', $args).' '.$function);
+    passthru("git push && sls deploy --stage=$stage --region=$region" . implode(' ', $args) . ' ' . $function);
 }
 
 /**
  * Parse Command Args
- *
+ * 
+ * @param array $args
  * @return array
  */
-function parseArgs($args){
+function parseArgs($args)
+{
     $params = [];
-    if(!empty($args)){
+    if (!empty($args)) {
         unset($args[0]);
         foreach ($args as $arg) {
-            $e=explode("=",$arg);
-            if(count($e)==2)
-                $params[$e[0]]=$e[1];
-            else   
-                $params[$e[0]]=1;
+            $e = explode("=", $arg);
+            if (count($e) == 2)
+                $params[$e[0]] = $e[1];
+            else
+                $params[$e[0]] = 1;
         }
     }
     return $params;
@@ -81,8 +117,9 @@ function parseArgs($args){
  *
  * @return void
  */
-function showHints(){
-    
+function showHints()
+{
+
     echo "php deploy [options]";
     echo PHP_EOL;
     echo PHP_EOL;
@@ -90,11 +127,11 @@ function showHints(){
     echo PHP_EOL;
     echo "-------";
     echo PHP_EOL;
-    echo "--dev             =     Deployment to Development ENV";
+    echo "--dev             =     Deployment to Development ENV. Permitted branches: " . implode(' ', BRANCHES_DEV);
     echo PHP_EOL;
-    echo "--prod            =     Deployment to Production ENV";
+    echo "--prod            =     Deployment to Production ENV. Permitted branches: " . implode(' ', BRANCHES_PROD);
     echo PHP_EOL;
-    echo "--all             =     Deployment to All ENV - Development and Production";
+    echo "--all             =     Deployment to All ENV - Development and Production. Permitted branches: " . implode(' ', BRANCHES_PROD);
     echo PHP_EOL;
     echo "--conceal         =     Hide secrets from the output (e.g. API Gateway key values)";
     echo PHP_EOL;
@@ -103,4 +140,43 @@ function showHints(){
     echo "--function=<VAL>  =     Function name. Deploys a single function";
     echo PHP_EOL;
     echo PHP_EOL;
+}
+
+/**
+ * Check if files have been committed to git
+ *
+ * @return boolean
+ */
+function checkCommit()
+{
+    return empty(trim(shell_exec('git diff --quiet || echo dirty')));
+}
+
+/**
+ * Get branch name
+ *
+ * @return string
+ */
+function branchName()
+{
+    return trim(shell_exec('git rev-parse --abbrev-ref HEAD'));
+}
+
+/**
+ * Check if branch matches
+ *
+ * @param string $name Branch name
+ * @param array $list Branch list to match against
+ * @return boolean
+ */
+function isBranchMatch($name, $list)
+{
+    foreach ($list as $branch) {
+        if (!empty($branch) && stripos($branch, '*') !== false && stripos($name, str_replace('*', '', $branch)) !== false) {
+            return true;
+        } else if (!empty($branch) && $branch == $name) {
+            return true;
+        }
+    }
+    return false;
 }

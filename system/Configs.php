@@ -221,6 +221,18 @@ class Configs
     {
         return env("COMPANY_NAME");
     }
+    static function SYSTEM_SHUT_DOWN_TIME()
+    {
+        return env("SYSTEM_SHUT_DOWN_TIME", false);
+    }
+    static function SYSTEM_START_UP_TIME()
+    {
+        return env("SYSTEM_START_UP_TIME", false);
+    }
+    static function MAINTENANCE_MODE()
+    {
+        return env("MAINTENANCE_MODE", false);
+    }
     
     # App Settings
     static function ENCRYPTION_KEY($default = null)

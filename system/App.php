@@ -113,6 +113,21 @@ class App
             $this->preflight();
         }
 
+        // If offline or on maintenance mode
+        if (!empty(Configs::SYSTEM_START_UP_TIME()) && !empty(Configs::SYSTEM_SHUT_DOWN_TIME())) {
+            $start = new DateTime(Configs::SYSTEM_START_UP_TIME());
+            $stop = (new DateTime(Configs::SYSTEM_SHUT_DOWN_TIME()))->sub(DateInterval::createFromDateString('1 day'));
+            if (time() < $start->getTimestamp() && time() >= $stop->getTimestamp()) {
+                if (Configs::MAINTENANCE_MODE()) {
+                    $this->showMessage(503, false, "System is under maintenance. Please come back on " . $start->format('Y-m-d H:i P'));
+                } else {
+                    $this->showMessage(503, false, "System is currently offline. Please come back on " . $start->format('Y-m-d H:i P'));
+                }
+            }
+        } else if (Configs::MAINTENANCE_MODE()) {
+            $this->showMessage(503, false, "System is under maintenance");
+        }
+
         /*Initiate rerouting*/
         if ($controller && $function) {
             $this->processRoute($controller, $function, $params);
@@ -247,41 +262,40 @@ class App
         return false;
     }
 
-
     /**
      * Show Message
      * @param string $code Code
      * @param bool $status Status
-     * @param string $title itle
+     * @param string $title Title
      * @param string $msg Message
+     * @param string $line 
+     * @param string $file 
+     * @param string $trace 
      */
-    public function showMessage($code, $status, $title, $msg = null, $errorLine = null, $errorFile = null, $errorContext = [])
+    public function showMessage($code, $status, $title, $msg = null, $line = null, $file = null,  $trace = [])
     {
-        if (!is_cli() && !headers_sent()) {
-            header(HTTP_VERSION . ' ' . $code . ' ' . $title, TRUE, $code);
-            header("Content-type: application/json");
-            header('Access-Control-Allow-Origin: *', true);
-            header('Access-Control-Allow-Methods: *', true);
-        }
-        if ($status) {
-            if (is_cli()) {
-                echo "success - true" . PHP_EOL . "message - " . $msg ?? $title;
-            } else {
-                echo json_encode(['success' => true, 'msg' => $title, 'env' => ENVIRONMENT, 'ip' => IPADDRESS], JSON_PRETTY_PRINT);
-            }
-            exit(1);
+        !ob_get_contents() ?: ob_clean();
+        ob_start();
+        if (is_cli()) {
+            echo "status - false" . PHP_EOL . "msg - " . $msg ?? $title . PHP_EOL .  "version - " . Configs::APP_VERSION() . PHP_EOL . "line - $line" . PHP_EOL . "file path - $file" . PHP_EOL;
         } else {
-            if (is_cli()) {
-                echo "success - false" . PHP_EOL . "message - " . ($msg ?? $title) . PHP_EOL . "line - $errorLine" . PHP_EOL . "file path - $errorFile" . PHP_EOL;
-            } else if (ENVIRONMENT != ENV_PROD) {
-                echo json_encode(['success' => false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT, 'ip' => IPADDRESS,  'line' =>  $errorLine,  'file_path' =>  $errorFile,  'backtrace' =>  $errorContext], JSON_PRETTY_PRINT);
-            } else {
-                echo json_encode(['success' => false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT, 'ip' => IPADDRESS], JSON_PRETTY_PRINT);
+            if (!headers_sent()) {
+                header(HTTP_VERSION . ' ' . $code . ' ' . $msg ? $title : '', TRUE, $code);
+                header("Content-type: application/json");
+                header('Access-Control-Allow-Origin: *', true);
+                header('Access-Control-Allow-Methods: *', true);
             }
-            exit;
+            $data = ['status' => $status, 'msg' => $msg ?? $title, 'env' => ENVIRONMENT, 'version' => Configs::APP_VERSION(), 'ip' => IPADDRESS];
+            if (ENVIRONMENT != ENV_PROD) {
+                if (!empty($line)) $data['line'] = $line;
+                if (!empty($file)) $data['file_path'] = $file;
+                if (!empty($trace)) $data['backtrace'] = $trace;
+            }
+            echo json_encode($data, JSON_PRETTY_PRINT);
         }
+        ob_flush();
+        exit;
     }
-
 
     /**Get File From path
      * @param $filePath
