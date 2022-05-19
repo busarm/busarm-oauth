@@ -18,5 +18,8 @@
         "phpmailer/phpmailer": "^6.1",
         "aws/aws-sdk-php": "^3.133",
         "bugsnag/bugsnag": "^3.0"
+    },
+    "scripts": {
+        "bref:cli": "vendor/bin/bref cli"
     }
 }
