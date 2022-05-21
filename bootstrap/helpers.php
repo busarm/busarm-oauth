@@ -1,6 +1,6 @@
 <?php
-defined('FCPATH') or exit('No direct script access allowed');
 
+use System\App;
 
 if (!function_exists('is_cli')) {
     /**
@@ -160,5 +160,33 @@ if (!function_exists('get_server_protocol')) {
     {
         return (!empty(env('SERVER_PROTOCOL')) && in_array(env('SERVER_PROTOCOL'), array('HTTP/1.0', 'HTTP/1.1', 'HTTP/2', 'HTTP/2.0'), TRUE))
             ? env('SERVER_PROTOCOL') : 'HTTP/1.1';
+    }
+}
+
+
+if (!function_exists('app')) {
+    /**
+     * Get app instance
+     * @return \System\App
+     */
+    function app()
+    {
+        return \System\App::getInstance();;
+    }
+}
+
+
+if (!function_exists('output')) {
+    /**
+     * Send output of data
+     * @param string $data
+     * @param int $code
+     */
+    function out($data = null, $code = 0)
+    {
+        header("Content-type: application/json");
+        print_r(json_encode($data, JSON_PRETTY_PRINT) ?: $data);
+        print_r(PHP_EOL);
+        exit($code);
     }
 }

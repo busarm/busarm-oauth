@@ -1,5 +1,4 @@
 <?php
-defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
 
 /**
  * @var string $client_name
@@ -9,6 +8,10 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
  * @var array $scopes
  * @var string $action
  */
+
+use System\Configs;
+use System\URL;
+
 ?>
 
 <!DOCTYPE html>
@@ -18,12 +21,12 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <link rel="icon" type="image/png" href="<?= App::getCDNUrl('public/images/favicon/dark/favicon-16x16.png') ?>" sizes="16x16" />
-    <link rel="icon" type="image/png" href="<?= App::getCDNUrl('public/images/favicon/dark/favicon-32x32.png') ?>" sizes="32x32" />
-    <link rel="icon" type="image/png" href="<?= App::getCDNUrl('public/images/favicon/dark/favicon-64x64.png') ?>" sizes="64x64" />
-    <link rel="icon" type="image/png" href="<?= App::getCDNUrl('public/images/favicon/dark/favicon-96x96.png') ?>" sizes="96x96" />
+    <link rel="icon" type="image/png" href="<?= URL::assetUrl('public/images/favicon/dark/favicon-16x16.png') ?>" sizes="16x16" />
+    <link rel="icon" type="image/png" href="<?= URL::assetUrl('public/images/favicon/dark/favicon-32x32.png') ?>" sizes="32x32" />
+    <link rel="icon" type="image/png" href="<?= URL::assetUrl('public/images/favicon/dark/favicon-64x64.png') ?>" sizes="64x64" />
+    <link rel="icon" type="image/png" href="<?= URL::assetUrl('public/images/favicon/dark/favicon-96x96.png') ?>" sizes="96x96" />
 
-    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Arima+Madurai:wght@500&display=swap" />
+    <link rel="stylesheet" type="text/css" href="<?= URL::GOOGLE_FONT_URL ?>" />
 
     <title>Authorize Access</title>
     <style>
@@ -67,31 +70,6 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
         oauth-authorize h4 {
             font-size: 16px;
             font-weight: bold;
-        }
-
-        oauth-authorize footer {
-            height: auto;
-            background: transparent;
-            padding: 10px;
-            text-align: center;
-        }
-
-        oauth-authorize footer .copyright {
-            color: #fff;
-            font-size: 0.9em;
-            padding: 0;
-            text-align: center;
-        }
-
-        oauth-authorize footer .copyright a {
-            color: inherit;
-        }
-
-        oauth-authorize footer .copyright li {
-            display: inline-block;
-            list-style: none;
-            margin: 5px;
-            padding: 5px;
         }
 
         oauth-authorize .auth-page {
@@ -197,17 +175,17 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
         <div class="auth-page">
             <div class="form">
                 <div>
-                    <img class="logo logo_icon" src="<?= App::getCDNUrl('public/images/logo/dark/logo_256px.png') ?>">
+                    <img class="logo logo_icon" src="<?= URL::assetUrl('public/images/logo/dark/logo_256px.png') ?>">
                 </div>
                 <div>
-                    <img class="logo logo_txt" src="<?= App::getCDNUrl('public/images/logo/dark/logo_txt_512px.png') ?>">
+                    <img class="logo logo_txt" src="<?= URL::assetUrl('public/images/logo/dark/logo_txt_512px.png') ?>">
                 </div>
                 <br>
                 <form id="login-form" class="form" method="post" action="<?= $action ?? null ?>">
                     <h3> <span style="color:#DF632D"><?= ucfirst($client_name ?? $org_name) ?></span> is requesting access to your account</h3>
                     <?php if (!empty($user_name) || !empty($user_email)) : ?>
                         <div>
-                            <img class="icon" src="<?= App::getCDNUrl('public/images/icons/Name_104px.png') ?>">
+                            <img class="icon" src="<?= URL::assetUrl('public/images/icons/Name_104px.png') ?>">
                             <div>
                                 <?php if ($user_name) : ?>
                                     <strong><?= $user_name ?> </strong>
@@ -243,15 +221,8 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
             </div>
         </div>
         <!-- Footer -->
-        <footer>
-            <ul class="copyright">
-                <li style="min-width: 100px;"><a href="<?= App::getAppUrl('privacy') ?>" target="_blank">Privacy Policy</a></li>
-                <li style="min-width: 100px;"><a href="<?= App::getAppUrl('terms') ?>" target="_blank">Terms & Conditions</a></li>
-            </ul>
-            <ul class="copyright">
-                <li>&copy; Busarm All rights reserved.</li>
-            </ul>
-        </footer>
+        <?= app()->loadView('components/footer') ?>
+
     </oauth-authorize>
 </body>
 

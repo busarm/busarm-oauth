@@ -1,5 +1,10 @@
 <?php
-defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
+
+namespace Application\Controllers;
+
+use phpseclib\Crypt\RSA;
+use System\Scopes;
+use System\Server;
 
 /**
  * Created by PhpStorm.
@@ -313,7 +318,7 @@ class Resources extends Server
 
             //Insert jwt public keys for client
             $algo = 'sha256';
-            $rsa = new phpseclib\Crypt\RSA();
+            $rsa = new RSA();
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
             if (!empty($keys) && $this->getOauthStorage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
@@ -435,7 +440,7 @@ class Resources extends Server
         if (!empty($client_id)) {
 
             $algo = 'sha256';
-            $rsa = new phpseclib\Crypt\RSA();
+            $rsa = new RSA();
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
 
@@ -502,7 +507,7 @@ class Resources extends Server
         $size = intval($this->request->request('size') ?? $this->request->query('size') ?? 1024);
 
         $algo = 'sha256';
-        $rsa = new phpseclib\Crypt\RSA();
+        $rsa = new RSA();
         $rsa->setHash($algo);
         $keys = $rsa->createKey($size < 16 || $size > 2048 ? 1024 : $size);
 

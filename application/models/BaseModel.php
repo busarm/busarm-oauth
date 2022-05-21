@@ -1,8 +1,11 @@
 <?php
 
-use OAuth2\Storage\Pdo;
+namespace Application\Models;
 
-class OauthPdo  extends Pdo
+use OAuth2\Storage\Pdo;
+use System\Scopes;
+
+class BaseModel  extends Pdo
 {
     public function __construct($connection, $config = array())
     {
@@ -55,7 +58,7 @@ class OauthPdo  extends Pdo
         if (!$unique) {
             return false;
         }
-        
+
         $stmt = $this->db->prepare(sprintf('SELECT * FROM %s WHERE (user_id=:unique OR email=:unique) AND password=sha2(CONCAT(user_id,\':\',salt,\':\',:password),256) LIMIT 1', $this->config['user_table']));
         $stmt->execute(array('unique' => $unique, 'password' => $password));
 
@@ -130,8 +133,7 @@ class OauthPdo  extends Pdo
             $fields[] = 'email';
             $fields[] = 'phone';
             $fields[] = 'dial_code';
-        }
-        else {
+        } else {
             if (in_array(Scopes::SCOPE_CLAIM_NAME, $claims)) {
                 $fields[] = 'name';
             }
@@ -143,7 +145,7 @@ class OauthPdo  extends Pdo
                 $fields[] = 'dial_code';
             }
         }
-        if(!$excludeScopes) {
+        if (!$excludeScopes) {
             $fields[] = 'scope';
         }
 

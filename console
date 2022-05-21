@@ -1,27 +1,133 @@
 <?php
-if ($argv && ($function = $argv[1] ?? null)) {
+// Path to the front controller (this file) directory
+define('FCPATH', dirname(__FILE__) . DIRECTORY_SEPARATOR);
 
-    // Get params
-    $params = [];
-    for ($i = 2; $i < count($argv); $i++) {
-        $params[] = strip_tags(trim($argv[$i]));
-    }
+// Load packages
+require_once(boolval(getenv('SEPARATE_VENDOR')) ? '/tmp/vendor/autoload.php' : FCPATH . 'vendor/autoload.php');
+require_once('bootstrap/helpers.php');
 
-    // Set the current directory correctly for CLI requests
-    if (defined('STDIN')) {
-        chdir(dirname(__FILE__));
-    }
+use Application\Controllers\Task;
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
+use System\App;
+use System\Router;
 
-    // Path to the front controller (this file) directory
-    define('FCPATH', dirname(__FILE__) . DIRECTORY_SEPARATOR);
+/**
+ *  Composer Command
+ */
+$composerCommand = (new Command('run'))
+    ->setDescription("Run composer scripts")
+    ->addArgument('name', InputOption::VALUE_NONE, "Composer script name")
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
+        passthru(sprintf("composer run-script %s", $input->getArgument('name')));
+        $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
+    });
 
-    //define System path
-    define("OAUTH_BASE_PATH", FCPATH . 'system/');
 
-    // Initialize vendor packages
-    require_once(boolval(getenv('SEPARATE_VENDOR')) ? '/tmp/vendor/autoload.php' : FCPATH . 'vendor/autoload.php');
+/**
+ *  DB Migration Command
+ */
+$migrationCommand = (new Command('migrate'))
+    ->setDescription("Migrate database")
+    ->addOption('fake', '', InputOption::VALUE_NONE, "Mark any migrations selected as run, but don't actually execute them")
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
+        if ($input->getOption('fake')) {
+            passthru('composer migration:migrate-fake');
+        } else {
+            passthru('composer migration:migrate');
+        }
+        $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
+    });
 
-    require_once OAUTH_BASE_PATH . "App.php";
-    (new App)->initialize("Console", $function, $params);
-    die();
-} else die("Invalid command\n");
+/**
+ *  Create Org Command
+ */
+$createOrg = (new Command('org:create'))
+    ->setDescription("Create organization")
+    ->addOption('name', '', InputOption::VALUE_REQUIRED, "Organization name")
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
+        (new App(new Router(Task::class, "create_org", [
+            $input->getOption('name')
+        ])))->run();
+        $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
+    });
+
+/**
+ *  Create Client Command
+ */
+$createClient = (new Command('client:create'))
+    ->setDescription("Create Client")
+    ->addOption('org', '', InputOption::VALUE_REQUIRED, "Organization id")
+    ->addOption('name', '', InputOption::VALUE_REQUIRED, "Client name")
+    ->addOption('redirect', '', InputOption::VALUE_OPTIONAL, "Client redirect uri")
+    ->addOption('scopes', '', InputOption::VALUE_OPTIONAL, "Client scopes")
+    ->addOption('grants', '', InputOption::VALUE_OPTIONAL, "Client grant types")
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
+        (new App(new Router(Task::class, "create_client", [
+            $input->getOption('org'),
+            $input->getOption('name'),
+            $input->getOption('redirect'),
+            $input->getOption('scopes'),
+            $input->getOption('grants'),
+        ])))->run();
+        $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
+    });
+
+/**
+ *  Update Client Key Command
+ */
+$updateClientKey = (new Command('client:update:key'))
+    ->setDescription("Update Client Key")
+    ->addOption('client', '', InputOption::VALUE_REQUIRED, "Client id")
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
+        (new App(new Router(Task::class, "update_client_key", [
+            $input->getOption('client')
+        ])))->run();
+        $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
+    });
+
+/**
+ *  Create User Command
+ */
+$createUser = (new Command('user:create'))
+    ->setDescription("Create User")
+    ->addOption('name', '', InputOption::VALUE_REQUIRED, "User name")
+    ->addOption('email', '', InputOption::VALUE_REQUIRED, "User email")
+    ->addOption('password', '', InputOption::VALUE_OPTIONAL, "User password")
+    ->addOption('dial', '', InputOption::VALUE_OPTIONAL, "User phone number dial code")
+    ->addOption('phone', '', InputOption::VALUE_OPTIONAL, "User phone number")
+    ->addOption('scopes', '', InputOption::VALUE_OPTIONAL, "User scopes")
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
+        (new App(new Router(Task::class, "create_user", [
+            $input->getOption('name'),
+            $input->getOption('email'),
+            $input->getOption('password'),
+            $input->getOption('dial'),
+            $input->getOption('phone'),
+            $input->getOption('scopes')
+        ])))->run();
+        $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
+    });
+
+/**
+ * Initialize console app
+ */
+$app = (new Application(getenv('APP_NAME') ?? 'PHP' . " Console App"));
+$app->addCommands([
+    $composerCommand,
+    $migrationCommand,
+    $createOrg,
+    $createClient,
+    $updateClientKey,
+    $createUser,
+]);
+$app->run();

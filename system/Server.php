@@ -1,6 +1,15 @@
 <?php
-defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
 
+namespace System;
+
+use Exception;
+use Application\Models\BaseModel;
+use OAuth2\GrantType\AuthorizationCode;
+use OAuth2\GrantType\ClientCredentials;
+use OAuth2\GrantType\RefreshToken;
+use OAuth2\GrantType\UserCredentials;
+use OAuth2\Server as OAuth2Server;
+use OAuth2\Storage\Memory;
 use PHPMailer\PHPMailer\PHPMailer;
 
 /**
@@ -46,19 +55,15 @@ class Server
      */
     protected function __construct($validateAccess = false, $useJWT = false)
     {
-
-        //Create request & response objects
+        // Create request & response objects
         $this->request = \OAuth2\Request::createFromGlobals();
         $this->response = new \OAuth2\Response();
 
-        //Load custom model
-        App::getInstance()->loadModel("OauthPdo");
+        // Create PDO - MYSQL DB Storage
+        $this->oauthStorage = new BaseModel(array('dsn' => sprintf("mysql:dbname=%s;host=%s", Configs::DB_NAME(), Configs::DB_HOST()), 'username' => Configs::DB_USER(), 'password' => Configs::DB_PASS()));
 
-        //Create PDO - MYSQL DB Storage
-        $this->oauthStorage = new OauthPdo(array('dsn' => sprintf("mysql:dbname=%s;host=%s", Configs::DB_NAME(), Configs::DB_HOST()), 'username' => Configs::DB_USER(), 'password' => Configs::DB_PASS()));
-
-        //Create server without implicit
-        $this->oauthServer = new \OAuth2\Server($this->oauthStorage, array(
+        // Create server without implicit
+        $this->oauthServer = new OAuth2Server($this->oauthStorage, array(
             'access_lifetime' => ENVIRONMENT == ENV_DEV ? 86400 * 30 : 86400,
             'refresh_token_lifetime' => ENVIRONMENT == ENV_DEV ? 86400 * 90 : 86400 * 30,
             'auth_code_lifetime' => 3600, //1 hour
@@ -66,25 +71,25 @@ class Server
             'allow_implicit' => false,
             'use_jwt_access_tokens' => $useJWT,
             'store_encrypted_token_string' => false,
-            'issuer' => OAUTH_BASE_URL
+            'issuer' => BASE_URL
         ));
 
         // User Credentials grant type
-        $this->oauthServer->addGrantType(new OAuth2\GrantType\UserCredentials($this->oauthStorage));
+        $this->oauthServer->addGrantType(new UserCredentials($this->oauthStorage));
 
         // Client Credentials grant type
-        $this->oauthServer->addGrantType(new OAuth2\GrantType\ClientCredentials($this->oauthStorage));
+        $this->oauthServer->addGrantType(new ClientCredentials($this->oauthStorage));
 
         // Authorization Code grant type
-        $this->oauthServer->addGrantType(new OAuth2\GrantType\AuthorizationCode($this->oauthStorage));
+        $this->oauthServer->addGrantType(new AuthorizationCode($this->oauthStorage));
 
         // Refresh Token grant type - the refresh token grant request will have a "refresh_token" field
-        $this->oauthServer->addGrantType(new OAuth2\GrantType\RefreshToken($this->oauthStorage, array(
+        $this->oauthServer->addGrantType(new RefreshToken($this->oauthStorage, array(
             'always_issue_new_refresh_token' => true
         )));
 
         // Set up Scopes
-        $this->oauthServer->setScopeUtil(new Scopes(new OAuth2\Storage\Memory(array(
+        $this->oauthServer->setScopeUtil(new Scopes(new Memory(array(
             'default_scope' => Scopes::DEFAULT_SCOPE,
             'supported_scopes' => array_keys(Scopes::ALL_SCOPES)
         ))));
@@ -109,7 +114,7 @@ class Server
 
     /**
      * Get oauth storage
-     * @return OauthPdo
+     * @return BaseModel
      */
     protected function getOauthStorage()
     {
@@ -325,5 +330,43 @@ class Server
     public function getTokenInfo($param = null)
     {
         return $this->tokenInfo ? ($param ? $this->tokenInfo[$param] ?? null : $this->tokenInfo) : null;
+    }
+
+    /**
+     * Start Login session
+     *
+     * @param string $user User Id
+     * @param string $duration Session duration in seconds. default = 1hr
+     * @return void
+     */
+    public function startLoginSession($user, $duration = 3600)
+    {
+        if (!$user) return;
+        $encryptedUser = CIPHER::encrypt(Configs::ENCRYPTION_KEY() . md5(IPADDRESS), $user);
+        Utils::set_cookie('login_user', $encryptedUser, $duration);
+    }
+
+    /**
+     * Clear Login session
+     * 
+     * @return void
+     */
+    public function clearLoginSession()
+    {
+        Utils::delete_cookie('login_user');
+    }
+
+    /**
+     * Get Login User
+     *
+     * @return string|bool
+     */
+    public function getLoginUser()
+    {
+        $encryptedUser = Utils::get_cookie('login_user');
+        if ($encryptedUser) {
+            return CIPHER::decrypt(Configs::ENCRYPTION_KEY() . md5(IPADDRESS), $encryptedUser);
+        }
+        return false;
     }
 }

@@ -1,5 +1,10 @@
 <?php
-defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
+
+namespace Application\Controllers;
+
+use phpseclib\Crypt\RSA;
+use System\Scopes;
+use System\Server;
 
 /**
  * Created by PhpStorm.
@@ -8,7 +13,7 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
  * Time: 12:20 PM
  */
 
-class Console extends Server
+class Task extends Server
 {
     public function __construct()
     {
@@ -70,7 +75,7 @@ class Console extends Server
 
             //Insert jwt public keys for client
             $algo = 'sha256';
-            $rsa = new phpseclib\Crypt\RSA();
+            $rsa = new RSA();
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
             if (!empty($keys) && $this->getOauthStorage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
@@ -106,7 +111,7 @@ class Console extends Server
     {
         if (!empty($client_id)) {
             $algo = 'sha256';
-            $rsa = new phpseclib\Crypt\RSA();
+            $rsa = new RSA();
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
             if (!empty($keys) && $this->getOauthStorage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
@@ -128,10 +133,12 @@ class Console extends Server
      * @param string $name
      * @param string $email
      * @param string $password
+     * @param string $dial_code
+     * @param string $phone
      * @param string $scopes
      * @return void
      */
-    public function create_user($name, $email, $password = null, $scopes = null)
+    public function create_user($name, $email, $password = null, $dial_code = null, $phone = null, $scopes = null)
     {
         //Create user id
         $prefix = !empty($email) ? $email : (!empty($phone) ? $phone : "");
@@ -146,7 +153,7 @@ class Console extends Server
         ]);
 
         //Insert User
-        $result = $this->getOauthStorage()->setUserCustom($user_id, $user_password, $email, $name, null, null, $scopes);
+        $result = $this->getOauthStorage()->setUserCustom($user_id, $user_password, $email, $name, $phone, $dial_code, $scopes);
         if ($result) {
             $this->print("Successfully Created User");
             $this->print("User ID = $result");
