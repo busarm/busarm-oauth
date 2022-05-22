@@ -176,7 +176,7 @@ if (!function_exists('app')) {
 }
 
 
-if (!function_exists('output')) {
+if (!function_exists('out')) {
     /**
      * Send output of data
      * @param string $data
