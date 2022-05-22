@@ -156,4 +156,5 @@ $app->addCommands([
 -   Go into the application's contaner. Run `docker-compose exec oauth-workspace bash`
 -   Change directory to application folder. Run `cd /var/www`
 -   List available commands `php console list`
+-   Get command help `php console <command> --help`
 -   Run `php console <command> <arg1> <arg2> <arg...>`

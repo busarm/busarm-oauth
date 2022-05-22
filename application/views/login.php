@@ -210,7 +210,7 @@ use System\URL;
             </div>
         </div>
         <!-- Footer -->
-        <?= app()->loadView('components/footer') ?>
+        <?= app()->view('components/footer') ?>
 
     </oauth-login>
 </body>

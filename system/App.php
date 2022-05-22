@@ -5,6 +5,7 @@ namespace System;
 use DateInterval;
 use DateTime;
 use Exception;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 define("ENV_DEV", "development");
 define("ENV_PROD", "production");
@@ -25,7 +26,6 @@ class App
 {
 
     const CONTROLLER_PATH =  "application/controllers/";
-    const LIBRARY_PATH =  "application/library/";
     const VIEW_PATH =  "application/views/";
     const MODEL_PATH =  "application/model/";
 
@@ -37,6 +37,9 @@ class App
     /** @var Router */
     public $router;
 
+    /** @var Logger */
+    public $logger;
+
     /**
      * @param Router|null $router
      */
@@ -44,23 +47,21 @@ class App
     {
         self::$instance = &$this;
 
-        // Set router
-        $this->router = $router ?: new Router();
-
         // Set up envs
         $this->setUpEnvironment();
 
+        // Set up error handlers
         if ($key = Configs::BUGSNAG_KEY()) {
             $this->bugsnag = \Bugsnag\Client::make($key);
             $this->bugsnag->setReleaseStage(ENVIRONMENT);
             $this->bugsnag->setAppType(is_cli() ? "Console" : "HTTP");
             \Bugsnag\Handler::register($this->bugsnag);
         }
-        set_error_handler(function ($errno, $errstr, $errfile = null, $errline = null) {
+        set_error_handler(function ($errno, $errstr, $errfile = null, $errline = null, $errcontext = []) {
             if ($this->bugsnag) {
                 $this->bugsnag->notifyError("unexpected_error", $errstr);
             }
-            $this->showMessage(500, false, "unexpected_error", $errstr, $errline, $errfile);
+            $this->showMessage(500, false, $errno, $errstr, $errline, $errfile, $errcontext);
         });
         set_exception_handler(function ($e) {
             if ($this->bugsnag) {
@@ -76,6 +77,11 @@ class App
             }, $e->getTrace());
             $this->showMessage(500, false, "unexpected_exception", $e->getMessage(), $e->getLine(), $e->getFile(), $trace);
         });
+
+        // Set router
+        $this->router = $router ?: new Router();
+        // Set logger
+        $this->logger = new Logger(ENVIRONMENT === ENV_DEV ? ConsoleOutput::VERBOSITY_DEBUG : ConsoleOutput::VERBOSITY_NORMAL);
     }
 
     /**
@@ -118,25 +124,7 @@ class App
         // Define HTTP_VERSION
         define("HTTP_VERSION", get_server_protocol());
 
-
-        /*
-        *---------------------------------------------------------------
-        * APPLICATION ENVIRONMENT
-        *---------------------------------------------------------------
-        *
-        * You can load different configurations depending on your
-        * current environment. Setting the environment also influences
-        * things like logging and error reporting.
-        *
-        * This can be set to anything, but default usage is:
-        *
-        *     development
-        *     testing
-        *     production
-        *
-        * NOTE: If you change these, also change the error_reporting() code below
-        */
-
+        // APPLICATION ENVIRONMENT
         if (strtolower(env('ENV')) == "prod" || strtolower(env('STAGE')) == "prod") {
             define('ENVIRONMENT', ENV_PROD);
         } else if (strtolower(env('ENV')) == "dev" || strtolower(env('STAGE')) == "dev") {
@@ -145,15 +133,7 @@ class App
             define('ENVIRONMENT', ENV_DEV);
         }
 
-
-        /*
-        *---------------------------------------------------------------
-        * ERROR REPORTING
-        *---------------------------------------------------------------
-        *
-        * Different environments will require different levels of error reporting.
-        * By default development will show errors but testing and live will hide them.
-        */
+        // ERROR REPORTING
         switch (ENVIRONMENT) {
             case ENV_DEV:
             case ENV_TEST:
@@ -229,19 +209,15 @@ class App
         }
     }
 
-    #---------------------------
-    # Loaders
-    #---------------------------
-
-
-    /**Load View
+    /**
+     * Load View
      * @param $path
      * @param array $vars
      * @param bool $return
      * @return string
      * @throws Exception
      */
-    public function loadView($path, $vars = array(), $return = false)
+    public function view($path, $vars = array(), $return = false)
     {
         if ($filePath = Utils::fileExists(FCPATH . self::VIEW_PATH . $path . ".php")) {
             ob_start();
@@ -263,37 +239,6 @@ class App
             } else {
                 throw new Exception("File does not Exist");
             }
-        }
-    }
-
-    /**Load Library
-     * @param $path
-     * @param array $vars
-     * @throws Exception
-     */
-    public function loadLibrary($path, $vars = array())
-    {
-        if ($filePath = Utils::fileExists(FCPATH . self::LIBRARY_PATH . $path . ".php")) {
-            if (!empty($vars)) extract($vars);
-            require_once $filePath;
-        } else {
-            throw new Exception("File does not Exist");
-        }
-    }
-
-
-    /**Load Model
-     * @param $path
-     * @param array $vars
-     * @throws Exception
-     */
-    public function loadModel($path, $vars = array())
-    {
-        if ($filePath = Utils::fileExists(FCPATH . self::MODEL_PATH . $path . ".php")) {
-            if (!empty($vars)) extract($vars);
-            require_once $filePath;
-        } else {
-            throw new Exception("File does not Exist");
         }
     }
 
@@ -364,15 +309,22 @@ class App
         !ob_get_contents() ?: ob_clean();
         ob_start();
         if (is_cli()) {
-            echo "status - false" . PHP_EOL . "msg - " . ($msg ?? $title) . PHP_EOL .  "version - " . Configs::APP_VERSION() . PHP_EOL . "line - $line" . PHP_EOL . "file path - $file" . PHP_EOL;
+            $this->logger->logError(PHP_EOL . "status\t-\tfalse" . PHP_EOL . "msg\t-\t" . ($msg ?? $title) . PHP_EOL .  "version\t-\t" . Configs::APP_VERSION() . PHP_EOL . "line\t-\t$line" . PHP_EOL . "path\t-\t$file" . PHP_EOL, $trace);
         } else {
+
             if (!headers_sent()) {
                 header(HTTP_VERSION . ' ' . $code . ' ' . $msg ? $title : '', TRUE, $code);
                 header("Content-type: application/json");
                 header('Access-Control-Allow-Origin: *', true);
                 header('Access-Control-Allow-Methods: *', true);
             }
-            $data = ['status' => $status, 'msg' => $msg ?? $title, 'env' => ENVIRONMENT, 'version' => Configs::APP_VERSION(), 'ip' => IPADDRESS];
+
+            $data = ['status' => $status, 'msg' => $msg ?? $title];
+            if ($code !== 200 || $code !== 201) {
+                $data['env'] = ENVIRONMENT;
+                $data['version'] = Configs::APP_VERSION();
+                $data['ip'] = IPADDRESS;
+            }
             if (ENVIRONMENT != ENV_PROD) {
                 if (!empty($line)) $data['line'] = $line;
                 if (!empty($file)) $data['file_path'] = $file;

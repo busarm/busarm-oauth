@@ -52,9 +52,15 @@ class Server
      * Server constructor.
      * @param boolean $validateAccess Validate access to server
      * @param boolean $useJWT Use JWT Token
+     * @param boolean $isCLI Is CLI Application
      */
-    protected function __construct($validateAccess = false, $useJWT = false)
+    protected function __construct($validateAccess = false, $useJWT = false, $isCLI = false)
     {
+        // Check cli
+        if ($isCLI && !is_cli()) {
+            app()->showMessage(403, false, 'Unauthorized request');
+        }
+
         // Create request & response objects
         $this->request = \OAuth2\Request::createFromGlobals();
         $this->response = new \OAuth2\Response();

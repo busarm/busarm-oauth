@@ -5,6 +5,7 @@
 use Application\Controllers\Authorize;
 use Application\Controllers\Misc;
 use Application\Controllers\Resources;
+use Application\Controllers\Task;
 use Application\Controllers\Token;
 use System\Router;
 

@@ -17,23 +17,7 @@ class Task extends Server
 {
     public function __construct()
     {
-        if (is_cli()) {
-            parent::__construct(false, true);
-        } else {
-            exit('Unauthorized request');
-        }
-    }
-
-    /**
-     * Print to console
-     *
-     * @param mixed $msg
-     * @return void
-     */
-    private function print($msg)
-    {
-        print_r($msg);
-        print_r(PHP_EOL);
+        parent::__construct(false, true, true);
     }
 
     /**
@@ -46,8 +30,8 @@ class Task extends Server
     {
         $result = $this->getOauthStorage()->setOrganizationDetails($org_name);
         if ($result) {
-            $this->print("Successfully Added Organization");
-            $this->print("Organizatoin ID = $result");
+            log_info("Successfully Added Organization");
+            log_info("Organizatoin ID = $result");
         }
         die;
     }
@@ -79,21 +63,21 @@ class Task extends Server
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
             if (!empty($keys) && $this->getOauthStorage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
-                $this->print("Successfully Created Client");
-                $this->print("Client ID = $client_id");
-                $this->print("Client Secret = $client_secret");
-                $this->print("Client Grant_types = $grant_types");
-                $this->print("Client Scopes = $scopes");
-                $this->print("Client Redirect Url = $redirect_uri");
-                $this->print("Client Public Key = " . $keys['publickey']);
-                $this->print("Client Public Key ALGO = $algo");
+                log_info("Successfully Created Client");
+                log_info("Client ID = $client_id");
+                log_info("Client Secret = $client_secret");
+                log_info("Client Grant_types = $grant_types");
+                log_info("Client Scopes = $scopes");
+                log_info("Client Redirect Url = $redirect_uri");
+                log_info("Client Public Key = " . $keys['publickey']);
+                log_info("Client Public Key ALGO = $algo");
             } else {
-                $this->print("Successfully Created Client");
-                $this->print("Client ID = $client_id");
-                $this->print("Client Secret = $client_secret");
-                $this->print("Client Grant_types = $grant_types");
-                $this->print("Client Scopes = $scopes");
-                $this->print("Client Redirect Url = $redirect_uri");
+                log_info("Successfully Created Client");
+                log_info("Client ID = $client_id");
+                log_info("Client Secret = $client_secret");
+                log_info("Client Grant_types = $grant_types");
+                log_info("Client Scopes = $scopes");
+                log_info("Client Redirect Url = $redirect_uri");
             }
             die;
         } else {
@@ -115,9 +99,9 @@ class Task extends Server
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
             if (!empty($keys) && $this->getOauthStorage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
-                $this->print("Successfully Updated Client Keys");
-                $this->print("Client Public Key = " . $keys['publickey']);
-                $this->print("Client Public Key ALGO = $algo");
+                log_info("Successfully Updated Client Keys");
+                log_info("Client Public Key = " . $keys['publickey']);
+                log_info("Client Public Key ALGO = $algo");
                 die;
             } else {
                 exit("Failed to update client keys");
@@ -155,14 +139,14 @@ class Task extends Server
         //Insert User
         $result = $this->getOauthStorage()->setUserCustom($user_id, $user_password, $email, $name, $phone, $dial_code, $scopes);
         if ($result) {
-            $this->print("Successfully Created User");
-            $this->print("User ID = $result");
-            $this->print("User Name = $name");
-            $this->print("User Email = $email");
+            log_info("Successfully Created User");
+            log_info("User ID = $result");
+            log_info("User Name = $name");
+            log_info("User Email = $email");
             if (empty($password)) {
-                $this->print("User Password = $user_password");
+                log_info("User Password = $user_password");
             }
-            $this->print("User Scopes = $scopes");
+            log_info("User Scopes = $scopes");
             die;
         } else {
             exit("Failed to create user");

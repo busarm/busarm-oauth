@@ -1,5 +1,6 @@
 <?php
 
+use Symfony\Component\Console\Logger\ConsoleLogger;
 use System\App;
 
 if (!function_exists('is_cli')) {
@@ -188,5 +189,56 @@ if (!function_exists('out')) {
         print_r(json_encode($data, JSON_PRETTY_PRINT) ?: $data);
         print_r(PHP_EOL);
         exit($code);
+    }
+}
+
+
+if (!function_exists('log_error')) {
+    /**
+     * @param string $message
+     */
+    function log_error($message)
+    {
+        return \System\App::getInstance()->logger->logError($message);
+    }
+}
+
+if (!function_exists('log_exception')) {
+    /**
+     * @param Exception $exception
+     */
+    function log_exception($exception)
+    {
+        return \System\App::getInstance()->logger->logError($exception->getMessage(), $exception->getTrace());
+    }
+}
+
+if (!function_exists('log_info')) {
+    /**
+     * @param string $message
+     */
+    function log_info($message)
+    {
+        return \System\App::getInstance()->logger->logInfo($message);
+    }
+}
+
+if (!function_exists('log_debug')) {
+    /**
+     * @param string $message
+     */
+    function log_debug($message)
+    {
+        return \System\App::getInstance()->logger->logDebug($message);
+    }
+}
+
+if (!function_exists('log_warning')) {
+    /**
+     * @param string $message
+     */
+    function log_warning($message)
+    {
+        return \System\App::getInstance()->logger->logWarning($message);
     }
 }

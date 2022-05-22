@@ -291,7 +291,7 @@ class Authorize extends Server
     private function showLogin($vars = array())
     {
         try {
-            echo app()->loadView("login", array_merge($vars, [
+            echo app()->view("login", array_merge($vars, [
                 'csrf_token' => Utils::generate_csrf_token(),
                 'action' => ""
             ]), true);
@@ -309,7 +309,7 @@ class Authorize extends Server
     private function showAuthorize($vars = array())
     {
         try {
-            echo app()->loadView("authorize", $vars, true);
+            echo app()->view("authorize", $vars, true);
             die;
         } catch (Exception $e) {
             App::reportException($e); // Report
@@ -328,7 +328,7 @@ class Authorize extends Server
     private function showEmailSuccess($userInfo)
     {
         try {
-            echo app()->loadView("success", $userInfo, true);
+            echo app()->view("success", $userInfo, true);
             die;
         } catch (Exception $e) {
             App::reportException($e); // Report
@@ -355,7 +355,7 @@ class Authorize extends Server
             ]));
         } else {
             try {
-                echo app()->loadView("failed", [
+                echo app()->view("failed", [
                     "msg" => ucfirst(str_replace('_', ' ', $error)),
                     "desc" => $error_description
                 ], true);
@@ -396,8 +396,8 @@ class Authorize extends Server
     private function getEmailAuthView($link)
     {
         try {
-            $content = app()->loadView("email/auth", ["link" => $link], true);
-            return app()->loadView("email/template/simple_mail", ["content" => $content], true);
+            $content = app()->view("email/auth", ["link" => $link], true);
+            return app()->view("email/template/simple_mail", ["content" => $content], true);
         } catch (Exception $e) {
             App::reportException($e); // Report
             return $content;
