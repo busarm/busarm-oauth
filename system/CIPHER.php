@@ -1,5 +1,8 @@
 <?php
-defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
+
+namespace System;
+
+use Throwable;
 
 /**
  * Created by PhpStorm.

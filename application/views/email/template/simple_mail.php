@@ -8,6 +8,10 @@
  *
  * @var string $content
  */
+
+use System\Configs;
+use System\URL;
+
 if (empty($content)) {
     exit;
 }
@@ -247,7 +251,6 @@ if (empty($content)) {
 
     .x-scroll {
         -webkit-overflow-scrolling: touch;
-        overflow-scrolling: touch;
         overflow-x: auto;
     }
 
@@ -336,8 +339,6 @@ if (empty($content)) {
 
     table {
         border-collapse: collapse;
-        mso-table-lspace: 0;
-        mso-table-rspace: 0;
     }
 
     sup {
@@ -380,7 +381,7 @@ if (empty($content)) {
         <!--Header-->
         <tr align="center" style="height: auto !important;background: <?= Configs::APP_THEME_PRIMARY_COLOR() ?>;">
             <td height="40" align="center" style="padding:10px;display: flex; align-content: center; justify-content: center;">
-                <img style="height:40px !important;margin:auto;object-fit: contain;user-select: none;image-rendering:auto;" src="<?= App::getCDNUrl('public/images/logo/white/logo_txt_512px.png') ?>" alt="Busarm Logo" />
+                <img style="height:40px !important;margin:auto;object-fit: contain;user-select: none;image-rendering:auto;" src="<?= URL::assetUrl('public/images/logo/white/logo_txt_512px.png') ?>" alt="Busarm Logo" />
             </td>
         </tr>
         <!--Content-->
@@ -395,7 +396,7 @@ if (empty($content)) {
                 <table style="margin:auto;display: flex; align-content: center; justify-content: center;">
                     <tr>
                         <td align="center" style="padding:10px;display: flex; align-content: center; justify-content: center;">
-                            <p style="color: white;margin:auto;" align="center">&copy; Busarm All rights reserved.</p>
+                            <p style="color: white;margin:auto;" align="center">&copy; <?= Configs::COMPANY_NAME() ?> All rights reserved.</p>
                         </td>
                     </tr>
                 </table>

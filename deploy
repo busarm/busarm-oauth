@@ -30,7 +30,7 @@ $branch = branchName();
 echo PHP_EOL;
 echo "---------------------------------";
 echo PHP_EOL;
-echo "Wecari PHP Serverless Deployment";
+echo "PHP Serverless Deployment";
 echo PHP_EOL;
 echo "Branch - $branch";
 echo PHP_EOL;

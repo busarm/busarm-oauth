@@ -1,5 +1,8 @@
 <?php
-defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
+
+namespace Application\Controllers;
+
+use System\Server;
 
 /**
  * Created by PhpStorm.

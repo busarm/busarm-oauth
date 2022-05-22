@@ -1,8 +1,8 @@
 <?php
 
-use OAuth2\Scope;
+namespace System;
 
-defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
+use OAuth2\Scope;
 
 /**
  * Created by VSCode.
@@ -49,6 +49,7 @@ class Scopes extends Scope
     ];
 
     const CLAIM_SCOPES = [
+        self::SCOPE_OPENID,
         self::SCOPE_CLAIM_NAME,
         self::SCOPE_CLAIM_EMAIL,
         self::SCOPE_CLAIM_PHONE,
@@ -119,6 +120,5 @@ class Scopes extends Scope
         }
 
         return !empty($found) ? $found : false;
-        
     }
 }
