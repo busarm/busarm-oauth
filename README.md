@@ -1,8 +1,8 @@
-# Busarm Oauth
+# Wecari Oauth
 
 ## Description
 
-Busarm Authorization server. Manages user authentication and authorization to access Busarm resources
+Wecari Authorization server. Manages user authentication and authorization to access Wecari resources
 
 ## Specification
 
@@ -101,7 +101,7 @@ https://documenter.getpostman.com/view/20461972/UVyytYJ5
 -   Set up Environment Variables
     -   Ensure `.env` file exists. If not run copy `.env.example` to `.env`
     -   Ensure `.env` file is populated with the corrent details
--   Start Local Server (Busarm Oauth)
+-   Start Local Server (Wecari Oauth)
     -   Run `docker-compose up` or `docker-compose up --scale oauth-php=<NUMBER_OF_INSTANCES>`
 -   For First time Deployment:
 -   Set Up Local Server
@@ -126,7 +126,7 @@ https://documenter.getpostman.com/view/20461972/UVyytYJ5
         -   Set up Domain and add domain to API Gateway custom domain
         -   Add VPC's Private Subnet IDs and Security Group to `serverless.yml` file
     -   Set up Serverless on PC. Visit https://serverless.com
-        -   Configure Serverless credentials with profile name `busarm`
+        -   Configure Serverless credentials with profile name `wecari`
 -   Set up database
     -   Run migration script
         -   Access workspace container. Run `docker-compose exec oauth-workspace bash`

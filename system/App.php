@@ -17,9 +17,9 @@ define("ENV_TEST", "testing");
  * Date: 10/14/2018
  * Time: 12:34 AM
  *
- * Mini Framework for Busarm
+ * Mini Framework for Wecari
  *
- * @copyright busarm.com
+ * @copyright wecari.com
  */
 
 class App

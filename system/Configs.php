@@ -109,18 +109,18 @@ class Configs
     |
     */
     const ALLOWED_CORS_ORIGINS = [
-        'https://busarm.com',
-        'https://busarm.com/',
-        'https://staging.busarm.com',
-        'https://staging.busarm.com/',
-        'https://api.busarm.com',
-        'https://api.busarm.com/',
-        'https://api.staging.busarm.com',
-        'https://api.staging.busarm.com/',
-        'https://partner.busarm.com',
-        'https://partner.busarm.com/',
-        'https://partner.staging.busarm.com',
-        'https://partner.staging.busarm.com/'
+        'https://wecari.com',
+        'https://wecari.com/',
+        'https://staging.wecari.com',
+        'https://staging.wecari.com/',
+        'https://api.wecari.com',
+        'https://api.wecari.com/',
+        'https://api.staging.wecari.com',
+        'https://api.staging.wecari.com/',
+        'https://partner.wecari.com',
+        'https://partner.wecari.com/',
+        'https://partner.staging.wecari.com',
+        'https://partner.staging.wecari.com/'
     ];
 
     static function APP_VERSION($default = '0.1')

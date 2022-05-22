@@ -27,9 +27,9 @@ class URL
     public static function appUrl($path = '')
     {
         if (ENVIRONMENT == ENV_PROD)
-            return "https://busarm.com/" . $path;
+            return "https://wecari.com/" . $path;
         else  if (ENVIRONMENT == ENV_TEST)
-            return "https://staging.busarm.com/" . $path;
+            return "https://staging.wecari.com/" . $path;
         else
             return "http://localhost/" . $path;
     }
@@ -43,11 +43,11 @@ class URL
     public static function assetUrl($path = '')
     {
         if (ENVIRONMENT == ENV_PROD)
-            return "https://cdn.busarm.com/" . $path;
+            return "https://cdn.wecari.com/" . $path;
         else  if (ENVIRONMENT == ENV_TEST)
-            return "https://cdn.staging.busarm.com/" . $path;
+            return "https://cdn.staging.wecari.com/" . $path;
         else
-            return "https://cdn.staging.busarm.com/" . $path;
+            return "https://cdn.staging.wecari.com/" . $path;
     }
 
     /**

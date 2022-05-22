@@ -1,13 +1,13 @@
-service: Busarm-Oauth
+service: Wecari-Oauth
 
 provider:
     name: aws
     runtime: provided.al2
-    profile: busarm
+    profile: wecari
     region: ${opt:region, ''}
     stage: ${opt:stage, ''}
-    stackName: Busarm-Oauth-${self:provider.stage}
-    apiName: Busarm-Oauth-${self:provider.stage}
+    stackName: Wecari-Oauth-${self:provider.stage}
+    apiName: Wecari-Oauth-${self:provider.stage}
     role: ${self:custom.roleName}
     logRetentionInDays: ${self:custom.logRetentionInDays}
     environment: # define service wide environment variables here
@@ -16,14 +16,14 @@ provider:
         SEPARATE_VENDOR: "0"
         # App
         APP_VERSION: ${git:describe}
-        APP_NAME: "Busarm Oauth"
-        APP_THEME_PRIMARY_COLOR: "#267272"
-        APP_THEME_SECONDARY_COLOR: "#e9ffb7"
-        COMPANY_NAME: "Busarm"
+        APP_NAME: "Wecari Oauth"
+        APP_THEME_PRIMARY_COLOR: '#3f5f44'
+        APP_THEME_SECONDARY_COLOR: '#f1da8e'
+        COMPANY_NAME: "Wecari"
         ENCRYPTION_KEY: ${self:custom.secret.${self:provider.stage}.oauth_encryption_key}
         BUGSNAG_KEY: ${self:custom.secret.${self:provider.stage}.oauth_bugsnag_key}
-        EMAIL_INFO: "info@busarm.com"
-        EMAIL_SUPPORT: "support@busarm.com"
+        EMAIL_INFO: "info@wecari.com"
+        EMAIL_SUPPORT: "support@wecari.com"
         SYSTEM_SHUT_DOWN_TIME: ${self:custom.stopTime.${self:provider.stage}}
         SYSTEM_START_UP_TIME: ${self:custom.startTime.${self:provider.stage}}
         MAINTENANCE_MODE: "0"
@@ -90,9 +90,9 @@ custom:
         Prod: 256
     logRetentionInDays: 30
     secret:
-        Dev: ${ssm:/aws/reference/secretsmanager/dev/busarm}
-        Prod: ${ssm:/aws/reference/secretsmanager/prod/busarm}
-    roleName: BusarmOauthLambdaRole
+        Dev: ${ssm:/aws/reference/secretsmanager/dev/wecari}
+        Prod: ${ssm:/aws/reference/secretsmanager/prod/wecari}
+    roleName: WecariOauthLambdaRole
     corsHeaders:
         - Content-Type
         - Authorization
@@ -142,7 +142,7 @@ functions:
     # Console
     Console:
         handler: console
-        description: "Busarm Console & Cron Job Scheduler"
+        description: "Wecari Console & Cron Job Scheduler"
         memorySize: ${self:custom.avgMem.${self:provider.stage}}
         timeout: 28
         layers:
@@ -244,10 +244,10 @@ functions:
 
 resources:
     Resources:
-        BusarmOauthLambdaRole:
+        WecariOauthLambdaRole:
             Type: AWS::IAM::Role
             Properties:
-                RoleName: BusarmOauthLambdaRole${self:provider.stage}-${self:provider.region}
+                RoleName: WecariOauthLambdaRole${self:provider.stage}-${self:provider.region}
                 Path: /
                 AssumeRolePolicyDocument:
                     Version: "2012-10-17"
@@ -258,7 +258,7 @@ resources:
                                   - lambda.amazonaws.com
                           Action: sts:AssumeRole
                 Policies:
-                    - PolicyName: BusarmOauthLambdaPolicy${self:provider.stage}
+                    - PolicyName: WecariOauthLambdaPolicy${self:provider.stage}
                       PolicyDocument:
                           Version: "2012-10-17"
                           Statement:

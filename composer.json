@@ -1,6 +1,6 @@
 {
-    "name": "busarm/oauth",
-    "description": "Authentication and Authorization server for Busarm",
+    "name": "wecari/oauth",
+    "description": "Authentication and Authorization server for Wecari",
     "type": "project",
     "license": "Mit",
     "authors": [
