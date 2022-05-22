@@ -34,7 +34,8 @@
         "migration:rollback": "phinx rollback --configuration database/phinx.php",
         "migration:seed:create": "phinx seed:create --configuration database/phinx.php",
         "migration:seed:run": "phinx seed:run --configuration database/phinx.php",
-        "migration": "phinx"
+        "migration": "phinx",
+        "migration:dev": "phinx-migrations"
     },
     "autoload": {
         "psr-4": {
