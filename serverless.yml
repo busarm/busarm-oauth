@@ -27,6 +27,10 @@ provider:
         SYSTEM_SHUT_DOWN_TIME: ${self:custom.stopTime.${self:provider.stage}}
         SYSTEM_START_UP_TIME: ${self:custom.startTime.${self:provider.stage}}
         MAINTENANCE_MODE: "0"
+        API_URL: ${self:custom.apiUrl.${self:provider.stage}}
+        APP_URL: ${self:custom.appUrl.${self:provider.stage}}
+        ASSET_URL: ${self:custom.assetUrl.${self:provider.stage}}
+        PARTNER_URL: ${self:custom.partnerUrl.${self:provider.stage}}
         # Databse
         DB_NAME: 13243546576879_oauth
         DB_HOST: ${self:custom.secret.${self:provider.stage}.db_host}
@@ -137,6 +141,19 @@ custom:
         automatic: true
         includeLayers: true
         number: 3 # Max versions allowed
+    # Urls
+    apiUrl:
+        Dev: "https://api.staging.busarm.com"
+        Prod: "https://api.busarm.com"
+    appUrl:
+        Dev: "https://staging.busarm.com"
+        Prod: "https://busarm.com"
+    assetUrl:
+        Dev: "https://cdn.staging.busarm.com"
+        Prod: "https://cdn.busarm.com"
+    partnerUrl:
+        Dev: "https://partner.staging.busarm.com"
+        Prod: "https://partner.busarm.com"
 
 functions:
     # Console
