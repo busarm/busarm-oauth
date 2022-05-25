@@ -152,7 +152,7 @@ functions:
             exclude:
                 - "public/**"
         deploymentSettings:
-            type: Linear10PercentEvery1Minute
+            type: AllAtOnce
             alias: Live
 
     Authorize:
@@ -172,7 +172,7 @@ functions:
                       allowCredentials: false
                       cacheControl: ${self:custom.corsCache}
         deploymentSettings:
-            type: Linear10PercentEvery1Minute
+            type: AllAtOnce
             alias: Live
 
     Resources:
@@ -196,7 +196,7 @@ functions:
                   input:
                       warmer: true
         deploymentSettings:
-            type: Linear10PercentEvery1Minute
+            type: AllAtOnce
             alias: Live
 
     Token:
@@ -220,7 +220,7 @@ functions:
                   input:
                       warmer: true
         deploymentSettings:
-            type: Linear10PercentEvery1Minute
+            type: AllAtOnce
             alias: Live
     Misc:
         handler: "public/index.php"
@@ -239,7 +239,7 @@ functions:
                       allowCredentials: false
                       cacheControl: ${self:custom.corsCache}
         deploymentSettings:
-            type: Linear10PercentEvery1Minute
+            type: AllAtOnce
             alias: Live
 
 resources:

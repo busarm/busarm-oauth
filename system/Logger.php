@@ -14,6 +14,7 @@ use Symfony\Component\Console\Output\ConsoleOutput;
  */
 class Logger
 {
+    /** @var ConsoleLogger */
     private $logger;
 
     /**

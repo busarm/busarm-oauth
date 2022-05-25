@@ -65,7 +65,7 @@ class Scopes extends Scope
      *                                  if it isn't.
      *
      * @see http://tools.ietf.org/html/rfc6749#section-7
-     *
+     * @inheritDoc
      * @ingroup oauth2_section_7
      */
     public function checkScope($required_scope, $available_scope)
