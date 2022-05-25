@@ -203,7 +203,7 @@ class Authorize extends Server
                                 Utils::set_cookie(self::EMAIL_REQ_TOKEN_PARAM, $token, $timeout); //Save to cookie to prevent duplicate 
                                 return $user;
                             } catch (Exception $e) {
-                                App::reportException($e); // Report
+                                app()->reportException($e); // Report
                                 $this->showError("authorization_failed", sprintf("Unknown error. Please contact <a href='%s' target='_blank'>support</a> for assistance", URL::appUrl(URL::APP_SUPPORT_PATH)), $redirect_uri);
                             }
                         } else {
@@ -297,7 +297,7 @@ class Authorize extends Server
             ]), true);
             die;
         } catch (Exception $e) {
-            App::reportException($e); // Report
+            app()->reportException($e); // Report
             echo $e->getMessage();
             die;
         }
@@ -312,7 +312,7 @@ class Authorize extends Server
             echo app()->view("authorize", $vars, true);
             die;
         } catch (Exception $e) {
-            App::reportException($e); // Report
+            app()->reportException($e); // Report
             echo $e->getMessage();
             die;
         }
@@ -331,7 +331,7 @@ class Authorize extends Server
             echo app()->view("success", $userInfo, true);
             die;
         } catch (Exception $e) {
-            App::reportException($e); // Report
+            app()->reportException($e); // Report
             echo $e->getMessage();
             die;
         }
@@ -346,7 +346,7 @@ class Authorize extends Server
     private function showError($error, $error_description = '', $redirect_uri = '')
     {
         // Report
-        App::reportError(ucfirst(str_replace('_', ' ', $error)), $error_description);
+        app()->reportError(ucfirst(str_replace('_', ' ', $error)), $error_description);
 
         if (!empty($redirect_uri)) {
             URL::redirect(URL::parseUrl($redirect_uri, [
@@ -361,7 +361,7 @@ class Authorize extends Server
                 ], true);
                 die;
             } catch (Exception $e) {
-                App::reportException($e); // Report
+                app()->reportException($e); // Report
                 echo $e->getMessage();
                 die;
             }
@@ -399,7 +399,7 @@ class Authorize extends Server
             $content = app()->view("email/auth", ["link" => $link], true);
             return app()->view("email/template/simple_mail", ["content" => $content], true);
         } catch (Exception $e) {
-            App::reportException($e); // Report
+            app()->reportException($e); // Report
             return $content;
         }
     }

@@ -29,16 +29,17 @@ class App
     const VIEW_PATH =  "application/views/";
     const MODEL_PATH =  "application/model/";
 
+    /** @var self */
     private static $instance;
 
     /** @var \Bugsnag\Client */
     private $bugsnag;
 
     /** @var Router */
-    public $router;
+    private $router;
 
     /** @var Logger */
-    public $logger;
+    private $logger;
 
     /**
      * @param Router|null $router
@@ -102,6 +103,26 @@ class App
     public function getBugsnag()
     {
         return $this->bugsnag;
+    }
+
+    /**
+     * Get Router
+     *
+     * @return Logger
+     */
+    public function getRouter()
+    {
+        return $this->router;
+    }
+
+    /**
+     * Get Logger
+     *
+     * @return Logger
+     */
+    public function getLogger()
+    {
+        return $this->logger;
     }
 
     /**
@@ -348,6 +369,7 @@ class App
         if (!empty(self::$instance->bugsnag)) {
             self::$instance->bugsnag->notifyError($heading, $message);
         }
+        log_error($message);
     }
 
     /**
@@ -361,6 +383,7 @@ class App
         if (!empty(self::$instance->bugsnag)) {
             self::$instance->bugsnag->notifyException($exception);
         }
+        log_exception($exception);
     }
 
     /**

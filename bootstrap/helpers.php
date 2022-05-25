@@ -1,8 +1,5 @@
 <?php
 
-use Symfony\Component\Console\Logger\ConsoleLogger;
-use System\App;
-
 if (!function_exists('is_cli')) {
     /**
      * Is CLI?
@@ -172,7 +169,7 @@ if (!function_exists('app')) {
      */
     function app()
     {
-        return \System\App::getInstance();;
+        return \System\App::getInstance();
     }
 }
 
@@ -199,7 +196,7 @@ if (!function_exists('log_error')) {
      */
     function log_error($message)
     {
-        return \System\App::getInstance()->logger->logError($message);
+        return app()->getLogger()->logError($message);
     }
 }
 
@@ -209,7 +206,7 @@ if (!function_exists('log_exception')) {
      */
     function log_exception($exception)
     {
-        return \System\App::getInstance()->logger->logError($exception->getMessage(), $exception->getTrace());
+        return app()->getLogger()->logError($exception->getMessage(), $exception->getTrace());
     }
 }
 
@@ -219,7 +216,7 @@ if (!function_exists('log_info')) {
      */
     function log_info($message)
     {
-        return \System\App::getInstance()->logger->logInfo($message);
+        return app()->getLogger()->logInfo($message);
     }
 }
 
@@ -229,7 +226,7 @@ if (!function_exists('log_debug')) {
      */
     function log_debug($message)
     {
-        return \System\App::getInstance()->logger->logDebug($message);
+        return app()->getLogger()->logDebug($message);
     }
 }
 
@@ -239,6 +236,6 @@ if (!function_exists('log_warning')) {
      */
     function log_warning($message)
     {
-        return \System\App::getInstance()->logger->logWarning($message);
+        return app()->getLogger()->logWarning($message);
     }
 }

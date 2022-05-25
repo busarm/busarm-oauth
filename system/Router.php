@@ -52,7 +52,6 @@ class Router
 
         // Set Request Method
         $this->method = strtoupper(env('REQUEST_METHOD')) ?? NULL;
-        
 
         // Set Request Route
         $this->route = env('PATH_INFO');
@@ -73,7 +72,9 @@ class Router
         // If custom routes
         if ($this->controller && $this->function) {
             return $this->reroute($this->controller, $this->function, $this->params);
-        } else {
+        }
+        // If http routes
+        else {
             if ($path = $this->check()) {
                 $routes = explode('::', $path);
                 $controller = $routes[0] ?? null;
@@ -92,7 +93,7 @@ class Router
      * @param $function Application Controller (public) function. e.g index
      * @return self
      */
-    public function route_get($path, $class, $function)
+    public function get($path, $class, $function)
     {
         $this->routes[self::GET_METHOD][$path] = $class . '::' . $function;
         return $this;
@@ -102,13 +103,13 @@ class Router
      * Set HTTP POST routes
      * 
      * @param $path HTTP path. e.g /home. Regular expression is supported
-     * @param $to Application Controller class name e.g Home
+     * @param $class Application Controller class name e.g Home
      * @param $method [Optional] Application Controller function. e.g index
      * @return self
      */
-    public function route_post($path, $to, $function = null)
+    public function post($path, $class, $function)
     {
-        $this->routes[self::POST_METHOD][$path] = $to . ($function ? '::' . $function : '');
+        $this->routes[self::POST_METHOD][$path] = $class . '::' . $function;
         return $this;
     }
 
@@ -120,7 +121,7 @@ class Router
      * @param $function Application Controller (public) function. e.g index
      * @return self
      */
-    public function route_get_post($path, $class, $function)
+    public function get_post($path, $class, $function)
     {
         $this->routes[self::GET_METHOD][$path] = $class . '::' . $function;
         $this->routes[self::POST_METHOD][$path] = $class . '::' . $function;
@@ -131,26 +132,42 @@ class Router
      * Set HTTP PUT routes
      * 
      * @param $path HTTP path. e.g /home. Regular expression is supported
-     * @param $to Application Controller class name e.g Home
+     * @param $class Application Controller class name e.g Home
      * @param $method [Optional] Application Controller function. e.g index
      * @return self
      */
-    public function route_put($path, $to, $function = null)
+    public function put($path, $class, $function)
     {
-        $this->routes[self::PUT_METHOD][$path] = $to . ($function ? '::' . $function : '');
+        $this->routes[self::PUT_METHOD][$path] = $class . '::' . $function;
         return $this;
     }
+
+    /**
+     * Set HTTP POST & PUT routes
+     * 
+     * @param $path HTTP path. e.g /home. Regular expression is supported
+     * @param $class Application Controller class name e.g Home
+     * @param $method [Optional] Application Controller function. e.g index
+     * @return self
+     */
+    public function post_put($path, $class, $function)
+    {
+        $this->routes[self::POST_METHOD][$path] = $class . '::' . $function;
+        $this->routes[self::PUT_METHOD][$path] = $class . '::' . $function;
+        return $this;
+    }
+
     /**
      * Set HTTP DELETE routes
      * 
      * @param $path HTTP path. e.g /home. Regular expression is supported
-     * @param $to Application Controller class name e.g Home
+     * @param $class Application Controller class name e.g Home
      * @param $method [Optional] Application Controller function. e.g index
      * @return self
      */
-    public function route_delete($path, $to, $function = null)
+    public function delete($path, $class, $function)
     {
-        $this->routes[self::DELETE_METHOD][$path] = $to . ($function ? '::' . $function : '');
+        $this->routes[self::DELETE_METHOD][$path] = $class . '::' . $function;
         return $this;
     }
 
