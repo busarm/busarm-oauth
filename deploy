@@ -1,4 +1,11 @@
 <?php
+require_once(boolval(getenv('SEPARATE_VENDOR')) ? '/tmp/vendor/autoload.php' : 'vendor/autoload.php');
+
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
 
 // Regions
 const REGION_DEV = "eu-west-2";
@@ -21,126 +28,113 @@ const BRANCHES_DEV = [
     '*-dev',
 ];
 
-// Get Arguments
-$args = parseArgs($argv);
 
-// Get current branch name
-$branch = branchName();
+/**
+ *  Deploymment serverless
+ */
+$serverlessDeployment = (new Command('sls'))
+    ->setDescription("Handle serverless deployments")
+    ->addOption('--dev', '', InputOption::VALUE_NONE, "Deployment to Development/staging environment. Permitted branches: " . implode(' ', BRANCHES_DEV))
+    ->addOption('--prod', '', InputOption::VALUE_NONE, "Deployment to Production environment. Permitted branches: " . implode(' ', BRANCHES_PROD))
+    ->addOption('--all', '', InputOption::VALUE_NONE, "Deployment to both Development & Production environments. Permitted branches: " . implode(' ', BRANCHES_PROD))
+    ->addOption('--force', '', InputOption::VALUE_NONE, "Force deployment")
+    ->addOption('--conceal', '-c', InputOption::VALUE_NONE, "Hide secrets from the output (e.g. API Gateway key values)")
+    ->addOption('--function', '-f', InputOption::VALUE_NONE, "Function name. Deploys a single function")
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
 
-echo PHP_EOL;
-echo "---------------------------------";
-echo PHP_EOL;
-echo "PHP Serverless Deployment";
-echo PHP_EOL;
-echo "Branch - $branch";
-echo PHP_EOL;
-echo "---------------------------------";
-echo PHP_EOL;
+        // Get current branch name
+        $branch = branchName();
 
-// Help
-if (isset($args['--help'])) {
-    showHints();
-    exit(0);
-} else {
+        // Check commit status
+        if (!checkCommit()) {
+            throw (new Exception('Please commit files to git before deploying'));
+        }
 
-    // Check commit status
-    if (!checkCommit()) {
-        exit("Please commit files to git before deploying") . PHP_EOL;
-    }
+        // Deploy to all - ensure that branch is production
+        if (!empty($input->getOption('all')) && (isBranchMatchOrThrow($branch, BRANCHES_PROD))) {
+            deploySLS(
+                STAGE_DEV,
+                REGION_DEV,
+                $input->getOption('function'),
+                $input->getOption('conceal'),
+                $input->getOption('force'),
+                $input->getOption('verbose')
+            );
+            deploySLS(
+                STAGE_PROD,
+                REGION_PROD,
+                $input->getOption('function'),
+                $input->getOption('conceal'),
+                $input->getOption('force'),
+                $input->getOption('verbose')
+            );
+        }
+        // Deploy to prod - ensure that branch is production
+        else if (!empty($input->getOption('prod')) && (isBranchMatchOrThrow($branch, BRANCHES_PROD))) {
+            deploySLS(
+                STAGE_PROD,
+                REGION_PROD,
+                $input->getOption('function'),
+                $input->getOption('conceal'),
+                $input->getOption('force'),
+                $input->getOption('verbose')
+            );
+        }
+        // Deploy to dev - ensure branch is staging or development
+        else if (!empty($input->getOption('dev')) && (isBranchMatchOrThrow($branch, BRANCHES_DEV))) {
+            deploySLS(
+                STAGE_DEV,
+                REGION_DEV,
+                $input->getOption('function'),
+                $input->getOption('conceal'),
+                $input->getOption('force'),
+                $input->getOption('verbose')
+            );
+        } else {
+            throw (new Exception('Invalid environment selected. Use option: `--dev`, `--prod` or `--all`,'));
+        }
 
-    // If --all requested, ensure that branch is production
-    if (isset($args['--all']) && (isBranchMatch($branch, BRANCHES_PROD))) {
-        deploy(STAGE_DEV, REGION_DEV, $args);
-        deploy(STAGE_PROD, REGION_PROD, $args);
-    }
-    // If --all requested, ensure branch is production
-    else if (isset($args['--prod']) && (isBranchMatch($branch, BRANCHES_PROD))) {
-        deploy(STAGE_PROD, REGION_PROD, $args);
-    }
-    // If --all requested, ensure branch is staging or development
-    else if (isset($args['--dev']) && (isBranchMatch($branch, BRANCHES_DEV))) {
-        deploy(STAGE_DEV, REGION_DEV, $args);
-    } else {
-        showHints();
-    }
-    exit(0);
-}
+        $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
+    });
+
+
+/**
+ * Initialize console app
+ */
+$app = (new Application(getenv('APP_NAME') ?? 'PHP' . " Console App"));
+$app->addCommands([
+    $serverlessDeployment,
+]);
+$app->run();
+
 
 /**
  * Process serverless deployment
  *
  * @param string $stage
  * @param string $region
- * @param array $params
+ * @param string $function
+ * @param boolean $conceal
+ * @param boolean $force
+ * @param boolean $verbose
  * @return void
  */
-function deploy($stage = STAGE_DEV, $region = REGION_DEV, $params = [])
+function deploySLS($stage = STAGE_DEV, $region = REGION_DEV, $function = '', $conceal = false, $force = false, $verbose = false)
 {
     $args = [];
-    $function = $params['--function'] ?? $params['-f'] ?? '';
-    if (isset($params['--conceal'])) {
+    if ($conceal) {
         $args[] = '--conceal';
     }
-    if (isset($params['--force'])) {
+    if ($force) {
         $args[] = '--force';
     }
-    if (isset($params['--verbose']) || isset($params['-v'])) {
+    if ($verbose) {
         $args[] = '--verbose';
     }
-    passthru("git push && sls deploy --stage=$stage --region=$region" . implode(' ', $args) . ' ' . $function);
+    passthru("git push && sls deploy --stage=$stage --region=$region --verbose" . implode(' ', $args) . ' ' . $function);
 }
 
-/**
- * Parse Command Args
- * 
- * @param array $args
- * @return array
- */
-function parseArgs($args)
-{
-    $params = [];
-    if (!empty($args)) {
-        unset($args[0]);
-        foreach ($args as $arg) {
-            $e = explode("=", $arg);
-            if (count($e) == 2)
-                $params[$e[0]] = $e[1];
-            else
-                $params[$e[0]] = 1;
-        }
-    }
-    return $params;
-}
-
-/**
- * Show Hints
- *
- * @return void
- */
-function showHints()
-{
-
-    echo "php deploy [options]";
-    echo PHP_EOL;
-    echo PHP_EOL;
-    echo "Options";
-    echo PHP_EOL;
-    echo "-------";
-    echo PHP_EOL;
-    echo "--dev             =     Deployment to Development ENV. Permitted branches: " . implode(' ', BRANCHES_DEV);
-    echo PHP_EOL;
-    echo "--prod            =     Deployment to Production ENV. Permitted branches: " . implode(' ', BRANCHES_PROD);
-    echo PHP_EOL;
-    echo "--all             =     Deployment to All ENV - Development and Production. Permitted branches: " . implode(' ', BRANCHES_PROD);
-    echo PHP_EOL;
-    echo "--conceal         =     Hide secrets from the output (e.g. API Gateway key values)";
-    echo PHP_EOL;
-    echo "--verbose         =     Show all stack events during deployment";
-    echo PHP_EOL;
-    echo "--function=<VAL>  =     Function name. Deploys a single function";
-    echo PHP_EOL;
-    echo PHP_EOL;
-}
 
 /**
  * Check if files have been committed to git
@@ -169,7 +163,7 @@ function branchName()
  * @param array $list Branch list to match against
  * @return boolean
  */
-function isBranchMatch($name, $list)
+function isBranchMatchOrThrow($name, $list)
 {
     foreach ($list as $branch) {
         if (!empty($branch) && stripos($branch, '*') !== false && stripos($name, str_replace('*', '', $branch)) !== false) {
@@ -178,5 +172,5 @@ function isBranchMatch($name, $list)
             return true;
         }
     }
-    return false;
+    throw (new Exception('Invalid branch. Deployment to this environment can only be performed from the following branches: ' . implode(' ', $list)));
 }
