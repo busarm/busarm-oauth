@@ -210,24 +210,26 @@ class Router
      * @param string $controller
      * @param string $function
      * @param string $params
-     * @return boolean
+     * @return boolean|mixed
      */
     private function reroute($controller, $function, $params = [])
     {
-        if (class_exists(ucfirst($controller))) {
+        if (class_exists($controller)) {
             // Load controller
             $object = new $controller();
             if (
                 method_exists($object, $function)
                 && is_callable(array($object, $function))
             ) {
-                call_user_func_array(
+                return call_user_func_array(
                     array($object, $function),
                     $params
                 );
             }
+            app()->reportError("Route error", "Method can't be called: " . $function);
             return false;
         }
+        app()->reportError("Route error", "Class does not exist: " . $controller);
         return false;
     }
 }
