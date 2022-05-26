@@ -144,17 +144,17 @@ custom:
         number: 3 # Max versions allowed
     # Urls
     apiUrl:
-        Dev: "https://api.staging.busarm.com"
-        Prod: "https://api.busarm.com"
+        Dev: "https://api.staging.wecari.com"
+        Prod: "https://api.wecari.com"
     appUrl:
-        Dev: "https://staging.busarm.com"
-        Prod: "https://busarm.com"
+        Dev: "https://staging.wecari.com"
+        Prod: "https://wecari.com"
     assetUrl:
-        Dev: "https://cdn.staging.busarm.com"
-        Prod: "https://cdn.busarm.com"
+        Dev: "https://cdn.staging.wecari.com"
+        Prod: "https://cdn.wecari.com"
     partnerUrl:
-        Dev: "https://partner.staging.busarm.com"
-        Prod: "https://partner.busarm.com"
+        Dev: "https://partner.staging.wecari.com"
+        Prod: "https://partner.wecari.com"
 
 functions:
     # Console
