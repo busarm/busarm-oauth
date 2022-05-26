@@ -7,6 +7,13 @@ namespace System;
  */
 class Configs
 {
+    /*
+    |--------------------------------------------------------------------------
+    | Cookie Prefix
+    |--------------------------------------------------------------------------
+    |
+    | Prefix appended to cookie name to prevent collisions
+    */
     const COOKIE_PREFIX = "oauth_";
 
     /*
@@ -108,20 +115,21 @@ class Configs
     | e.g. $config['allowed_origins'] = ['http://www.example.com', 'https://spa.example.com']
     |
     */
-    const ALLOWED_CORS_ORIGINS = [
-        'https://wecari.com',
-        'https://wecari.com/',
-        'https://staging.wecari.com',
-        'https://staging.wecari.com/',
-        'https://api.wecari.com',
-        'https://api.wecari.com/',
-        'https://api.staging.wecari.com',
-        'https://api.staging.wecari.com/',
-        'https://partner.wecari.com',
-        'https://partner.wecari.com/',
-        'https://partner.staging.wecari.com',
-        'https://partner.staging.wecari.com/'
-    ];
+    static function ALLOWED_CORS_ORIGINS()
+    {
+        return [
+            self::APP_URL(),
+            self::API_URL(),
+            self::PARTNER_URL()
+        ];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | ADD CUSTOM CONFIGS
+    |--------------------------------------------------------------------------
+    |
+    */
 
     static function APP_VERSION($default = '0.1')
     {
@@ -154,6 +162,22 @@ class Configs
     static function MAINTENANCE_MODE()
     {
         return env("MAINTENANCE_MODE", false);
+    }
+    static function API_URL()
+    {
+        return env("API_URL", '');
+    }
+    static function APP_URL()
+    {
+        return env("APP_URL", '');
+    }
+    static function ASSET_URL()
+    {
+        return env("ASSET_URL", '');
+    }
+    static function PARTNER_URL()
+    {
+        return env("PARTNER_URL", '');
     }
 
     # App Settings

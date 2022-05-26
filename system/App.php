@@ -17,7 +17,7 @@ define("ENV_TEST", "testing");
  * Date: 10/14/2018
  * Time: 12:34 AM
  *
- * Mini Framework for Wecari
+ * PHP Mini Framework
  *
  * @copyright wecari.com
  */
@@ -296,7 +296,7 @@ class App
             // Store the HTTP Origin header
             $origin = env('HTTP_ORIGIN') ?? env('HTTP_REFERER') ?? '';
 
-            $allowed_origins = Configs::ALLOWED_CORS_ORIGINS;
+            $allowed_origins = Configs::ALLOWED_CORS_ORIGINS();
 
             // If the origin domain is in the allowed_cors_origins list, then add the Access Control headers
             if (is_array($allowed_origins) && in_array(trim($origin, "/"), $allowed_origins)) {

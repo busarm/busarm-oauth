@@ -13,7 +13,7 @@ class URL
     const GOOGLE_FONT_URL = 'https://fonts.googleapis.com/css2?family=Arima+Madurai:wght@500&display=swap';
     const GOOGLE_RECAPTCHA_SCRIPT_URL = 'https://www.google.com/recaptcha/api.js';
     const GOOGLE_RECAPTCHA_VERFY_URL = 'https://www.google.com/recaptcha/api/siteverify';
-        
+
     const APP_PRIVACY_PATH = 'privacy';
     const APP_TERMS_PATH = 'terms';
     const APP_SUPPORT_PATH = 'support';
@@ -26,12 +26,7 @@ class URL
      */
     public static function appUrl($path = '')
     {
-        if (ENVIRONMENT == ENV_PROD)
-            return "https://wecari.com/" . $path;
-        else  if (ENVIRONMENT == ENV_TEST)
-            return "https://staging.wecari.com/" . $path;
-        else
-            return "http://localhost/" . $path;
+        return trim(Configs::APP_URL(), ' /') . '/' . $path;
     }
 
     /**
@@ -42,12 +37,7 @@ class URL
      */
     public static function assetUrl($path = '')
     {
-        if (ENVIRONMENT == ENV_PROD)
-            return "https://cdn.wecari.com/" . $path;
-        else  if (ENVIRONMENT == ENV_TEST)
-            return "https://cdn.staging.wecari.com/" . $path;
-        else
-            return "https://cdn.staging.wecari.com/" . $path;
+        return trim(Configs::ASSET_URL(), ' /') . '/' . $path;
     }
 
     /**
@@ -58,7 +48,7 @@ class URL
      */
     public static function baseUrl($path = '', $params = [])
     {
-        $url = trim(BASE_URL, '/') . '/' . $path;
+        $url = trim(BASE_URL, ' /') . '/' . $path;
         if (!empty($params)) {
             $url .= '?' . ((function_exists('http_build_query')) ? http_build_query($params) : self::buildUrlParams($params));
         }
