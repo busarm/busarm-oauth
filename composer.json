@@ -41,7 +41,13 @@
         "psr-4": {
             "Database\\": "database",
             "System\\": "system",
-            "Application\\": "application"
+            "Application\\": "application",
+            "Application\\Controllers\\": "application/controllers",
+            "Application\\Models\\": "application/models",
+            "Application\\Services\\": "application/services",
+            "Application\\Interfaces\\": "application/interfaces",
+            "Application\\Traits\\": "application/traits",
+            "Application\\Enums\\": "application/enums"
         }
     }
 }

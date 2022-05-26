@@ -208,7 +208,7 @@ class App
         if ($this->router->check('/ping')) {
             $this->showMessage(200, true, "System Online");
         } else if (!$this->router->process()) {
-            $this->showMessage(404, false, "Not found");
+            $this->showMessage(404, false, "Not found - " . $this->router->route);
         }
     }
 
@@ -334,7 +334,7 @@ class App
         } else {
 
             if (!headers_sent()) {
-                header(HTTP_VERSION . ' ' . $code . ' ' . $msg ? $title : '', TRUE, $code);
+                header(HTTP_VERSION . ' ' . $code . ' ' . ($msg ? $title : ''), TRUE, $code);
                 header("Content-type: application/json");
                 header('Access-Control-Allow-Origin: *', true);
                 header('Access-Control-Allow-Methods: *', true);
