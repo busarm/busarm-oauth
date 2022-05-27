@@ -132,8 +132,8 @@ https://documenter.getpostman.com/view/20461972/UVyytYJ5
         -   Access workspace container. Run `docker-compose exec oauth-workspace bash`
         -   Go to app folder. Run `cd /var/www`
         -   Run migration. Run `composer bref:cli <CONSOLE LAMBDA FUNCTION> migrate`
--   Run command `php deploy sls --dev` for staging
--   Run command `php deploy sls --prod` for production
+-   Run command `php deploy sls --dev` or `composer deploy:dev` for staging
+-   Run command `php deploy sls --prod` or `composer deploy:prod` for production
 
 ## Console Application
 
