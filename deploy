@@ -4,10 +4,11 @@ require_once('bootstrap/constants.php');
 
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\OutputInterface;
-
 
 /**
  *  Deploymment serverless
@@ -112,7 +113,17 @@ function deploySLS($stage = STAGE_DEV, $region = REGION_DEV, $function = '', $co
     if ($verbose) {
         $args[] = '--verbose';
     }
-    passthru("git push && sls deploy --stage=$stage --region=$region --verbose" . implode(' ', $args) . ' ' . $function);
+    $output = new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG, true, new OutputFormatter(true));
+    if (run('git', ['push'], $output)->isSuccessful()) {
+        run('sls', [
+            'deploy',
+            '--stage=' . $stage,
+            '--region=' . $region,
+            '--verbose',
+            ...$args,
+            $function
+        ], $output, true, 900);
+    }
 }
 
 

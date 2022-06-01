@@ -239,3 +239,62 @@ if (!function_exists('log_warning')) {
         return app()->getLogger()->logWarning($message);
     }
 }
+
+
+if (!function_exists('run')) {
+
+    /**
+     * Run external command
+     *
+     * @param string $command
+     * @param array $params
+     * @param Symfony\Component\Console\Output\OutputInterface $output
+     * @param boolean $wait Default = true
+     * @param int $timeout Default = 600 seconds
+     * @return Symfony\Component\Process\Process
+     */
+    function run(string $command, array $params, Symfony\Component\Console\Output\OutputInterface $output, $wait = true, $timeout = 600)
+    {
+        $output->getFormatter()->setStyle('error', new Symfony\Component\Console\Formatter\OutputFormatterStyle('red'));
+        $process = new Symfony\Component\Process\Process([
+            $command,
+            ...array_filter($params, fn ($arg) => !empty($arg))
+        ]);
+        $process->setTimeout($timeout);
+        if ($wait) {
+            $process->run(function ($type, $data) use ($output) {
+                if ($type == Symfony\Component\Process\Process::ERR) {
+                    $output->writeln('<error>' . $data . '</error>');
+                } else {
+                    $output->writeln('<comment>' . $data . '</comment>');
+                }
+            });
+        } else {
+            $process->start(function ($type, $data) use ($output) {
+                if ($type == Symfony\Component\Process\Process::ERR) {
+                    $output->writeln('<error>' . $data . '</error>');
+                } else {
+                    $output->writeln('<comment>' . $data . '</comment>');
+                }
+            });
+        }
+        return $process;
+    }
+}
+
+if (!function_exists('runAsync')) {
+
+    /**
+     * Run external command asynchronously
+     *
+     * @param string $command
+     * @param array $params
+     * @param Symfony\Component\Console\Output\OutputInterface $output
+     * @param int $timeout Default = 600 seconds
+     * @return Symfony\Component\Process\Process
+     */
+    function runAsync(string $command, array $params, Symfony\Component\Console\Output\OutputInterface $output, $timeout = 600)
+    {
+        return run($command, $params, $output, false, $timeout);
+    }
+}

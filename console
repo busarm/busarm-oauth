@@ -9,6 +9,7 @@ require_once('bootstrap/constants.php');
 use Application\Controllers\Task;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -21,10 +22,14 @@ use System\Scopes;
  */
 $composerCommand = (new Command('run'))
     ->setDescription("Run composer scripts")
-    ->addArgument('name', InputOption::VALUE_NONE, "Composer script name")
+    ->addArgument('name', InputArgument::REQUIRED, "Composer script name")
     ->setCode(function (InputInterface $input, OutputInterface $output) {
         $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
         passthru(sprintf("composer run-script %s", $input->getArgument('name')));
+        run('composer', [
+            'run-script',
+            $input->getArgument('name')
+        ], $output);
         $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
     });
 
