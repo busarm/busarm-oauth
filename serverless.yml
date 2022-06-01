@@ -64,8 +64,9 @@ plugins:
   - serverless-prune-plugin
 package:
     exclude:
-        - composer.json
         - composer.lock
+        - .env
+        - .env.*
         - .git/**
         - .vscode/**
         - .serverless/**

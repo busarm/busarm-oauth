@@ -4,6 +4,7 @@ define('FCPATH', dirname(__FILE__) . DIRECTORY_SEPARATOR);
 // Load packages
 require_once(boolval(getenv('SEPARATE_VENDOR')) ? '/tmp/vendor/autoload.php' : FCPATH . 'vendor/autoload.php');
 require_once('bootstrap/helpers.php');
+require_once('bootstrap/constants.php');
 
 use Application\Controllers\Task;
 use Symfony\Component\Console\Application;

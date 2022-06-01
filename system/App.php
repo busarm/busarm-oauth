@@ -7,10 +7,6 @@ use DateTime;
 use Exception;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
-define("ENV_DEV", "development");
-define("ENV_PROD", "production");
-define("ENV_TEST", "testing");
-
 /**
  * Created by PhpStorm.
  * User: Samuel

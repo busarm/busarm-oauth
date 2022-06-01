@@ -5,6 +5,7 @@ if (PHP_SAPI === 'cli' or defined('STDIN')) exit(1);
 // Load packages
 require_once(boolval(getenv('SEPARATE_VENDOR')) ? '/tmp/vendor/autoload.php' : FCPATH . 'vendor/autoload.php');
 require_once(FCPATH . 'bootstrap/helpers.php');
+require_once(FCPATH . 'bootstrap/constants.php');
 
 use Application\Controllers\Authorize;
 use Application\Controllers\Misc;

@@ -1,32 +1,12 @@
 <?php
 require_once(boolval(getenv('SEPARATE_VENDOR')) ? '/tmp/vendor/autoload.php' : 'vendor/autoload.php');
+require_once('bootstrap/constants.php');
 
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-
-// Regions
-const REGION_DEV = "eu-west-2";
-const REGION_PROD = "eu-west-2";
-// Stages
-const STAGE_DEV = "Dev";
-const STAGE_PROD = "Prod";
-// Allowed Branches
-const BRANCHES_PROD = [
-    'master',
-    'main',
-    'production',
-    'release-*',
-];
-const BRANCHES_DEV = [
-    'staging',
-    'develop',
-    'development',
-    '*-develop',
-    '*-dev',
-];
 
 
 /**
