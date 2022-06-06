@@ -81,6 +81,7 @@ https://documenter.getpostman.com/view/20461972/UVyytYJ5
 ### Console migration script
 
 -   `php console migrate` - Run migrations for all databases
+-   `php console rollback` - Run migrations rollback for database
 
 ### Composer migration scripts
 

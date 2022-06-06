@@ -13,3 +13,4 @@ tmp/
 
 composer.lock
 package-lock.json
+supervisord.*

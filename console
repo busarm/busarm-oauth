@@ -33,7 +33,6 @@ $composerCommand = (new Command('run'))
         $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
     });
 
-
 /**
  *  DB Migration Command
  */
@@ -42,11 +41,27 @@ $migrationCommand = (new Command('migrate'))
     ->addOption('fake', '', InputOption::VALUE_NONE, "Mark any migrations selected as run, but don't actually execute them")
     ->setCode(function (InputInterface $input, OutputInterface $output) {
         $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
-        if ($input->getOption('fake')) {
-            passthru('composer migration:migrate-fake');
-        } else {
-            passthru('composer migration:migrate');
-        }
+        run('vendor/bin/phinx', [
+            'migrate',
+            '--configuration=database/phinx.php',
+            $input->getOption('fake') ? '--fake' : null
+        ], $output);
+        $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
+    });
+
+/**
+ * DB Migration Rollback Command
+ */
+$rollbackCommand = (new Command('rollback'))
+    ->setDescription("Rollback database")
+    ->addOption('fake', '', InputOption::VALUE_NONE, "Mark any migrations selected as run, but don't actually execute them")
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
+        run('vendor/bin/phinx', [
+            'rollback',
+            '--configuration=database/app/phinx.php',
+            $input->getOption('fake') ? '--fake' : null
+        ], $output);
         $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
     });
 
@@ -131,6 +146,7 @@ $app = (new Application(getenv('APP_NAME') ?? 'PHP' . " Console App"));
 $app->addCommands([
     $composerCommand,
     $migrationCommand,
+    $rollbackCommand,
     $createOrg,
     $createClient,
     $updateClientKey,
