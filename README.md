@@ -94,6 +94,12 @@ https://documenter.getpostman.com/view/20461972/UVyytYJ5
 -   `composer migration:seed:run` - Runs the migration:seed:run script as defined in composer.json.
 -   `composer migration:status` - Runs the migration:status script as defined in composer.json.
 
+## Development Instructions
+
+### Database
+
+-   DON'T USE COMPOSITE KEYS. Composite keys are not supported my a lot of services, hence use a single primary key and make the intended composit keys a unique index
+
 ## Deployemnt Steps
 
 ### Development (using Docker)

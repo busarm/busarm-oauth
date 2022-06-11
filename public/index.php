@@ -23,6 +23,7 @@ $router = (new Router())
     ->post('/token/request', Token::class, 'request')
     ->get_post('/token/verify', Token::class, 'verify')
     ->get_post('/token/info', Token::class, 'info')
+    ->get_post('/token/user', Token::class, 'user')
     ->post('/token/invalidate', Token::class, 'invalidate')
     // Resources
     ->get('/resources/scopes', Resources::class, 'scopes')
