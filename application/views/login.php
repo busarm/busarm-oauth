@@ -1,5 +1,4 @@
 <?php
-defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
 
 /**
  * @var string $msg
@@ -7,6 +6,10 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
  * @var string $action
  * @var string $redirect_url
  */
+
+use System\Configs;
+use System\URL;
+
 ?>
 
 <!DOCTYPE html>
@@ -16,12 +19,12 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <link rel="icon" type="image/png" href="<?= App::getCDNUrl('public/images/favicon/dark/favicon-16x16.png') ?>" sizes="16x16" />
-    <link rel="icon" type="image/png" href="<?= App::getCDNUrl('public/images/favicon/dark/favicon-32x32.png') ?>" sizes="32x32" />
-    <link rel="icon" type="image/png" href="<?= App::getCDNUrl('public/images/favicon/dark/favicon-64x64.png') ?>" sizes="64x64" />
-    <link rel="icon" type="image/png" href="<?= App::getCDNUrl('public/images/favicon/dark/favicon-96x96.png') ?>" sizes="96x96" />
-    
-    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Arima+Madurai:wght@500&display=swap" />
+    <link rel="icon" type="image/png" href="<?= URL::assetUrl('public/images/favicon/dark/favicon-16x16.png') ?>" sizes="16x16" />
+    <link rel="icon" type="image/png" href="<?= URL::assetUrl('public/images/favicon/dark/favicon-32x32.png') ?>" sizes="32x32" />
+    <link rel="icon" type="image/png" href="<?= URL::assetUrl('public/images/favicon/dark/favicon-64x64.png') ?>" sizes="64x64" />
+    <link rel="icon" type="image/png" href="<?= URL::assetUrl('public/images/favicon/dark/favicon-96x96.png') ?>" sizes="96x96" />
+
+    <link rel="stylesheet" type="text/css" href="<?= URL::GOOGLE_FONT_URL ?>" />
 
     <title>Login</title>
     <style>
@@ -65,31 +68,6 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
         oauth-login h4 {
             font-size: 16px;
             font-weight: bold;
-        }
-
-        oauth-login footer {
-            height: auto;
-            background: transparent;
-            padding: 10px;
-            text-align: center;
-        }
-
-        oauth-login footer .copyright {
-            color: #fff;
-            font-size: 0.9em;
-            padding: 0;
-            text-align: center;
-        }
-
-        oauth-login footer .copyright a {
-            color: inherit;
-        }
-
-        oauth-login footer .copyright li {
-            display: inline-block;
-            list-style: none;
-            margin: 5px;
-            padding: 5px;
         }
 
         oauth-login .login-page {
@@ -179,7 +157,7 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
             text-decoration: none;
         }
     </style>
-    <script src="https://www.google.com/recaptcha/api.js"></script>
+    <script src="<?= URL::GOOGLE_RECAPTCHA_SCRIPT_URL ?>"></script>
     <script>
         function onSubmit(token) {
             let auth_type = document.getElementById('auth_type');
@@ -210,10 +188,10 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
         <div class="login-page">
             <div class="form">
                 <div>
-                    <img class="logo logo_icon" src="<?= App::getCDNUrl('public/images/logo/dark/logo_256px.png') ?>">
+                    <img class="logo logo_icon" src="<?= URL::assetUrl('public/images/logo/dark/logo_256px.png') ?>">
                 </div>
                 <div>
-                    <img class="logo logo_txt" src="<?= App::getCDNUrl('public/images/logo/dark/logo_txt_512px.png') ?>">
+                    <img class="logo logo_txt" src="<?= URL::assetUrl('public/images/logo/dark/logo_txt_512px.png') ?>">
                 </div>
                 <br>
                 <form id="login-form" class="form" method="post" action="<?= $action ?? null ?>">
@@ -232,15 +210,8 @@ defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
             </div>
         </div>
         <!-- Footer -->
-        <footer>
-            <ul class="copyright">
-                <li style="min-width: 100px;"><a href="<?= App::getAppUrl('privacy') ?>" target="_blank">Privacy Policy</a></li>
-                <li style="min-width: 100px;"><a href="<?= App::getAppUrl('terms') ?>" target="_blank">Terms & Conditions</a></li>
-            </ul>
-            <ul class="copyright">
-                <li>&copy; Busarm All rights reserved.</li>
-            </ul>
-        </footer>
+        <?= app()->view('components/footer') ?>
+
     </oauth-login>
 </body>
 

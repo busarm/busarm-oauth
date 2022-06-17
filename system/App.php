@@ -1,9 +1,11 @@
 <?php
-defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
-require_once "Helpers.php";
-require_once "Configs.php";
-require_once "CIPHER.php";
-require_once "Scopes.php";
+
+namespace System;
+
+use DateInterval;
+use DateTime;
+use Exception;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 /**
  * Created by PhpStorm.
@@ -11,7 +13,7 @@ require_once "Scopes.php";
  * Date: 10/14/2018
  * Time: 12:34 AM
  *
- * Mini Framework for Busarm
+ * PHP Mini Framework
  *
  * @copyright busarm.com
  */
@@ -19,31 +21,44 @@ require_once "Scopes.php";
 class App
 {
 
-    private $controllerDir = Configs::OAUTH_CONTROLLER_PATH;
-    private $viewDir = Configs::OAUTH_VIEW_PATH;
-    private $modelDir = Configs::OAUTH_MODEL_PATH;
-    private $libraryDir = Configs::OAUTH_LIBRARY_PATH;
+    const CONTROLLER_PATH =  "application/controllers/";
+    const VIEW_PATH =  "application/views/";
+    const MODEL_PATH =  "application/model/";
 
+    /** @var self */
     private static $instance;
 
     /** @var \Bugsnag\Client */
-    public $bugsnag;
+    private $bugsnag;
 
-    public function __construct()
+    /** @var Router */
+    private $router;
+
+    /** @var Logger */
+    private $logger;
+
+    /**
+     * @param Router|null $router
+     */
+    public function __construct(Router $router = null)
     {
         self::$instance = &$this;
 
+        // Set up envs
+        $this->setUpEnvironment();
+
+        // Set up error handlers
         if ($key = Configs::BUGSNAG_KEY()) {
-            $this->bugsnag = Bugsnag\Client::make($key);
+            $this->bugsnag = \Bugsnag\Client::make($key);
             $this->bugsnag->setReleaseStage(ENVIRONMENT);
             $this->bugsnag->setAppType(is_cli() ? "Console" : "HTTP");
-            Bugsnag\Handler::register($this->bugsnag);
+            \Bugsnag\Handler::register($this->bugsnag);
         }
-        set_error_handler(function ($errno, $errstr, $errfile = null, $errline = null) {
+        set_error_handler(function ($errno, $errstr, $errfile = null, $errline = null, $errcontext = []) {
             if ($this->bugsnag) {
                 $this->bugsnag->notifyError("unexpected_error", $errstr);
             }
-            $this->showMessage(500, false, "unexpected_error", $errstr, $errline, $errfile);
+            $this->showMessage(500, false, $errno, $errstr, $errline, $errfile, $errcontext);
         });
         set_exception_handler(function ($e) {
             if ($this->bugsnag) {
@@ -59,6 +74,11 @@ class App
             }, $e->getTrace());
             $this->showMessage(500, false, "unexpected_exception", $e->getMessage(), $e->getLine(), $e->getFile(), $trace);
         });
+
+        // Set router
+        $this->router = $router ?: new Router();
+        // Set logger
+        $this->logger = new Logger(ENVIRONMENT === ENV_DEV ? ConsoleOutput::VERBOSITY_DEBUG : ConsoleOutput::VERBOSITY_NORMAL);
     }
 
     /**
@@ -72,75 +92,119 @@ class App
     }
 
     /**
-     * Get PATH for APP
+     * Get Bugsnag Client
      *
-     * @param string $path
-     * @return void
+     * @return \Bugsnag\Client
      */
-    public static function getAppUrl($path = '')
+    public function getBugsnag()
     {
-        if (ENVIRONMENT == ENV_PROD)
-            return "https://busarm.com/" . $path;
-        else  if (ENVIRONMENT == ENV_TEST)
-            return "https://staging.busarm.com/" . $path;
-        else
-            return "http://localhost/" . $path;
+        return $this->bugsnag;
     }
 
     /**
-     * Get PATH for CDN
+     * Get Router
      *
-     * @param string $path
-     * @return void
+     * @return Logger
      */
-    public static function getCDNUrl($path = '')
+    public function getRouter()
     {
-        if (ENVIRONMENT == ENV_PROD)
-            return "https://cdn.busarm.com/" . $path;
-        else  if (ENVIRONMENT == ENV_TEST)
-            return "https://cdn.staging.busarm.com/" . $path;
-        else
-            return "https://cdn.staging.busarm.com/" . $path;
+        return $this->router;
+    }
+
+    /**
+     * Get Logger
+     *
+     * @return Logger
+     */
+    public function getLogger()
+    {
+        return $this->logger;
+    }
+
+    /**
+     * Set up environment
+     */
+    private function setUpEnvironment()
+    {
+        // Define user's IP Address as to be viewed across the server
+        define('IPADDRESS', get_ip_address());
+
+        // Define Server Local Ip
+        define('LOCALHOST', getHostByName(getHostName()));
+
+        // Define base variables
+        define("BASE_SCHEME", (is_https() ? "https" : "http") . "://");
+        define("BASE_SERVER", BASE_SCHEME . env('HTTP_HOST'));
+        define("BASE_URL", BASE_SERVER . str_replace(basename(env('SCRIPT_NAME')), "", env('SCRIPT_NAME')));
+        define("CURRENT_URL", BASE_SERVER . env('REQUEST_URI'));
+
+        // Define HTTP_VERSION
+        define("HTTP_VERSION", get_server_protocol());
+
+        // APPLICATION ENVIRONMENT
+        if (strtolower(env('ENV')) == "prod" || strtolower(env('STAGE')) == "prod") {
+            define('ENVIRONMENT', ENV_PROD);
+        } else if (strtolower(env('ENV')) == "dev" || strtolower(env('STAGE')) == "dev") {
+            define('ENVIRONMENT', ENV_TEST);
+        } else {
+            define('ENVIRONMENT', ENV_DEV);
+        }
+
+        // ERROR REPORTING
+        switch (ENVIRONMENT) {
+            case ENV_DEV:
+            case ENV_TEST:
+                error_reporting(E_ALL);
+                ini_set('display_errors', 1);
+                break;
+            case ENV_PROD:
+                ini_set('display_errors', 0);
+                if (version_compare(PHP_VERSION, '5.3', '>=')) {
+                    error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT & ~E_USER_NOTICE & ~E_USER_DEPRECATED);
+                } else {
+                    error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_USER_NOTICE);
+                }
+                break;
+
+            default:
+                header('HTTP/1.1 503 Service Unavailable.', TRUE, 503);
+                echo 'The application environment is not set correctly.';
+                exit(1); // EXIT_ERROR
+        }
     }
 
     /**
      * Initialize app
+     *
+     * @return void
      */
-    public function initialize($controller = null, $function = null, $params = [])
+    public function run()
     {
-        /*Preflight Checking*/
+        // Preflight Checking
         if (!is_cli()) {
-            $this->preflight();
+            $this->preflight($this->router->method);
         }
 
-        /*Initiate rerouting*/
-        if ($controller && $function) {
-            $this->processRoute($controller, $function, $params);
-        } else {
-
-            $request_path = env('PATH_INFO');
-            if (empty($request_path)) {
-                $request_path = env('ORIG_PATH_INFO');
-            }
-            if (empty($request_path)) {
-                $request_path = env('REQUEST_URI');
-            }
-            $request_path = urldecode($request_path);
-
-            if (!empty($request_path)) {
-                if (preg_match('/\/ping(\/)?$/', $request_path)) {
-                    $this->showMessage(200, true, "System Online");
+        // If offline or on maintenance mode
+        if (!empty(Configs::SYSTEM_START_UP_TIME()) && !empty(Configs::SYSTEM_SHUT_DOWN_TIME())) {
+            $start = new DateTime(Configs::SYSTEM_START_UP_TIME());
+            $stop = (new DateTime(Configs::SYSTEM_SHUT_DOWN_TIME()))->sub(DateInterval::createFromDateString('1 day'));
+            if (time() < $start->getTimestamp() && time() >= $stop->getTimestamp()) {
+                if (Configs::MAINTENANCE_MODE()) {
+                    $this->showMessage(503, false, "System is under maintenance. Please come back on " . $start->format('Y-m-d H:i P'));
                 } else {
-                    $routes = explode('/', explode('?', $request_path)[0]);
-                    if (!empty($routes)) {
-                        $this->reroute($routes);
-                    } else {
-                        $this->showMessage(404, false, "Invalid Request", "Invalid Request Path");
-                    }
+                    $this->showMessage(503, false, "System is currently offline. Please come back on " . $start->format('Y-m-d H:i P'));
                 }
-            } else {
-                $this->showMessage(404, false, "Invalid Request", "Invalid Request Path");
             }
+        } else if (Configs::MAINTENANCE_MODE()) {
+            $this->showMessage(503, false, "System is under maintenance");
+        }
+
+        // Initiate rerouting
+        if ($this->router->check('/ping')) {
+            $this->showMessage(200, true, "System Online");
+        } else if (!$this->router->process()) {
+            $this->showMessage(404, false, "Not found - " . $this->router->route);
         }
     }
 
@@ -149,179 +213,30 @@ class App
      *
      * @return void
      */
-    private function preflight()
+    private function preflight($method)
     {
         // Check for CORS access request
         if (Configs::CHECK_CORS == TRUE) {
             $this->check_cors();
         } else {
-            if (strtolower(env("REQUEST_METHOD")) === 'options') {
+            if (strtolower($method) === 'options') {
                 // kill the response and send it to the client
                 $this->showMessage(200, true, "Preflight Ok");
             }
         }
     }
 
-
     /**
-     * Re-Routing -  Inspired by Codeigniter
-     * @param array $routes
-     */
-    private function reroute($routes)
-    {
-        $routes = array_values(array_filter($routes, function ($route) {
-            if (!empty(trim($route, "\n\r'\"\\/&%!@#$*)(|<>{} "))) return $route;
-        }));
-        $controller = isset($routes[0]) ? $routes[0] : null; // First path = controller
-        $function = isset($routes[1]) ? $routes[1] : null; // Second path = function (public)
-        $params = isset($routes[2]) ? array_slice($routes, 2, count($routes)) : []; // Subsequent paths = function parameters
-
-        // Process route if available
-        if ($controller && $function) {
-            $this->processRoute(trim($controller), trim($function), $params);
-        } else {
-            $this->showMessage(404, false, "Invalid Request", "Invalid Request Path");
-        }
-    }
-
-    /**
-     * Process Route
-     *
-     * @param string $controller
-     * @param string $function
-     * @param string $params
-     * @return void
-     */
-    private function processRoute($controller, $function, $params = [])
-    {
-        if ($realPath = $this->fileExists(FCPATH . $this->controllerDir . $controller . ".php", false)) {
-            /*
-            * Let's Go...
-            */
-            require_once OAUTH_BASE_PATH . 'Server.php';
-            require_once $realPath;
-            if (class_exists(ucfirst($controller))) {
-                /*Load Class*/
-                /*Create instance of class*/
-                $object = new $controller();
-                if (
-                    method_exists($object, $function)
-                    && is_callable(array($object, $function))
-                ) {
-                    call_user_func_array(
-                        array($object, $function),
-                        $params
-                    );
-                }
-                return  $this->showMessage(400, false, "unknown_method", "Unknown Method - " . $function);
-            }
-            return $this->showMessage(400, false, "invalid_request", "Invalid request path - " . $controller);
-        }
-        return $this->showMessage(404, false, "invalid_request", "Request path not found - " . $controller);
-    }
-
-
-    /**
-     * Case Insensitive search
-     * @param $fileName string
-     * @param $caseSensitive bool
-     * @return mixed
-     */
-    private function fileExists($fileName, $caseSensitive = true)
-    {
-
-        if (file_exists($fileName)) {
-            return $fileName;
-        }
-        if ($caseSensitive) return false;
-
-        // Handle case insensitive requests
-        $directoryName = dirname($fileName);
-        $fileArray = glob($directoryName . '/*', GLOB_NOSORT);
-        $fileNameLowerCase = strtolower($fileName);
-        foreach ($fileArray as $file) {
-            if (strtolower($file) == $fileNameLowerCase) {
-                return $file;
-            }
-        }
-        return false;
-    }
-
-
-    /**
-     * Show Message
-     * @param string $code Code
-     * @param bool $status Status
-     * @param string $title itle
-     * @param string $msg Message
-     */
-    public function showMessage($code, $status, $title, $msg = null, $errorLine = null, $errorFile = null, $errorContext = [])
-    {
-        if (!is_cli() && !headers_sent()) {
-            header(HTTP_VERSION . ' ' . $code . ' ' . $title, TRUE, $code);
-            header("Content-type: application/json");
-            header('Access-Control-Allow-Origin: *', true);
-            header('Access-Control-Allow-Methods: *', true);
-        }
-        if ($status) {
-            if (is_cli()) {
-                echo "success - true" . PHP_EOL . "message - " . $msg ?? $title;
-            } else {
-                echo json_encode(['success' => true, 'msg' => $title, 'env' => ENVIRONMENT, 'ip' => IPADDRESS], JSON_PRETTY_PRINT);
-            }
-            exit(1);
-        } else {
-            if (is_cli()) {
-                echo "success - false" . PHP_EOL . "message - " . ($msg ?? $title) . PHP_EOL . "line - $errorLine" . PHP_EOL . "file path - $errorFile" . PHP_EOL;
-            } else if (ENVIRONMENT != ENV_PROD) {
-                echo json_encode(['success' => false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT, 'ip' => IPADDRESS,  'line' =>  $errorLine,  'file_path' =>  $errorFile,  'backtrace' =>  $errorContext], JSON_PRETTY_PRINT);
-            } else {
-                echo json_encode(['success' => false, 'error' => $title, 'error_description' => $msg, 'env' => ENVIRONMENT, 'ip' => IPADDRESS], JSON_PRETTY_PRINT);
-            }
-            exit;
-        }
-    }
-
-
-    /**Get File From path
-     * @param $filePath
-     * @return bool|string
-     */
-    public function get_file($filePath)
-    {
-        $data = false;
-        if (isset($filePath)) {
-            //$dl_file = preg_replace("([^\w\s\d\-_~,;:\[\]\(\).]|[\.]{2,})", '', $filePath); // simple file name validation
-            $dl_file = filter_var($filePath, FILTER_SANITIZE_URL); // Remove (more) invalid characters
-            $fullPath = $dl_file;
-
-            if (file_exists($fullPath)) {
-                try {
-                    $fd = @fopen($fullPath, "r");
-                } finally {
-                    if ($fd) {
-                        $file = @fread($fd, filesize($fullPath));
-                        $data = $file;
-                        fclose($fd);
-                    }
-                }
-            }
-        }
-
-        return $data;
-    }
-
-
-    /**Load View
+     * Load View
      * @param $path
      * @param array $vars
      * @param bool $return
      * @return string
      * @throws Exception
      */
-    public function loadView($path, $vars = array(), $return = false)
+    public function view($path, $vars = array(), $return = false)
     {
-        if ($filePath = $this->fileExists(FCPATH . $this->viewDir . $path . ".php")) {
+        if ($filePath = Utils::fileExists(FCPATH . self::VIEW_PATH . $path . ".php")) {
             ob_start();
             if (!empty($vars))
                 extract($vars);
@@ -342,123 +257,6 @@ class App
                 throw new Exception("File does not Exist");
             }
         }
-    }
-
-    /**Load Library
-     * @param $path
-     * @param array $vars
-     * @throws Exception
-     */
-    public function loadLibrary($path, $vars = array())
-    {
-        if ($filePath = $this->fileExists(FCPATH . $this->libraryDir . $path . ".php")) {
-            if (!empty($vars))
-                extract($vars);
-            require_once $filePath;
-        } else {
-            throw new Exception("File does not Exist");
-        }
-    }
-
-
-    /**Load Model
-     * @param $path
-     * @param array $vars
-     * @throws Exception
-     */
-    public function loadModel($path, $vars = array())
-    {
-        if ($filePath = $this->fileExists(FCPATH . $this->modelDir . $path . ".php")) {
-            if (!empty($vars))
-                extract($vars);
-            require_once $filePath;
-        } else {
-            throw new Exception("File does not Exist");
-        }
-    }
-
-    /**Generate CSRF TOKEN
-     * @return string
-     */
-    public function generate_csrf_token($key = null)
-    {
-        if (empty($key) && empty($key = $this->get_cookie("csrf_key"))) {
-            $key = md5(uniqid(IPADDRESS));
-            $this->set_cookie("csrf_key", $key);
-        }
-        $dateObj = new DateTime("now", new DateTimeZone("GMT"));
-        $csrf_token = sha1(sprintf("%s:%s:%s", $key, IPADDRESS, $dateObj->format('Y-m-d H')));
-        return $csrf_token;
-    }
-
-
-    /**Get CSRF TOKEN
-     * @return string
-     */
-    public function get_csrf_token()
-    {
-        if (!empty($key = $this->get_cookie("csrf_key"))) {
-            return $this->generate_csrf_token($key);
-        }
-        return null;
-    }
-
-    /**CSRF Validation
-     * @param string $csrf_token
-     * @return array|boolean
-     */
-    public function validate_csrf_token($csrf_token)
-    {
-        if ($csrf_token) {
-            return $csrf_token == $this->get_csrf_token();
-        }
-        return false;
-    }
-
-    /**
-     * Get cookie
-     * @param String $name
-     * @return void
-     */
-    public function get_cookie($name)
-    {
-        return !empty($_COOKIE["oauth_" . $name]) ? @$_COOKIE["oauth_" . $name] : null;
-    }
-
-    /**
-     * Pull cookie - Get and delete cooke
-     * @param String $name
-     * @return void
-     */
-    public function pull_cookie($name)
-    {
-        $value = $this->get_cookie($name);
-        if ($value)
-            $this->delete_cookie($name);
-        return $value;
-    }
-
-    /**
-     * Set cookie
-     *
-     * @param [type] $name
-     * @param [type] $value
-     * @param integer $duration
-     * @return bool
-     */
-    public function set_cookie($name, $value, $duration = 3600)
-    {
-        return setcookie("oauth_" . $name, $value, time() + $duration, "/");
-    }
-
-    /**
-     * Delete cookie
-     * @param String $name
-     * @return bool
-     */
-    public function delete_cookie($name)
-    {
-        return $this->set_cookie($name, "", -3600);
     }
 
     /**
@@ -494,7 +292,7 @@ class App
             // Store the HTTP Origin header
             $origin = env('HTTP_ORIGIN') ?? env('HTTP_REFERER') ?? '';
 
-            $allowed_origins = Configs::ALLOWED_CORS_ORIGINS;
+            $allowed_origins = Configs::ALLOWED_CORS_ORIGINS();
 
             // If the origin domain is in the allowed_cors_origins list, then add the Access Control headers
             if (is_array($allowed_origins) && in_array(trim($origin, "/"), $allowed_origins)) {
@@ -514,150 +312,45 @@ class App
     }
 
     /**
-     * Start Login session
-     *
-     * @param string $user User Id
-     * @param string $duration Session duration in seconds. default = 1hr
-     * @return void
+     * Show Message
+     * @param string $code Code
+     * @param bool $status Status
+     * @param string $title Title
+     * @param string $msg Message
+     * @param string $line 
+     * @param string $file 
+     * @param string $trace 
      */
-    public function startLoginSession($user, $duration = 3600)
+    public function showMessage($code, $status, $title, $msg = null, $line = null, $file = null,  $trace = [])
     {
-        if (!$user) return;
-        $encryptedUser = CIPHER::encrypt(Configs::ENCRYPTION_KEY() . md5(IPADDRESS), $user);
-        $this->set_cookie('login_user', $encryptedUser, $duration);
-    }
+        !ob_get_contents() ?: ob_clean();
+        ob_start();
+        if (is_cli()) {
+            $this->logger->logError(PHP_EOL . "status\t-\tfalse" . PHP_EOL . "msg\t-\t" . ($msg ?? $title) . PHP_EOL .  "version\t-\t" . Configs::APP_VERSION() . PHP_EOL . "line\t-\t$line" . PHP_EOL . "path\t-\t$file" . PHP_EOL, $trace);
+        } else {
 
-    /**
-     * Clear Login session
-     * 
-     * @return void
-     */
-    public function clearLoginSession()
-    {
-        $this->delete_cookie('login_user');
-    }
-
-    /**
-     * Get Login User
-     *
-     * @return string|bool
-     */
-    public function getLoginUser()
-    {
-        $encryptedUser = $this->get_cookie('login_user');
-        if ($encryptedUser) {
-            return CIPHER::decrypt(Configs::ENCRYPTION_KEY() . md5(IPADDRESS), $encryptedUser);
-        }
-        return false;
-    }
-
-    /**
-     * Header Redirect
-     *	 *
-     * @param	string	$uri	URL
-     * @param	string	$method	Redirect method
-     *			'auto', 'location' or 'refresh'
-     * @param	int	$code	HTTP Response status code
-     * @return	void
-     */
-    public function redirect($uri, $method = 'auto', $code = NULL)
-    {
-        if (!preg_match('#^(\w+:)?//#i', $uri)) {
-            $uri = $this->baseUrl($uri);
-        }
-
-        // IIS environment likely? Use 'refresh' for better compatibility
-        if ($method === 'auto' && isset($_SERVER['SERVER_SOFTWARE']) && strpos($_SERVER['SERVER_SOFTWARE'], 'Microsoft-IIS') !== FALSE) {
-            $method = 'refresh';
-        } elseif ($method !== 'refresh' && (empty($code) or !is_numeric($code))) {
-            if (isset($_SERVER['SERVER_PROTOCOL'], $_SERVER['REQUEST_METHOD']) && $_SERVER['SERVER_PROTOCOL'] === 'HTTP/1.1') {
-                $code = ($_SERVER['REQUEST_METHOD'] !== 'GET')
-                    ? 303    // reference: http://en.wikipedia.org/wiki/Post/Redirect/Get
-                    : 307;
-            } else {
-                $code = 302;
+            if (!headers_sent()) {
+                header(HTTP_VERSION . ' ' . $code . ' ' . ($msg ? $title : ''), TRUE, $code);
+                header("Content-type: application/json");
+                header('Access-Control-Allow-Origin: *', true);
+                header('Access-Control-Allow-Methods: *', true);
             }
-        }
 
-        switch ($method) {
-            case 'refresh':
-                header('Refresh:0;url=' . $uri);
-                break;
-            default:
-                header('Location: ' . $uri, TRUE, $code);
-                break;
+            $data = ['status' => $status, 'msg' => $msg ?? $title];
+            if ($code !== 200 || $code !== 201) {
+                $data['env'] = ENVIRONMENT;
+                $data['version'] = Configs::APP_VERSION();
+                $data['ip'] = IPADDRESS;
+            }
+            if (ENVIRONMENT != ENV_PROD) {
+                if (!empty($line)) $data['line'] = $line;
+                if (!empty($file)) $data['file_path'] = $file;
+                if (!empty($trace)) $data['backtrace'] = $trace;
+            }
+            echo json_encode($data, JSON_PRETTY_PRINT);
         }
+        ob_flush();
         exit;
-    }
-
-    /**
-     * Get base url
-     *
-     * @param string $path
-     * @return string
-     */
-    public function baseUrl($path = '', $params = [])
-    {
-        $url = trim(OAUTH_BASE_URL, '/') . '/' . $path;
-        if (!empty($params)) {
-            $url .= '?' . ((function_exists('http_build_query')) ? http_build_query($params) : self::buildUrlParams($params));
-        }
-        return $url;
-    }
-
-    /**
-     * @param array $params
-     * @param string $parent
-     * @return string
-     */
-    public static function buildUrlParams($params, $parent = null)
-    {
-        $query = '';
-        foreach ($params as $key => $param) {
-            if (is_array($param)) {
-                $query .= $parent ? self::buildUrlParams($param, $parent . "[$key]") : self::buildUrlParams($param, $key);
-            } else {
-                $query .= ($parent ? urlencode($parent . "[$key]") . "=$param&" : "$key=$param&");
-            }
-        }
-        return trim($query, '&');
-    }
-
-    /**
-     * @param string $url
-     * @param array $params
-     * @param bool $override Overide URL query with given params if duplicate found
-     * @return string
-     */
-    public static function parseUrl($url, $params = [], $override = false)
-    {
-        if (!empty($params)) {
-            parse_str(parse_url($url,  PHP_URL_QUERY), $query);
-
-            // Defining a callback function
-            $callback = function ($var) {
-                return ($var !== NULL && $var !== FALSE && $var !== "");
-            };
-
-            if ($override) {
-                $params = array_merge(array_filter($query, $callback), array_filter($params, $callback));
-            } else {
-                $params = array_merge(array_filter($params, $callback), array_filter($query, $callback));
-            }
-
-            if (isset($params['ajax'])) {
-                unset($params['ajax']);
-            }
-            if (isset($params['pjax'])) {
-                unset($params['pjax']);
-            }
-
-            $url = explode('?', $url)[0];
-            if (!empty($params)) {
-                $url .= '?' . ((function_exists('http_build_query')) ? http_build_query($params) : self::buildUrlParams($params));
-            }
-        }
-        return $url;
     }
 
     /**
@@ -669,9 +362,10 @@ class App
      */
     public static function reportError($heading, $message)
     {
-        if (!empty(self::getInstance()->bugsnag)) {
-            self::getInstance()->bugsnag->notifyError($heading, $message);
+        if (!empty(self::$instance->bugsnag)) {
+            self::$instance->bugsnag->notifyError($heading, $message);
         }
+        log_error($message);
     }
 
     /**
@@ -682,9 +376,10 @@ class App
      */
     public static function reportException($exception)
     {
-        if (!empty(self::getInstance()->bugsnag)) {
-            self::getInstance()->bugsnag->notifyException($exception);
+        if (!empty(self::$instance->bugsnag)) {
+            self::$instance->bugsnag->notifyException($exception);
         }
+        log_exception($exception);
     }
 
     /**
@@ -696,8 +391,8 @@ class App
      */
     public static function leaveBreadcrumbs($crumb, $type = null, array $metadata = [])
     {
-        if (!empty(self::getInstance()->bugsnag)) {
-            self::getInstance()->bugsnag->leaveBreadcrumb($crumb, $type, $metadata);
+        if (!empty(self::$instance->bugsnag)) {
+            self::$instance->bugsnag->leaveBreadcrumb($crumb, $type, $metadata);
         }
     }
 }

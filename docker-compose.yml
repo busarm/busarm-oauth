@@ -58,7 +58,9 @@ services:
   # Workspace Server - Handles background and system mgnt taks
   oauth-workspace:
     restart: always
-    image: webdevops/php:8.0-alpine
+    build:
+      context: ./workspace
+    image: busarm-oauth-workspace:latest
     depends_on:
       - oauth-mysql
     expose: 

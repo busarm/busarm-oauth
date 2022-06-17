@@ -17,6 +17,37 @@
         "phpseclib/phpseclib": "^2.0",
         "phpmailer/phpmailer": "^6.1",
         "aws/aws-sdk-php": "^3.133",
-        "bugsnag/bugsnag": "^3.0"
+        "bugsnag/bugsnag": "^3.0",
+        "robmorgan/phinx": "^0.12.10",
+        "symfony/console": "^5.0"
+    },
+    "require-dev": {
+        "odan/phinx-migrations-generator": "^5.5"
+    },
+    "scripts": {
+        "bref:cli": "vendor/bin/bref cli",
+        "migration:generate": "phinx-migrations generate --overwrite --configuration database/phinx.php --name app",
+        "migration:create": "phinx create --configuration database/phinx.php",
+        "migration:migrate": "phinx migrate --configuration database/phinx.php",
+        "migration:migrate-fake": "phinx migrate --configuration database/phinx.php --fake",
+        "migration:status": "phinx status --configuration database/phinx.php",
+        "migration:rollback": "phinx rollback --configuration database/phinx.php",
+        "migration:seed:create": "phinx seed:create --configuration database/phinx.php",
+        "migration:seed:run": "phinx seed:run --configuration database/phinx.php",
+        "migration": "phinx",
+        "migration:dev": "phinx-migrations"
+    },
+    "autoload": {
+        "psr-4": {
+            "Database\\": "database",
+            "System\\": "system",
+            "Application\\": "application",
+            "Application\\Controllers\\": "application/controllers",
+            "Application\\Models\\": "application/models",
+            "Application\\Services\\": "application/services",
+            "Application\\Interfaces\\": "application/interfaces",
+            "Application\\Traits\\": "application/traits",
+            "Application\\Enums\\": "application/enums"
+        }
     }
 }

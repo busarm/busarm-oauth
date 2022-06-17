@@ -1,91 +1,20 @@
 <?php
-defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
 
-define("ENV_DEV", "development");
-define("ENV_PROD", "production");
-define("ENV_TEST", "testing");
-
-// Define user's IP Address as to be viewed across the server
-define('IPADDRESS', get_ip_address());
-
-// Define Server Local Ip
-define('LOCALHOST', getHostByName(getHostName()));
-
-// Define base variables
-define("OAUTH_BASE_SCHEME", (is_https() ? "https" : "http") . "://");
-define("OAUTH_BASE_SERVER", OAUTH_BASE_SCHEME . env('HTTP_HOST'));
-define("OAUTH_BASE_URL", OAUTH_BASE_SERVER . str_replace(basename(env('SCRIPT_NAME')), "", env('SCRIPT_NAME')));
-define("OAUTH_CURRENT_URL", OAUTH_BASE_SERVER . env('REQUEST_URI'));
-
-// Define HTTP_VERSION
-define("HTTP_VERSION", get_server_protocol());
-
-
-/*
-*---------------------------------------------------------------
-* APPLICATION ENVIRONMENT
-*---------------------------------------------------------------
-*
-* You can load different configurations depending on your
-* current environment. Setting the environment also influences
-* things like logging and error reporting.
-*
-* This can be set to anything, but default usage is:
-*
-*     development
-*     testing
-*     production
-*
-* NOTE: If you change these, also change the error_reporting() code below
-*/
-
-if (strtolower(env('ENV')) == "prod" || strtolower(env('STAGE')) == "prod") {
-    define('ENVIRONMENT', ENV_PROD);
-} else if (strtolower(env('ENV')) == "dev" || strtolower(env('STAGE')) == "dev") {
-    define('ENVIRONMENT', ENV_TEST);
-} else {
-    define('ENVIRONMENT', ENV_DEV);
-}
-
-
-/*
-*---------------------------------------------------------------
-* ERROR REPORTING
-*---------------------------------------------------------------
-*
-* Different environments will require different levels of error reporting.
-* By default development will show errors but testing and live will hide them.
-*/
-switch (ENVIRONMENT) {
-    case ENV_DEV:
-    case ENV_TEST:
-        error_reporting(E_ALL);
-        ini_set('display_errors', 1);
-        break;
-    case ENV_PROD:
-        ini_set('display_errors', 0);
-        if (version_compare(PHP_VERSION, '5.3', '>=')) {
-            error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT & ~E_USER_NOTICE & ~E_USER_DEPRECATED);
-        } else {
-            error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_USER_NOTICE);
-        }
-        break;
-
-    default:
-        header('HTTP/1.1 503 Service Unavailable.', TRUE, 503);
-        echo 'The application environment is not set correctly.';
-        exit(1); // EXIT_ERROR
-}
+namespace System;
 
 /**
  * Define Configuration
  */
 class Configs
 {
-    const OAUTH_CONTROLLER_PATH =  "application/controllers/";
-    const OAUTH_LIBRARY_PATH =  "application/library/";
-    const OAUTH_VIEW_PATH =  "application/views/";
-    const OAUTH_MODEL_PATH =  "application/model/";
+    /*
+    |--------------------------------------------------------------------------
+    | Cookie Prefix
+    |--------------------------------------------------------------------------
+    |
+    | Prefix appended to cookie name to prevent collisions
+    */
+    const COOKIE_PREFIX = "oauth_";
 
     /*
     |--------------------------------------------------------------------------
@@ -186,20 +115,21 @@ class Configs
     | e.g. $config['allowed_origins'] = ['http://www.example.com', 'https://spa.example.com']
     |
     */
-    const ALLOWED_CORS_ORIGINS = [
-        'https://busarm.com',
-        'https://busarm.com/',
-        'https://staging.busarm.com',
-        'https://staging.busarm.com/',
-        'https://api.busarm.com',
-        'https://api.busarm.com/',
-        'https://api.staging.busarm.com',
-        'https://api.staging.busarm.com/',
-        'https://partner.busarm.com',
-        'https://partner.busarm.com/',
-        'https://partner.staging.busarm.com',
-        'https://partner.staging.busarm.com/'
-    ];
+    static function ALLOWED_CORS_ORIGINS()
+    {
+        return [
+            self::APP_URL(),
+            self::API_URL(),
+            self::PARTNER_URL()
+        ];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | ADD CUSTOM CONFIGS
+    |--------------------------------------------------------------------------
+    |
+    */
 
     static function APP_VERSION($default = '0.1')
     {
@@ -221,7 +151,35 @@ class Configs
     {
         return env("COMPANY_NAME");
     }
-    
+    static function SYSTEM_SHUT_DOWN_TIME()
+    {
+        return env("SYSTEM_SHUT_DOWN_TIME", false);
+    }
+    static function SYSTEM_START_UP_TIME()
+    {
+        return env("SYSTEM_START_UP_TIME", false);
+    }
+    static function MAINTENANCE_MODE()
+    {
+        return env("MAINTENANCE_MODE", false);
+    }
+    static function API_URL()
+    {
+        return env("API_URL", '');
+    }
+    static function APP_URL()
+    {
+        return env("APP_URL", '');
+    }
+    static function ASSET_URL()
+    {
+        return env("ASSET_URL", '');
+    }
+    static function PARTNER_URL()
+    {
+        return env("PARTNER_URL", '');
+    }
+
     # App Settings
     static function ENCRYPTION_KEY($default = null)
     {

@@ -1,5 +1,9 @@
 <?php
-defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
+
+namespace Application\Controllers;
+
+use System\Scopes;
+use System\Server;
 
 /**
  * Created by PhpStorm.
@@ -54,6 +58,30 @@ class Token extends Server
     {
         if ($this->validateAccessToken()) {
             $this->response->setParameters(array('success' => true, 'data' => $this->getTokenInfo()));
+        }
+        $this->response->send();
+        die;
+    }
+
+    /**
+     * Verify & Obtain user info for token
+     * @api token/user
+     * @method GET|POST 
+     * */
+    public function user()
+    {
+        if ($this->validateAccessToken()) {
+            $user =  $this->getOauthStorage()->getSingleUserInfoForClaims(
+                $this->getTokenInfo('user_id'),
+                array_keys(Scopes::findOpenIdScope($this->getTokenInfo('scope')) ?: []),
+                true
+            );
+            if (!empty($user)) {
+                $this->response->setParameters($this->success($user));
+            } else {
+                $this->response->setStatusCode(404);
+                $this->response->setParameters($this->error('Users does not exist', 'invalid_user'));
+            }
         }
         $this->response->send();
         die;

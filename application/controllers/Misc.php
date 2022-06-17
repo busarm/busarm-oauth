@@ -1,8 +1,10 @@
 <?php
+namespace Application\Controllers;
 
-use GuzzleHttp\RequestOptions;
-
-defined('OAUTH_BASE_PATH') or exit('No direct script access allowed');
+use System\App;
+use System\CIPHER;
+use System\Configs;
+use System\URL;
 
 /**
  * Created by VSCode.
@@ -37,10 +39,10 @@ class Misc
         if (!empty($data)) {
             $link = CIPHER::decrypt(Configs::ENCRYPTION_KEY(), $data);
             if($link) {
-                return App::getInstance()->redirect($link);
+                return URL::redirect($link);
             }
-            return App::getInstance()->showMessage(400, false, 'Invalid Request', 'Failed to process link');
+            return app()->showMessage(400, false, 'Invalid Request', 'Failed to process link');
         }
-        return App::getInstance()->showMessage(400, false, 'Invalid Request', 'Secure link not available');
+        return app()->showMessage(400, false, 'Invalid Request', 'Secure link not available');
     }
 }

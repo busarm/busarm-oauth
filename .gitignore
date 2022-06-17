@@ -12,3 +12,5 @@ node_modules/
 tmp/
 
 composer.lock
+package-lock.json
+supervisord.*

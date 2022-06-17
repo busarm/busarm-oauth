@@ -8,6 +8,9 @@
  *
  * @var string $link
  */
+
+use System\Configs;
+
 if (empty($link)) {
     exit;
 }

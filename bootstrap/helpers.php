@@ -1,6 +1,4 @@
 <?php
-defined('FCPATH') or exit('No direct script access allowed');
-
 
 if (!function_exists('is_cli')) {
     /**
@@ -160,5 +158,143 @@ if (!function_exists('get_server_protocol')) {
     {
         return (!empty(env('SERVER_PROTOCOL')) && in_array(env('SERVER_PROTOCOL'), array('HTTP/1.0', 'HTTP/1.1', 'HTTP/2', 'HTTP/2.0'), TRUE))
             ? env('SERVER_PROTOCOL') : 'HTTP/1.1';
+    }
+}
+
+
+if (!function_exists('app')) {
+    /**
+     * Get app instance
+     * @return \System\App
+     */
+    function app()
+    {
+        return \System\App::getInstance();
+    }
+}
+
+
+if (!function_exists('out')) {
+    /**
+     * Send output of data
+     * @param string $data
+     * @param int $code
+     */
+    function out($data = null, $code = 0)
+    {
+        header("Content-type: application/json");
+        print_r(json_encode($data, JSON_PRETTY_PRINT) ?: $data);
+        print_r(PHP_EOL);
+        exit($code);
+    }
+}
+
+
+if (!function_exists('log_error')) {
+    /**
+     * @param string $message
+     */
+    function log_error($message)
+    {
+        return app()->getLogger()->logError($message);
+    }
+}
+
+if (!function_exists('log_exception')) {
+    /**
+     * @param Exception $exception
+     */
+    function log_exception($exception)
+    {
+        return app()->getLogger()->logError($exception->getMessage(), $exception->getTrace());
+    }
+}
+
+if (!function_exists('log_info')) {
+    /**
+     * @param string $message
+     */
+    function log_info($message)
+    {
+        return app()->getLogger()->logInfo($message);
+    }
+}
+
+if (!function_exists('log_debug')) {
+    /**
+     * @param string $message
+     */
+    function log_debug($message)
+    {
+        return app()->getLogger()->logDebug($message);
+    }
+}
+
+if (!function_exists('log_warning')) {
+    /**
+     * @param string $message
+     */
+    function log_warning($message)
+    {
+        return app()->getLogger()->logWarning($message);
+    }
+}
+
+
+if (!function_exists('run')) {
+
+    /**
+     * Run external command
+     *
+     * @param string $command
+     * @param array $params
+     * @param Symfony\Component\Console\Output\OutputInterface $output
+     * @param boolean $wait Default = true
+     * @param int $timeout Default = 600 seconds
+     * @return Symfony\Component\Process\Process
+     */
+    function run(string $command, array $params, Symfony\Component\Console\Output\OutputInterface $output, $wait = true, $timeout = 600)
+    {
+        $output->getFormatter()->setStyle('error', new Symfony\Component\Console\Formatter\OutputFormatterStyle('red'));
+        $process = new Symfony\Component\Process\Process([
+            $command,
+            ...array_filter($params, fn ($arg) => !empty($arg))
+        ]);
+        $process->setTimeout($timeout);
+        if ($wait) {
+            $process->run(function ($type, $data) use ($output) {
+                if ($type == Symfony\Component\Process\Process::ERR) {
+                    $output->writeln('<error>' . $data . '</error>');
+                } else {
+                    $output->writeln('<comment>' . $data . '</comment>');
+                }
+            });
+        } else {
+            $process->start(function ($type, $data) use ($output) {
+                if ($type == Symfony\Component\Process\Process::ERR) {
+                    $output->writeln('<error>' . $data . '</error>');
+                } else {
+                    $output->writeln('<comment>' . $data . '</comment>');
+                }
+            });
+        }
+        return $process;
+    }
+}
+
+if (!function_exists('runAsync')) {
+
+    /**
+     * Run external command asynchronously
+     *
+     * @param string $command
+     * @param array $params
+     * @param Symfony\Component\Console\Output\OutputInterface $output
+     * @param int $timeout Default = 600 seconds
+     * @return Symfony\Component\Process\Process
+     */
+    function runAsync(string $command, array $params, Symfony\Component\Console\Output\OutputInterface $output, $timeout = 600)
+    {
+        return run($command, $params, $output, false, $timeout);
     }
 }

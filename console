@@ -1,27 +1,155 @@
 <?php
-if ($argv && ($function = $argv[1] ?? null)) {
+// Path to the front controller (this file) directory
+define('FCPATH', dirname(__FILE__) . DIRECTORY_SEPARATOR);
+// Load packages
+require_once(boolval(getenv('SEPARATE_VENDOR')) ? '/tmp/vendor/autoload.php' : FCPATH . 'vendor/autoload.php');
+require_once('bootstrap/helpers.php');
+require_once('bootstrap/constants.php');
 
-    // Get params
-    $params = [];
-    for ($i = 2; $i < count($argv); $i++) {
-        $params[] = strip_tags(trim($argv[$i]));
-    }
+use Application\Controllers\Task;
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
+use System\App;
+use System\Router;
+use System\Scopes;
 
-    // Set the current directory correctly for CLI requests
-    if (defined('STDIN')) {
-        chdir(dirname(__FILE__));
-    }
+/**
+ *  Composer Command
+ */
+$composerCommand = (new Command('run'))
+    ->setDescription("Run composer scripts")
+    ->addArgument('name', InputArgument::REQUIRED, "Composer script name")
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
+        passthru(sprintf("composer run-script %s", $input->getArgument('name')));
+        run('composer', [
+            'run-script',
+            $input->getArgument('name')
+        ], $output);
+        $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
+    });
 
-    // Path to the front controller (this file) directory
-    define('FCPATH', dirname(__FILE__) . DIRECTORY_SEPARATOR);
+/**
+ *  DB Migration Command
+ */
+$migrationCommand = (new Command('migrate'))
+    ->setDescription("Migrate database")
+    ->addOption('fake', '', InputOption::VALUE_NONE, "Mark any migrations selected as run, but don't actually execute them")
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
+        run('vendor/bin/phinx', [
+            'migrate',
+            '--configuration=database/phinx.php',
+            $input->getOption('fake') ? '--fake' : null
+        ], $output);
+        $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
+    });
 
-    //define System path
-    define("OAUTH_BASE_PATH", FCPATH . 'system/');
+/**
+ * DB Migration Rollback Command
+ */
+$rollbackCommand = (new Command('rollback'))
+    ->setDescription("Rollback database")
+    ->addOption('fake', '', InputOption::VALUE_NONE, "Mark any migrations selected as run, but don't actually execute them")
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
+        run('vendor/bin/phinx', [
+            'rollback',
+            '--configuration=database/app/phinx.php',
+            $input->getOption('fake') ? '--fake' : null
+        ], $output);
+        $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
+    });
 
-    // Initialize vendor packages
-    require_once(boolval(getenv('SEPARATE_VENDOR')) ? '/tmp/vendor/autoload.php' : FCPATH . 'vendor/autoload.php');
+/**
+ *  Create Org Command
+ */
+$createOrg = (new Command('org:create'))
+    ->setDescription("Create organization")
+    ->addOption('name', '', InputOption::VALUE_REQUIRED, "Organization name")
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
+        (new App(new Router(Task::class, "create_org", [
+            $input->getOption('name') ?? exit('`name` option is required')
+        ])))->run();
+        $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
+    });
 
-    require_once OAUTH_BASE_PATH . "App.php";
-    (new App)->initialize("Console", $function, $params);
-    die();
-} else die("Invalid command\n");
+/**
+ *  Create Client Command
+ */
+$createClient = (new Command('client:create'))
+    ->setDescription("Create Client")
+    ->addOption('org', '', InputOption::VALUE_REQUIRED, "Organization id")
+    ->addOption('name', '', InputOption::VALUE_REQUIRED, "Client name")
+    ->addOption('redirect', '', InputOption::VALUE_OPTIONAL, "Client redirect urls (space sparated). e.g http://localhost:80 http://localhost:81")
+    ->addOption('scopes', '', InputOption::VALUE_OPTIONAL, "Client scopes (space sparated). e.g " . implode(' ', array_keys(Scopes::ALL_SCOPES)))
+    ->addOption('grants', '', InputOption::VALUE_OPTIONAL, "Client grant types (space sparated). e.g password client_credential refresh_token authorization_code")
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
+        (new App(new Router(Task::class, "create_client", [
+            $input->getOption('org') ?? exit('`org` option is required'),
+            $input->getOption('name') ?? exit('`name` option is required'),
+            $input->getOption('redirect'),
+            $input->getOption('scopes'),
+            $input->getOption('grants'),
+        ])))->run();
+        $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
+    });
+
+/**
+ *  Update Client Key Command
+ */
+$updateClientKey = (new Command('client:update:key'))
+    ->setDescription("Update Client Key")
+    ->addOption('client', '', InputOption::VALUE_REQUIRED, "Client id")
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
+        (new App(new Router(Task::class, "update_client_key", [
+            $input->getOption('client') ?? exit('`client` option is required')
+        ])))->run();
+        $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
+    });
+
+/**
+ *  Create User Command
+ */
+$createUser = (new Command('user:create'))
+    ->setDescription("Create User")
+    ->addOption('name', '', InputOption::VALUE_REQUIRED, "User name")
+    ->addOption('email', '', InputOption::VALUE_REQUIRED, "User email")
+    ->addOption('password', '', InputOption::VALUE_OPTIONAL, "User password")
+    ->addOption('dial', '', InputOption::VALUE_OPTIONAL, "User phone number dial code")
+    ->addOption('phone', '', InputOption::VALUE_OPTIONAL, "User phone number")
+    ->addOption('scopes', '', InputOption::VALUE_OPTIONAL, "User scopes (space sparated). e.g " . implode(' ', array_keys(Scopes::ALL_SCOPES)))
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
+        (new App(new Router(Task::class, "create_user", [
+            $input->getOption('name') ?? exit('`name` option is required'),
+            $input->getOption('email') ?? exit('`email` option is required'),
+            $input->getOption('password'),
+            $input->getOption('dial'),
+            $input->getOption('phone'),
+            $input->getOption('scopes')
+        ])))->run();
+        $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
+    });
+
+/**
+ * Initialize console app
+ */
+$app = (new Application(getenv('APP_NAME') ?? 'PHP' . " Console App"));
+$app->addCommands([
+    $composerCommand,
+    $migrationCommand,
+    $rollbackCommand,
+    $createOrg,
+    $createClient,
+    $updateClientKey,
+    $createUser,
+]);
+$app->run();
