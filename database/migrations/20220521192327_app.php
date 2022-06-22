@@ -249,11 +249,17 @@ class App extends BaseMigration
 
         $this->table('oauth_jti', [
                 'id' => false,
+                'primary_key' => ['id'],
                 'engine' => 'InnoDB',
                 'encoding' => 'latin1',
                 'collation' => 'latin1_swedish_ci',
                 'comment' => '',
                 'row_format' => 'DYNAMIC',
+            ])
+            ->addColumn('id', 'integer', [
+                'null' => false,
+                'limit' => MysqlAdapter::INT_REGULAR,
+                'identity' => 'enable',
             ])
             ->addColumn('issuer', 'string', [
                 'null' => false,
