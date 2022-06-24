@@ -24,6 +24,14 @@ class App
     const CONTROLLER_PATH =  "application/controllers/";
     const VIEW_PATH =  "application/views/";
     const MODEL_PATH =  "application/model/";
+    const CONFIG_PATH =  "configs/";
+
+    const DEFAULT_CONFIGS = [
+        'app',
+        'database',
+        'mail',
+        'services',
+    ];
 
     /** @var self */
     private static $instance;
@@ -39,41 +47,17 @@ class App
 
     /**
      * @param Router|null $router
+     * @param array $configs List of custom config files in configuration directory to load. e.g aws, papertrail 
      */
-    public function __construct(Router $router = null)
+    public function __construct(Router $router = null, $configs = array())
     {
         self::$instance = &$this;
 
-        // Set up envs
-        $this->setUpEnvironment();
+        // Set up configs
+        $this->setUpConfigs($configs);
 
-        // Set up error handlers
-        if ($key = Configs::BUGSNAG_KEY()) {
-            $this->bugsnag = \Bugsnag\Client::make($key);
-            $this->bugsnag->setReleaseStage(ENVIRONMENT);
-            $this->bugsnag->setAppType(is_cli() ? "Console" : "HTTP");
-            \Bugsnag\Handler::register($this->bugsnag);
-        }
-        set_error_handler(function ($errno, $errstr, $errfile = null, $errline = null, $errcontext = []) {
-            if ($this->bugsnag) {
-                $this->bugsnag->notifyError("unexpected_error", $errstr);
-            }
-            $this->showMessage(500, false, $errno, $errstr, $errline, $errfile, $errcontext);
-        });
-        set_exception_handler(function ($e) {
-            if ($this->bugsnag) {
-                $this->bugsnag->notifyException($e);
-            }
-            $trace = array_map(function ($instance) {
-                return [
-                    'file' => $instance['file'] ?? null,
-                    'line' => $instance['line'] ?? null,
-                    'class' => $instance['class'] ?? null,
-                    'function' => $instance['function'] ?? null,
-                ];
-            }, $e->getTrace());
-            $this->showMessage(500, false, "unexpected_exception", $e->getMessage(), $e->getLine(), $e->getFile(), $trace);
-        });
+        // Set up error reporting
+        $this->setUpErrorReporting();
 
         // Set router
         $this->router = $router ?: new Router();
@@ -122,35 +106,27 @@ class App
     }
 
     /**
+     * Set up configs
+     * @param array $configs
+     */
+    private function setUpConfigs($configs = array())
+    {
+        foreach (array_unique(array_merge(self::DEFAULT_CONFIGS, $configs)) as $config) {
+            $path = FCPATH . self::CONFIG_PATH . $config . '.php';
+            if (file_exists($path)) {
+                require_once $path;
+            } else {
+                throw new Exception("Config file $config.php not found");
+            }
+        }
+    }
+
+    /**
      * Set up environment
      */
-    private function setUpEnvironment()
+    private function setUpErrorReporting()
     {
-        // Define user's IP Address as to be viewed across the server
-        define('IPADDRESS', get_ip_address());
-
-        // Define Server Local Ip
-        define('LOCALHOST', getHostByName(getHostName()));
-
-        // Define base variables
-        define("BASE_SCHEME", (is_https() ? "https" : "http") . "://");
-        define("BASE_SERVER", BASE_SCHEME . env('HTTP_HOST'));
-        define("BASE_URL", BASE_SERVER . str_replace(basename(env('SCRIPT_NAME')), "", env('SCRIPT_NAME')));
-        define("CURRENT_URL", BASE_SERVER . env('REQUEST_URI'));
-
-        // Define HTTP_VERSION
-        define("HTTP_VERSION", get_server_protocol());
-
-        // APPLICATION ENVIRONMENT
-        if (strtolower(env('ENV')) == "prod" || strtolower(env('STAGE')) == "prod") {
-            define('ENVIRONMENT', ENV_PROD);
-        } else if (strtolower(env('ENV')) == "dev" || strtolower(env('STAGE')) == "dev") {
-            define('ENVIRONMENT', ENV_TEST);
-        } else {
-            define('ENVIRONMENT', ENV_DEV);
-        }
-
-        // ERROR REPORTING
+        // Error Reporting
         switch (ENVIRONMENT) {
             case ENV_DEV:
             case ENV_TEST:
@@ -159,18 +135,41 @@ class App
                 break;
             case ENV_PROD:
                 ini_set('display_errors', 0);
-                if (version_compare(PHP_VERSION, '5.3', '>=')) {
-                    error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT & ~E_USER_NOTICE & ~E_USER_DEPRECATED);
-                } else {
-                    error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_USER_NOTICE);
-                }
+                error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT & ~E_USER_NOTICE & ~E_USER_DEPRECATED);
                 break;
-
             default:
-                header('HTTP/1.1 503 Service Unavailable.', TRUE, 503);
+                header(HTTP_VERSION . ' 503 Service Unavailable.', TRUE, 503);
                 echo 'The application environment is not set correctly.';
                 exit(1); // EXIT_ERROR
         }
+
+        // Error Handlers
+        if ($key = BUGSNAG_KEY) {
+            $this->bugsnag = \Bugsnag\Client::make($key);
+            $this->bugsnag->setReleaseStage(ENVIRONMENT);
+            $this->bugsnag->setAppType(is_cli() ? "Console" : "HTTP");
+            \Bugsnag\Handler::register($this->bugsnag);
+        }
+        set_error_handler(function ($errno, $errstr, $errfile = null, $errline = null, $errcontext = []) {
+            if ($this->bugsnag) {
+                $this->bugsnag->notifyError("unexpected_error", $errstr);
+            }
+            $this->showMessage(500, false, $errno, $errstr, $errline, $errfile, $errcontext);
+        });
+        set_exception_handler(function ($e) {
+            if ($this->bugsnag) {
+                $this->bugsnag->notifyException($e);
+            }
+            $trace = array_map(function ($instance) {
+                return [
+                    'file' => $instance['file'] ?? null,
+                    'line' => $instance['line'] ?? null,
+                    'class' => $instance['class'] ?? null,
+                    'function' => $instance['function'] ?? null,
+                ];
+            }, $e->getTrace());
+            $this->showMessage(500, false, "unexpected_exception", $e->getMessage(), $e->getLine(), $e->getFile(), $trace);
+        });
     }
 
     /**
@@ -186,17 +185,17 @@ class App
         }
 
         // If offline or on maintenance mode
-        if (!empty(Configs::SYSTEM_START_UP_TIME()) && !empty(Configs::SYSTEM_SHUT_DOWN_TIME())) {
-            $start = new DateTime(Configs::SYSTEM_START_UP_TIME());
-            $stop = (new DateTime(Configs::SYSTEM_SHUT_DOWN_TIME()))->sub(DateInterval::createFromDateString('1 day'));
+        if (!empty(SYSTEM_START_UP_TIME) && !empty(SYSTEM_SHUT_DOWN_TIME)) {
+            $start = new DateTime(SYSTEM_START_UP_TIME);
+            $stop = (new DateTime(SYSTEM_SHUT_DOWN_TIME))->sub(DateInterval::createFromDateString('1 day'));
             if (time() < $start->getTimestamp() && time() >= $stop->getTimestamp()) {
-                if (Configs::MAINTENANCE_MODE()) {
+                if (MAINTENANCE_MODE) {
                     $this->showMessage(503, false, "System is under maintenance. Please come back on " . $start->format('Y-m-d H:i P'));
                 } else {
                     $this->showMessage(503, false, "System is currently offline. Please come back on " . $start->format('Y-m-d H:i P'));
                 }
             }
-        } else if (Configs::MAINTENANCE_MODE()) {
+        } else if (MAINTENANCE_MODE) {
             $this->showMessage(503, false, "System is under maintenance");
         }
 
@@ -216,7 +215,7 @@ class App
     private function preflight($method)
     {
         // Check for CORS access request
-        if (Configs::CHECK_CORS == TRUE) {
+        if (CHECK_CORS == TRUE) {
             $this->check_cors();
         } else {
             if (strtolower($method) === 'options') {
@@ -268,10 +267,10 @@ class App
      */
     protected function check_cors()
     {
-        $allowed_cors_headers = Configs::ALLOWED_CORS_HEADERS;
-        $exposed_cors_headers = Configs::EXPOSED_CORS_HEADERS;
-        $allowed_cors_methods = Configs::ALLOWED_CORS_METHODS;
-        $max_cors_age = Configs::MAX_CORS_AGE;
+        $allowed_cors_headers = ALLOWED_CORS_HEADERS;
+        $exposed_cors_headers = EXPOSED_CORS_HEADERS;
+        $allowed_cors_methods = ALLOWED_CORS_METHODS;
+        $max_cors_age = MAX_CORS_AGE;
 
         // Convert the config items into strings
         $allowed_headers = implode(', ', is_array($allowed_cors_headers) ? $allowed_cors_headers : []);
@@ -279,7 +278,7 @@ class App
         $allowed_methods = implode(', ', is_array($allowed_cors_methods) ? $allowed_cors_methods : []);
 
         // If we want to allow any domain to access the API
-        if (Configs::ALLOWED_ANY_CORS_DOMAIN == TRUE) {
+        if (ALLOWED_ANY_CORS_DOMAIN == TRUE) {
             header(HTTP_VERSION . " 200 OK", TRUE, 200);
             header('Access-Control-Allow-Origin: *', true);
             header('Access-Control-Allow-Methods: ' . $allowed_methods, true);
@@ -292,7 +291,7 @@ class App
             // Store the HTTP Origin header
             $origin = env('HTTP_ORIGIN') ?? env('HTTP_REFERER') ?? '';
 
-            $allowed_origins = Configs::ALLOWED_CORS_ORIGINS();
+            $allowed_origins = ALLOWED_CORS_ORIGINS;
 
             // If the origin domain is in the allowed_cors_origins list, then add the Access Control headers
             if (is_array($allowed_origins) && in_array(trim($origin, "/"), $allowed_origins)) {
@@ -326,7 +325,7 @@ class App
         !ob_get_contents() ?: ob_clean();
         ob_start();
         if (is_cli()) {
-            $this->logger->logError(PHP_EOL . "status\t-\tfalse" . PHP_EOL . "msg\t-\t" . ($msg ?? $title) . PHP_EOL .  "version\t-\t" . Configs::APP_VERSION() . PHP_EOL . "line\t-\t$line" . PHP_EOL . "path\t-\t$file" . PHP_EOL, $trace);
+            $this->logger->logError(PHP_EOL . "status\t-\tfalse" . PHP_EOL . "msg\t-\t" . ($msg ?? $title) . PHP_EOL .  "version\t-\t" . APP_VERSION . PHP_EOL . "line\t-\t$line" . PHP_EOL . "path\t-\t$file" . PHP_EOL, $trace);
         } else {
 
             if (!headers_sent()) {
@@ -339,7 +338,7 @@ class App
             $data = ['status' => $status, 'msg' => $msg ?? $title];
             if ($code !== 200 || $code !== 201) {
                 $data['env'] = ENVIRONMENT;
-                $data['version'] = Configs::APP_VERSION();
+                $data['version'] = APP_VERSION;
                 $data['ip'] = IPADDRESS;
             }
             if (ENVIRONMENT != ENV_PROD) {

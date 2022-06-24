@@ -1,8 +1,9 @@
 <?php
 
-namespace System;
+namespace Application\Services;
 
 use OAuth2\Scope;
+use OAuth2\Storage\Memory;
 
 /**
  * Created by VSCode.
@@ -10,7 +11,7 @@ use OAuth2\Scope;
  * Date: 12/7/2021
  * Time: 12:49 AM
  */
-class Scopes extends Scope
+class OAuthScopeService extends Scope
 {
     const SCOPE_OWNER = '*';
     const SCOPE_SYSTEM = 'system';
@@ -28,9 +29,8 @@ class Scopes extends Scope
     const SCOPE_CLAIM_PHONE = 'phone';
     const SCOPE_CLAIM_PROFILE = 'profile';
 
-    const DEFAULT_SCOPE = self::SCOPE_PUBLIC;
-
-    const ALL_SCOPES = [
+    public static $defaultScope = self::SCOPE_PUBLIC;
+    public static $allScopes = [
         self::SCOPE_OWNER => "Access everything",
         self::SCOPE_SYSTEM => "Access system resources",
         self::SCOPE_ADMIN => "Access administrator resources",
@@ -48,6 +48,11 @@ class Scopes extends Scope
         self::SCOPE_CLAIM_PROFILE => "Get user profile information",
     ];
 
+    /**
+     * @var \OAuth2\Storage\ScopeInterface|\OAuth2\Storage\Memory
+     */
+    protected $storage;
+
     const CLAIM_SCOPES = [
         self::SCOPE_OPENID,
         self::SCOPE_CLAIM_NAME,
@@ -55,6 +60,26 @@ class Scopes extends Scope
         self::SCOPE_CLAIM_PHONE,
         self::SCOPE_CLAIM_PROFILE,
     ];
+    
+    /**
+     * Constructor
+     * @param array $scopes ['name' => 'description'][]
+     * @param string $defaultScope
+     * @throws InvalidArgumentException
+     */
+    public function __construct($scopes = [], $defaultScope = null)
+    {
+        if(!empty($scopes)) {
+            self::$allScopes = array_unique(array_merge(self::$allScopes, $scopes));
+        }
+        if(!empty($defaultScope)) {
+            self::$defaultScope = $defaultScope;
+        }
+        parent::__construct(new Memory(array(
+            'default_scope' => self::$defaultScope,
+            'supported_scopes' => array_keys(self::$allScopes)
+        )));
+    }
 
     /**
      * Check if everything in required scope is contained in available scope.
@@ -71,9 +96,9 @@ class Scopes extends Scope
     public function checkScope($required_scope, $available_scope)
     {
         $required_scope = explode(' ', trim($required_scope));
-        $required_scope = in_array(Scopes::SCOPE_OWNER, $required_scope) ? array_keys(Scopes::ALL_SCOPES) : $required_scope;
+        $required_scope = in_array(OAuthScopeService::SCOPE_OWNER, $required_scope) ? array_keys(OAuthScopeService::$allScopes) : $required_scope;
         $available_scope = explode(' ', trim($available_scope));
-        $available_scope = in_array(Scopes::SCOPE_OWNER, $available_scope) ? array_keys(Scopes::ALL_SCOPES) : $available_scope;
+        $available_scope = in_array(OAuthScopeService::SCOPE_OWNER, $available_scope) ? array_keys(OAuthScopeService::$allScopes) : $available_scope;
 
         return (count(array_diff($required_scope, $available_scope)) == 0);
     }
@@ -86,14 +111,14 @@ class Scopes extends Scope
     public static function findScope($scopes)
     {
         $scopes = !is_array($scopes) ? explode(' ', $scopes) : $scopes;
-        $scopes = in_array(Scopes::SCOPE_OWNER, $scopes) ? array_keys(Scopes::ALL_SCOPES) : $scopes;
+        $scopes = in_array(OAuthScopeService::SCOPE_OWNER, $scopes) ? array_keys(OAuthScopeService::$allScopes) : $scopes;
 
-        $availableScopes =  array_keys(self::ALL_SCOPES);
+        $availableScopes =  array_keys(self::$allScopes);
 
         $found = [];
         foreach ($scopes as $scope) {
             if (in_array(trim($scope), $availableScopes)) {
-                $found[$scope] = self::ALL_SCOPES[$scope];
+                $found[$scope] = self::$allScopes[$scope];
             }
         }
 
@@ -108,14 +133,14 @@ class Scopes extends Scope
     public static function findOpenIdScope($scopes)
     {
         $scopes = !is_array($scopes) ? explode(' ', $scopes) : $scopes;
-        $scopes = in_array(Scopes::SCOPE_OWNER, $scopes) ? array_keys(Scopes::ALL_SCOPES) : $scopes;
+        $scopes = in_array(OAuthScopeService::SCOPE_OWNER, $scopes) ? array_keys(OAuthScopeService::$allScopes) : $scopes;
 
-        if (!in_array(Scopes::SCOPE_OPENID, $scopes)) return false;
+        if (!in_array(OAuthScopeService::SCOPE_OPENID, $scopes)) return false;
 
         $found = [];
         foreach ($scopes as $scope) {
             if (in_array(trim($scope), self::CLAIM_SCOPES)) {
-                $found[$scope] = self::ALL_SCOPES[$scope];
+                $found[$scope] = self::$allScopes[$scope];
             }
         }
 

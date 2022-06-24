@@ -4,7 +4,6 @@ namespace System;
 
 use DateTime;
 use DateTimeZone;
-use Phinx\Config\Config;
 
 /**
  * Created by VSCODE.
@@ -14,78 +13,147 @@ use Phinx\Config\Config;
  */
 class Utils
 {
+    
+    /**
+     * In array case-insensitive
+     *
+     * @param string $needle
+     * @param string[]|array $haystack
+     * @return void
+     */
+    public function inArrayi($needle, $haystack)
+    {
+        return in_array(strtolower($needle), array_map('strtolower', $haystack));
+    }
+
+    /**
+     * Explode array
+     * @param mixed $data
+     * @param string $delimiter
+     * @return array
+     */
+    public static function explode($data, $delimiter = " ")
+    {
+        $res = [];
+        if (!empty($data)) {
+            if (is_array($data)) {
+                $res = $data;
+            } else {
+                if (is_string($data) && !empty($arr = json_decode($data, true))) {
+                    $res = $arr;
+                } else if (is_string($data)) {
+                    $res = explode($delimiter, $data);
+                }
+            }
+        }
+        return $res;
+    }
+
+    /**
+     * Implode data
+     * @param mixed $data
+     * @param string $glue
+     * @return string
+     */
+    public static function implode($data, $glue = " ")
+    {
+        $res = "";
+        if (!empty($data)) {
+            if (is_array($data)) {
+                $res = implode($glue, $data);
+            } else {
+                if (is_string($data) && !empty($arr = json_decode($data))) {
+                    $res = implode($glue, $arr);
+                } else if (is_string($data)) {
+                    $res = $data;
+                }
+            }
+        }
+        return trim($res);
+    }
+
     /**Generate CSRF TOKEN
      * @return string
      */
-    public static function generate_csrf_token($key = null)
+    public static function generateCsrfToken($key = null)
     {
-        if (empty($key) && empty($key = self::get_cookie("csrf_key"))) {
+        if (empty($key) && empty($key = self::getCookie("csrf_key"))) {
             $key = md5(uniqid(IPADDRESS));
-            self::set_cookie("csrf_key", $key);
+            self::setCookie("csrf_key", $key);
         }
-        $dateObj = new DateTime("now", new DateTimeZone("GMT"));
-        $csrf_token = sha1(sprintf("%s:%s:%s", $key, IPADDRESS, $dateObj->format('Y-m-d H')));
-        return $csrf_token;
+        $date = new DateTime("now", new DateTimeZone("GMT"));
+        return sha1(sprintf("%s:%s:%s", $key, IPADDRESS, $date->format('Y-m-d H')));
     }
 
 
-    /**Get CSRF TOKEN
+    /**
+     * Get CSRF Token
      * @return string
      */
-    public static function get_csrf_token()
+    public static function getCsrfToken()
     {
-        if (!empty($key = self::get_cookie("csrf_key"))) {
-            return self::generate_csrf_token($key);
+        if (!empty($key = self::getCookie("csrf_key"))) {
+            return self::generateCsrfToken($key);
         }
         return null;
     }
 
-    /**CSRF Validation
+    /**
+     * CSRF Validation
      * @param string $csrf_token
-     * @return array|boolean
+     * @return boolean
      */
-    public static function validate_csrf_token($csrf_token)
+    public static function validateCsrf($csrf_token)
     {
         if ($csrf_token) {
-            return $csrf_token == self::get_csrf_token();
+            return $csrf_token == self::getCsrfToken();
         }
         return false;
     }
 
     /**
      * Get cookie
-     * @param String $name
-     * @return void
+     * @param string $name
+     * @param string $ipAddress
+     * @return mixed
      */
-    public static function get_cookie($name)
+    public static function getCookie($name, $ipAddress = NULL)
     {
-        return !empty($_COOKIE["oauth_" . $name]) ? @$_COOKIE[Configs::COOKIE_PREFIX . $name] : null;
+        $value = $_COOKIE[COOKIE_PREFIX . '_' . $name] ?? null;
+        if (!empty($value)) {
+            return Encrypter::decrypt(ENCRYPTION_KEY . ($ipAddress ? md5($ipAddress) : ''), $value) ?: NULL;
+        }
+        return null;
     }
 
     /**
-     * Pull cookie - Get and delete cooke
-     * @param String $name
-     * @return void
+     * Pull cookie - Get and delete cookie
+     * @param string $name
+     * @param string $ipAddress
+     * @return mixed
      */
-    public static function pull_cookie($name)
+    public static function pullCookie($name, $ipAddress = NULL)
     {
-        $value = self::get_cookie($name);
-        if ($value)
-            self::delete_cookie($name);
+        $value = self::getCookie($name, $ipAddress);
+        if ($value) {
+            self::deleteCookie($name);
+        }
         return $value;
     }
 
     /**
      * Set cookie
      *
-     * @param [type] $name
-     * @param [type] $value
+     * @param string $name
+     * @param string $value
      * @param integer $duration
+     * @param string $ipAddress
      * @return bool
      */
-    public static function set_cookie($name, $value, $duration = 3600)
+    public static function setCookie($name, $value, $duration = 3600, $ipAddress = NULL)
     {
-        return setcookie(Configs::COOKIE_PREFIX . $name, $value, time() + $duration, "/");
+        $value = !empty($value) ? Encrypter::encrypt(ENCRYPTION_KEY . ($ipAddress ? md5($ipAddress) : ''), $value) : "";
+        return setcookie(COOKIE_PREFIX . '_' . $name, $value, time() + $duration, "/");
     }
 
     /**
@@ -93,11 +161,10 @@ class Utils
      * @param String $name
      * @return bool
      */
-    public static function delete_cookie($name)
+    public static function deleteCookie($name)
     {
-        return self::set_cookie($name, "", -3600);
+        return self::setCookie($name, "", 1);
     }
-
 
     /**
      * Case Insensitive search

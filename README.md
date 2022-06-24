@@ -70,8 +70,7 @@ https://documenter.getpostman.com/view/20461972/UVyytYJ5
     -   `Router.php` - Configure and application routing
     -   `Utils.php` - Configure and application utilities functions
     -   `URL.php` - Configure and application urls and paths
-    -   `CIPHER.php` - Encryption / Decryption helper class
-    -   `Scopes.php` - Manage supported oauth scopes
+    -   `Encrypter.php` - Encryption / Decryption helper class
     -   `Server.php` - Base controller class for Oauth Server. Processes Oauth requests.
 
 ## Database Migration

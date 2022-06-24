@@ -1,29 +1,26 @@
 <?php
 
-namespace Application\Models;
+namespace Application\Services;
 
 use OAuth2\Storage\Pdo;
-use System\Scopes;
+use  Application\Services\OAuthScopeService;
 
-class BaseModel  extends Pdo
+class OAuthStorageService extends Pdo
 {
     public function __construct($connection, $config = array())
     {
-        //Add custom configs
+        // Add custom configs
         $config = array_merge(array(
             'orgs_table' => 'oauth_organizations',
         ), $config);
         parent::__construct($connection, $config);
     }
 
-    /**
-     * @param string $user_id
-     * @return array|bool
-     */
-    public function getUserDetails($user_id)
-    {
-        return $this->getUser($user_id);
-    }
+
+    ##################################
+    # CLIENT
+    ##################################
+
 
     /**
      * plaintext passwords are bad!  Override this for your application
@@ -34,7 +31,7 @@ class BaseModel  extends Pdo
      */
     protected function checkPassword($user, $password)
     {
-        return $user['password'] == $this->hashPassword_custom($password, $user['salt']);
+        return $user['password'] == $this->hashPasswordWithSalt($password, $user['salt']);
     }
 
     /**
@@ -43,7 +40,7 @@ class BaseModel  extends Pdo
      * @param string $salt
      * @return string
      * */
-    protected function hashPassword_custom($password, $salt)
+    protected function hashPasswordWithSalt($password, $salt)
     {
         return hash('sha256', $password . $salt);
     }
@@ -89,6 +86,24 @@ class BaseModel  extends Pdo
         return $userInfo;
     }
 
+    /**
+     * Get Users
+     * @param array $uniques
+     * @return array|bool
+     */
+    public function getMultipleUsers($uniques)
+    {
+        $users = [];
+        if (!empty($uniques)) {
+            $whereInUserIds = implode(',', array_fill(0, is_array($uniques) ? count($uniques) : 0, '?'));
+            $stmt = $this->db->prepare(sprintf('SELECT user_id, email, name, phone, dial_code, scope, cred_updated_at FROM %s WHERE user_id IN (%s) OR email IN (%s);', $this->config['user_table'], $whereInUserIds, $whereInUserIds));
+            $stmt->execute(array_merge($uniques, $uniques));
+            if ($result = $stmt->fetchAll(\PDO::FETCH_ASSOC)) {
+                $users = (array_merge($users, $result));
+            }
+        }
+        return $users;
+    }
 
     /**
      * Get User
@@ -96,7 +111,7 @@ class BaseModel  extends Pdo
      * @param $excludeScopes
      * @return array|bool
      */
-    public function getSingleUserInfo($unique, $excludeScopes = false)
+    public function getCustomUser($unique, $excludeScopes = false)
     {
         if (!$unique) {
             return false;
@@ -121,26 +136,26 @@ class BaseModel  extends Pdo
      * @param $excludeScopes
      * @return array|bool
      */
-    public function getSingleUserInfoForClaims($unique, $claims = [], $excludeScopes = true)
+    public function getCustomUserWIthClaims($unique, $claims = [], $excludeScopes = true)
     {
         if (!$unique) {
             return false;
         }
 
         $fields = [];
-        if (in_array(Scopes::SCOPE_CLAIM_PROFILE, $claims)) {
+        if (in_array(OAuthScopeService::SCOPE_CLAIM_PROFILE, $claims)) {
             $fields[] = 'name';
             $fields[] = 'email';
             $fields[] = 'phone';
             $fields[] = 'dial_code';
         } else {
-            if (in_array(Scopes::SCOPE_CLAIM_NAME, $claims)) {
+            if (in_array(OAuthScopeService::SCOPE_CLAIM_NAME, $claims)) {
                 $fields[] = 'name';
             }
-            if (in_array(Scopes::SCOPE_CLAIM_EMAIL, $claims)) {
+            if (in_array(OAuthScopeService::SCOPE_CLAIM_EMAIL, $claims)) {
                 $fields[] = 'email';
             }
-            if (in_array(Scopes::SCOPE_CLAIM_PHONE, $claims)) {
+            if (in_array(OAuthScopeService::SCOPE_CLAIM_PHONE, $claims)) {
                 $fields[] = 'phone';
                 $fields[] = 'dial_code';
             }
@@ -163,26 +178,6 @@ class BaseModel  extends Pdo
     }
 
     /**
-     * Get Users
-     * @param array $uniques
-     * @return array|bool
-     */
-    public function getMultipleUserInfo($uniques)
-    {
-        $users = [];
-        if (!empty($uniques)) {
-            $whereInUserIds = implode(',', array_fill(0, is_array($uniques) ? count($uniques) : 0, '?'));
-            $stmt = $this->db->prepare(sprintf('SELECT user_id, email, name, phone, dial_code, scope, cred_updated_at FROM %s WHERE user_id IN (%s) OR email IN (%s);', $this->config['user_table'], $whereInUserIds, $whereInUserIds));
-            $stmt->execute(array_merge($uniques, $uniques));
-            if ($result = $stmt->fetchAll(\PDO::FETCH_ASSOC)) {
-                $users = (array_merge($users, $result));
-            }
-        }
-        return $users;
-    }
-
-
-    /**
      * plaintext passwords are bad!  Override this for your application
      *
      * @param string $user_id
@@ -194,7 +189,7 @@ class BaseModel  extends Pdo
      * @param string $scope
      * @return string|false - User ID or false if failed
      */
-    public function setUserCustom($user_id, $password, $email, $name, $phone, $dial_code, $scope)
+    public function setCustomUser($user_id, $password, $email, $name, $phone, $dial_code, $scope)
     {
         //Create unique Salt string
         $salt = sha1(uniqid($user_id));
@@ -235,11 +230,17 @@ class BaseModel  extends Pdo
         }
     }
 
+
+    ##################################
+    # CLIENT
+    ##################################
+
+
     /**
      * @param string $client_id
      * @return array|mixed
      */
-    public function getClientDetailsCustom($client_id, $org_id = null)
+    public function getCustomClientDetails($client_id, $org_id = null)
     {
         if ($org_id) {
             $stmt = $this->db->prepare(sprintf('SELECT * from %s where client_id = :client_id and org_id = :org_id', $this->config['client_table']));
@@ -263,10 +264,10 @@ class BaseModel  extends Pdo
      * @param bool $issue_jwt
      * @return bool
      */
-    public function setClientDetailsCustom($org_id, $client_id, $client_name, $client_secret = null, $redirect_uri = null, $grant_types = null, $scope = null, $user_id = null, $issue_jwt = true)
+    public function setCustomClientDetails($org_id, $client_id, $client_name, $client_secret = null, $redirect_uri = null, $grant_types = null, $scope = null, $user_id = null, $issue_jwt = true)
     {
         // if it exists, update it.
-        if ($this->getClientDetailsCustom($client_id, $org_id)) {
+        if ($this->getCustomClientDetails($client_id, $org_id)) {
             $stmt = $this->db->prepare(sprintf('UPDATE %s SET client_secret=:client_secret, client_name=:client_name, redirect_uri=:redirect_uri, grant_types=:grant_types, scope=:scope, user_id=:user_id, issue_jwt=:issue_jwt where client_id=:client_id', $this->config['client_table']));
             return $stmt->execute(compact('client_id', 'client_name', 'client_secret', 'redirect_uri', 'grant_types', 'scope', 'user_id', 'issue_jwt'));
         } else {
@@ -274,6 +275,27 @@ class BaseModel  extends Pdo
             return $stmt->execute(compact('org_id', 'client_id', 'client_name', 'client_secret', 'redirect_uri', 'grant_types', 'scope', 'user_id', 'issue_jwt'));
         }
     }
+
+    /**
+     * @param mixed $client_id
+     * @param $private_key
+     * @param $public_key
+     * @param $encryption_algorithm 
+     * @return bool
+     */
+    public function setClientPublickKey($client_id, $private_key, $public_key, $encryption_algorithm = "RS256")
+    {
+        if ($this->getPublicKey($client_id)) {
+            $stmt = $this->db->prepare(sprintf('UPDATE %s SET private_key=:private_key, public_key=:public_key, encryption_algorithm=:encryption_algorithm where client_id=:client_id', $this->config['public_key_table']));
+        } else {
+            $stmt = $this->db->prepare(sprintf('INSERT INTO %s (client_id, private_key, public_key, encryption_algorithm) VALUES (:client_id, :private_key, :public_key, :encryption_algorithm)', $this->config['public_key_table']));
+        }
+        return $stmt->execute(compact('client_id', 'private_key', 'public_key', 'encryption_algorithm'));
+    }
+
+    ##################################
+    # ORGANIZATION
+    ##################################
 
     /**
      * @param string $org_id
@@ -305,6 +327,12 @@ class BaseModel  extends Pdo
         }
     }
 
+
+    ##################################
+    # SCOPES
+    ##################################
+
+
     /**
      * Check if User has the requested scope
      * @param $scope
@@ -318,11 +346,11 @@ class BaseModel  extends Pdo
         $stmt->execute([$user_id]);
         if ($result = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $user_scopes = array_map('strtolower', explode(' ', $result['scope']));
-            if (in_array(Scopes::SCOPE_OWNER, $user_scopes)) {
-                $found = array_keys(Scopes::ALL_SCOPES);
+            if (in_array(OAuthScopeService::SCOPE_OWNER, $user_scopes)) {
+                $found = array_keys(OAuthScopeService::$allScopes);
             } else {
                 $scopes = !is_array($scope) ? explode(' ', $scope) : $scope;
-                $scopes = in_array(Scopes::SCOPE_OWNER, $scopes) ? array_keys(Scopes::ALL_SCOPES) : $scopes;
+                $scopes = in_array(OAuthScopeService::SCOPE_OWNER, $scopes) ? array_keys(OAuthScopeService::$allScopes) : $scopes;
                 foreach ($scopes as $scope) {
                     if (in_array(strtolower($scope), $user_scopes)) {
                         $found[] = $scope;
@@ -349,11 +377,11 @@ class BaseModel  extends Pdo
         $stmt->execute([$client_id]);
         if ($result = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $client_scopes = array_map('strtolower', explode(' ', $result['scope']));
-            if (in_array(Scopes::SCOPE_OWNER, $client_scopes)) {
-                $found = array_keys(Scopes::ALL_SCOPES);
+            if (in_array(OAuthScopeService::SCOPE_OWNER, $client_scopes)) {
+                $found = array_keys(OAuthScopeService::$allScopes);
             } else {
                 $scopes = !is_array($scope) ? explode(' ', $scope) : $scope;
-                $scopes = in_array(Scopes::SCOPE_OWNER, $scopes) ? array_keys(Scopes::ALL_SCOPES) : $scopes;
+                $scopes = in_array(OAuthScopeService::SCOPE_OWNER, $scopes) ? array_keys(OAuthScopeService::$allScopes) : $scopes;
                 foreach ($scopes as $scope) {
                     if (in_array(strtolower($scope), $client_scopes)) {
                         $found[] = $scope;
@@ -367,26 +395,30 @@ class BaseModel  extends Pdo
     }
 
     /**
-     * @param mixed $client_id
-     * @param $private_key
-     * @param $public_key
-     * @param $encryption_algorithm 
-     * @return bool
+     * Get all scopes
+     * @return array|mixed
      */
-    public function setClientPublickKey($client_id, $private_key, $public_key, $encryption_algorithm = "RS256")
+    public function getAllScopes()
     {
-        if ($this->getPublicKey($client_id)) {
-            $stmt = $this->db->prepare(sprintf('UPDATE %s SET private_key=:private_key, public_key=:public_key, encryption_algorithm=:encryption_algorithm where client_id=:client_id', $this->config['public_key_table']));
-        } else {
-            $stmt = $this->db->prepare(sprintf('INSERT INTO %s (client_id, private_key, public_key, encryption_algorithm) VALUES (:client_id, :private_key, :public_key, :encryption_algorithm)', $this->config['public_key_table']));
-        }
-        return $stmt->execute(compact('client_id', 'private_key', 'public_key', 'encryption_algorithm'));
+        $stmt = $this->db->prepare(sprintf('SELECT * from %s', $this->config['scope_table']));
+        $stmt->execute();
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC) ?? [];
     }
 
-
-    /**In array case-insensitive */
-    public function in_arrayi($needle, $haystack)
+    /**
+     * Get all scopes as list with name as kye and description as value
+     * @return array|mixed
+     */
+    public function getAllScopesList()
     {
-        return in_array(strtolower($needle), array_map('strtolower', $haystack));
+        $stmt = $this->db->prepare(sprintf('SELECT * from %s', $this->config['scope_table']));
+        $stmt->execute();
+        $list = [];
+        if($scopes = $stmt->fetchAll(\PDO::FETCH_ASSOC)){
+            foreach ($scopes as $scope) {
+                $list[$scope['scope']] = $scope['description'];
+            }
+        }
+        return $list;
     }
 }

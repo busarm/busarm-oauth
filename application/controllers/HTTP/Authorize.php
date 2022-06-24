@@ -1,14 +1,13 @@
 <?php
 
-namespace Application\Controllers;
+namespace Application\Controllers\HTTP;
 
+use Application\Controllers\OAuthBaseController;
+use Application\Services\MailService;
 use Exception;
 use GuzzleHttp\RequestOptions;
-use System\App;
-use System\CIPHER;
 use System\Configs;
-use System\Scopes;
-use System\Server;
+use  Application\Services\OAuthScopeService;
 use System\URL;
 use System\Utils;
 
@@ -21,7 +20,7 @@ use System\Utils;
  * **Note Authorization takes on the "scope" of the client
  *   and only that scope can be authorized
  */
-class Authorize extends Server
+class Authorize extends OAuthBaseController
 {
     const AUTH_REQ_TOKEN_PARAM = "auth_request_token";
     const EMAIL_REQ_TOKEN_PARAM = "email_request_token";
@@ -35,8 +34,7 @@ class Authorize extends Server
      * Authorize token request
      * (If using authorization_code grant type)
      * or Implicit Authorization request
-     * @api authorize/request
-     * @method GET
+     * 
      * @query email String Required for Email authorization
      * @query client_id String Required
      * @query state String Required
@@ -54,11 +52,11 @@ class Authorize extends Server
 
         // Use openId and implicit grant if requested
         if (
-            !$this->getOauthServer()->getScopeUtil()->checkScope($scope, Scopes::SCOPE_OPENID)
+            !$this->server->getScopeUtil()->checkScope($scope, OAuthScopeService::SCOPE_OPENID)
             && str_contains($response_type, 'id_token')
         ) {
-            $this->getOauthServer()->setConfig('allow_implicit', true);
-            $this->getOauthServer()->setConfig('use_openid_connect', true);
+            $this->server->setConfig('allow_implicit', true);
+            $this->server->setConfig('use_openid_connect', true);
         }
 
         // If email request - Validate and Send authorization url
@@ -70,10 +68,10 @@ class Authorize extends Server
             }
         }
 
-        //If Logged in
+        // If Logged in
         else if ($user_id = $this->getLoginUser()) {
             if ($this->processAuthRequest($user_id, $client_id, $redirect_uri, $state, $scope, $response_type)) {
-                $this->response = $this->getOauthServer()->handleAuthorizeRequest($this->request, $this->response, true, $user_id);
+                $this->server->handleAuthorizeRequest($this->request, $this->response, true, $user_id);
                 $this->response->send();
                 die();
             } else {
@@ -89,9 +87,6 @@ class Authorize extends Server
 
     /**
      * Login 
-     *
-     * @api authorize/login
-     * @method GET
      * @body username String Private - Required
      * @body password String Private - Required
      * @body csrf_token String Private - Required
@@ -119,9 +114,6 @@ class Authorize extends Server
 
     /**
      * Login 
-     *
-     * @api authorize/logout
-     * @method GET
      * @query redirect_url String - Required
      */
     public function logout()
@@ -129,7 +121,7 @@ class Authorize extends Server
         $redirect_url = $this->request->request("redirect_url", $this->request->query("redirect_url"));
         if (!empty($redirect_url)) {
             $this->clearLoginSession();
-            Utils::delete_cookie(self::AUTH_REQ_TOKEN_PARAM);
+            Utils::deleteCookie(self::AUTH_REQ_TOKEN_PARAM);
             URL::redirect('authorize/login?redirect_url=' . urlencode($redirect_url));
         } else {
             $this->showError("login_failed", "A Redirect Url is required");
@@ -142,14 +134,15 @@ class Authorize extends Server
     private function processLoginRequest()
     {
         if ($data = $this->loginRequestAvailable()) {
-            if ($this->validateRecaptcha(@$data['recaptcha_token']) && Utils::validate_csrf_token(@$data['csrf_token'])) {
+            if ($this->validateRecaptcha(@$data['recaptcha_token']) && Utils::validateCsrf(@$data['csrf_token'])) {
                 $max_count = 5;
                 $timeout = 60;
-                $count = Utils::get_cookie('request_count') ?? 0;
-                if ($count < $max_count) { // Max request count
+                $count = Utils::getCookie('request_count') ?? 0;
+                // Max request count
+                if ($count < $max_count) { 
                     $count += 1;
-                    Utils::set_cookie('request_count', $count, $timeout);
-                    if ($userInfo = ($this->getOauthStorage()->checkUserCredentials(@$data['username'], @$data['password']))) {
+                    Utils::setCookie('request_count', $count, $timeout);
+                    if ($userInfo = ($this->storage->checkUserCredentials(@$data['username'], @$data['password']))) {
                         if (!empty($userInfo[@'user_id'])) {
                             return $userInfo;
                         } else {
@@ -162,7 +155,7 @@ class Authorize extends Server
                     }
                 } else {
                     $min = intval($timeout / 60);
-                    $this->response->setParameters($this->error("Maximum attempt reached. Please try again in $min minute(s)', 'max_request"));
+                    $this->response->setParameters($this->error("Maximum attempt reached. Please try again in $min minute(s)", 'max_request'));
                 }
             } else {
                 $this->response->setParameters($this->error('Session validation failed. Please try again', 'validation_error'));
@@ -182,25 +175,27 @@ class Authorize extends Server
      */
     private function processEmailRequest($email, $redirect_uri, $state, $scope)
     {
-        if ($user = $this->getOauthStorage()->getUser($email)) {
+        if ($user = $this->storage->getUser($email)) {
 
             $timeout = 600;
             $token = sha1(sprintf("%s:%s:%s:%s", $email, $redirect_uri, $state, $scope));
-            if (Utils::get_cookie(self::EMAIL_REQ_TOKEN_PARAM) !== $token) {
+            if (Utils::getCookie(self::EMAIL_REQ_TOKEN_PARAM) !== $token) {
 
                 $user_id = $user['user_id'];
-                if (empty($scope) || $this->getOauthStorage()->scopeExistsForUser($scope, $user_id)) {
+                if (empty($scope) || $this->storage->scopeExistsForUser($scope, $user_id)) {
 
-                    if ($is_authorized = $this->getOauthServer()->validateAuthorizeRequest($this->request, $this->response)) {
+                    if ($is_authorized = $this->server->validateAuthorizeRequest($this->request, $this->response)) {
 
-                        $this->response = new \OAuth2\Response(); //reinitialize response
-                        $this->getOauthServer()->handleAuthorizeRequest($this->request, $this->response, $is_authorized, $user_id);
+                        // Reinitialize response
+                        $this->response = new \OAuth2\Response();
+                        $this->server->handleAuthorizeRequest($this->request, $this->response, $is_authorized, $user_id);
 
                         $message = $this->getEmailAuthView($this->response->getHttpHeader("Location"));
 
-                        if ($this->sendMail("Email Authorization", $message, $email)) {
+                        if ((new MailService)->send("Email Authorization", $message, $email)) {
                             try {
-                                Utils::set_cookie(self::EMAIL_REQ_TOKEN_PARAM, $token, $timeout); //Save to cookie to prevent duplicate 
+                                // Save to cookie to prevent duplicate 
+                                Utils::setCookie(self::EMAIL_REQ_TOKEN_PARAM, $token, $timeout);
                                 return $user;
                             } catch (Exception $e) {
                                 app()->reportException($e); // Report
@@ -215,7 +210,7 @@ class Authorize extends Server
                         $this->showError("authorization_failed", sprintf("<span style='color:red'>$msg</span>. Please contact <a href='%s' target='_blank'>support</a> for assistance", URL::appUrl(URL::APP_SUPPORT_PATH)), $redirect_uri);
                     }
                 } else {
-                    $this->showError("authorization_failed", sprintf("Requested scope(s) does not exist for the specified user. Please contact <strong>%s</strong> for assistance", Configs::EMAIL_SUPPORT()), $redirect_uri);
+                    $this->showError("authorization_failed", sprintf("Requested scope(s) does not exist for the specified user. Please contact <strong>%s</strong> for assistance", EMAIL_SUPPORT), $redirect_uri);
                 }
             } else {
                 $min = intval($timeout / 60);
@@ -238,7 +233,7 @@ class Authorize extends Server
      */
     private function processAuthRequest($user_id, $client_id, $redirect_uri, $state, $scope, $response_type)
     {
-        $request_token = Utils::get_cookie(self::AUTH_REQ_TOKEN_PARAM);
+        $request_token = Utils::getCookie(self::AUTH_REQ_TOKEN_PARAM);
         $token = sha1(sprintf("%s:%s:%s:%s:%s", $user_id, $client_id, $redirect_uri, $state, $scope, $response_type));
 
         $approve = $this->request->request("approve");
@@ -247,32 +242,31 @@ class Authorize extends Server
         // Authorization approved
         if ($approve && $request_token == $token) {
 
-            $scope = !empty($scope) ? $scope : $this->getOauthServer()->getScopeUtil()->getDefaultScope();
+            $scope = !empty($scope) ? $scope : $this->server->getScopeUtil()->getDefaultScope();
 
-            if ($this->getOauthStorage()->scopeExistsForUser($scope, $user_id)) {
-                if ($this->getOauthServer()->validateAuthorizeRequest($this->request, $this->response)) {
+            if ($this->storage->scopeExistsForUser($scope, $user_id)) {
+                if ($this->server->validateAuthorizeRequest($this->request, $this->response)) {
                     return true;
                 } else {
-                    Utils::delete_cookie(self::AUTH_REQ_TOKEN_PARAM);
+                    Utils::deleteCookie(self::AUTH_REQ_TOKEN_PARAM);
                     $this->showError($this->response->getParameter("error"), $this->response->getParameter("error_description"), $redirect_uri);
                 }
             } else {
-                Utils::delete_cookie(self::AUTH_REQ_TOKEN_PARAM);
+                Utils::deleteCookie(self::AUTH_REQ_TOKEN_PARAM);
                 $this->showError("invalid_scope", "Scope(s) '$scope' not available for this user", $redirect_uri);
             }
         }
         // Authorization approved
         else if ($decline && $request_token == $token) {
-            Utils::delete_cookie(self::AUTH_REQ_TOKEN_PARAM);
+            Utils::deleteCookie(self::AUTH_REQ_TOKEN_PARAM);
             $this->showError("authorization_declined", "Access declined by user", $redirect_uri);
         }
         // Client Id available
-        else if (!empty($client = $this->getOauthStorage()->getClientDetails($client_id))) {
-
-            Utils::set_cookie(self::AUTH_REQ_TOKEN_PARAM, $token, 300);
-            $org = $this->getOauthStorage()->getOrganizationDetails($client['org_id']);
-            $user = $this->getOauthStorage()->getUser($user_id);
-            $scopes = Scopes::findScope($scope);
+        else if (!empty($client = $this->storage->getClientDetails($client_id))) {
+            Utils::setCookie(self::AUTH_REQ_TOKEN_PARAM, $token, 300);
+            $org = $this->storage->getOrganizationDetails($client['org_id']);
+            $user = $this->storage->getUser($user_id);
+            $scopes = OAuthScopeService::findScope($scope);
             return $this->showAuthorize([
                 'client_name' => $client['client_name'],
                 'org_name' => $org ? $org['org_name'] : null,
@@ -292,7 +286,7 @@ class Authorize extends Server
     {
         try {
             echo app()->view("login", array_merge($vars, [
-                'csrf_token' => Utils::generate_csrf_token(),
+                'csrf_token' => Utils::generateCsrfToken(),
                 'action' => ""
             ]), true);
             die;
@@ -413,7 +407,7 @@ class Authorize extends Server
             $client = new \GuzzleHttp\Client();
             $res = $client->post(URL::GOOGLE_RECAPTCHA_VERFY_URL, [
                 RequestOptions::FORM_PARAMS => [
-                    'secret' => Configs::RECAPTCHA_SECRET_KEY(),
+                    'secret' => RECAPTCHA_SECRET_KEY,
                     'response' => $token,
                     'remoteip' => IPADDRESS,
                 ]
