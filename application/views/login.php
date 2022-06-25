@@ -31,7 +31,7 @@ use System\URL;
         body {
             margin: auto !important;
             user-select: none;
-            background: <?= Configs::APP_THEME_PRIMARY_COLOR() ?> !important;
+            background: <?= APP_THEME_PRIMARY_COLOR ?> !important;
         }
 
         oauth-login body,
@@ -129,7 +129,7 @@ use System\URL;
 
         oauth-login .login-page .form button {
             outline: 0;
-            background: <?= Configs::APP_THEME_PRIMARY_COLOR() ?>;
+            background: <?= APP_THEME_PRIMARY_COLOR ?>;
             width: 100%;
             border: 0;
             padding: 15px;
@@ -153,7 +153,7 @@ use System\URL;
         }
 
         oauth-login .login-page .form .message a {
-            color: <?= Configs::APP_THEME_PRIMARY_COLOR() ?>;
+            color: <?= APP_THEME_PRIMARY_COLOR ?>;
             text-decoration: none;
         }
     </style>
@@ -202,7 +202,7 @@ use System\URL;
                     <input id="recaptcha_token" type="hidden" required="required" name="recaptcha_token" />
                     <input id="csrf_token" type="hidden" required="required" name="csrf_token" value="<?= $csrf_token ?>" />
                     <input id="redirect_url" type="hidden" required="required" name="redirect_url" value="<?= $redirect_url ?>" />
-                    <button class="g-recaptcha" data-sitekey="<?= Configs::RECAPTCHA_CLIENT_KEY() ?>" data-callback='onSubmit' data-action='submit'>Proceed</button>
+                    <button class="g-recaptcha" data-sitekey="<?= RECAPTCHA_CLIENT_KEY ?>" data-callback='onSubmit' data-action='submit'>Proceed</button>
                     <?php if (isset($msg)) : ?>
                         <div class="message"><?= $msg ?></div>
                     <?php endif ?>

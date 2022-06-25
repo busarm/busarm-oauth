@@ -1,10 +1,11 @@
 <?php
 
-namespace Application\Controllers;
+namespace Application\Controllers\CLI;
 
+use Application\Controllers\OAuthBaseController;
 use phpseclib\Crypt\RSA;
-use System\Scopes;
-use System\Server;
+use  Application\Services\OAuthScopeService;
+use System\Utils;
 
 /**
  * Created by PhpStorm.
@@ -13,7 +14,7 @@ use System\Server;
  * Time: 12:20 PM
  */
 
-class Task extends Server
+class Task extends OAuthBaseController
 {
     public function __construct()
     {
@@ -28,7 +29,7 @@ class Task extends Server
      */
     public function create_org($org_name)
     {
-        $result = $this->getOauthStorage()->setOrganizationDetails($org_name);
+        $result = $this->storage->setOrganizationDetails($org_name);
         if ($result) {
             log_info("Successfully Added Organization");
             log_info("Organizatoin ID = $result");
@@ -50,11 +51,11 @@ class Task extends Server
     {
         $client_id = str_replace(' ', '_', strtolower($client_name)) . '_' . crc32(uniqid($client_name));
         $client_secret = md5(uniqid($client_id));
-        $grant_types = !empty($grant_types) ? $grant_types : $this->implode(array_keys($this->getOauthServer()->getGrantTypes()));
-        $scopes = !empty($scopes) ? $scopes : Scopes::DEFAULT_SCOPE;
+        $grant_types = !empty($grant_types) ? $grant_types : Utils::implode(array_keys($this->server->getGrantTypes()));
+        $scopes = !empty($scopes) ? $scopes : OAuthScopeService::$defaultScope;
 
         //Insert Client
-        $result = $this->getOauthStorage()->setClientDetailsCustom($org_id, $client_id, $client_name, $client_secret, $redirect_uri, $grant_types, $scopes);
+        $result = $this->storage->setCustomClientDetails($org_id, $client_id, $client_name, $client_secret, $redirect_uri, $grant_types, $scopes);
         if ($result) {
 
             //Insert jwt public keys for client
@@ -62,7 +63,7 @@ class Task extends Server
             $rsa = new RSA();
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
-            if (!empty($keys) && $this->getOauthStorage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
+            if (!empty($keys) && $this->storage->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
                 log_info("Successfully Created Client");
                 log_info("Client ID = $client_id");
                 log_info("Client Secret = $client_secret");
@@ -98,7 +99,7 @@ class Task extends Server
             $rsa = new RSA();
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
-            if (!empty($keys) && $this->getOauthStorage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
+            if (!empty($keys) && $this->storage->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
                 log_info("Successfully Updated Client Keys");
                 log_info("Client Public Key = " . $keys['publickey']);
                 log_info("Client Public Key ALGO = $algo");
@@ -128,16 +129,16 @@ class Task extends Server
         $prefix = !empty($email) ? $email : (!empty($phone) ? $phone : "");
         $user_id = sha1(uniqid($prefix));
         $user_password = !empty($password) ? $password : bin2hex(random_bytes(5));
-        $scopes = !empty($scopes) ? $scopes : $this->implode([
-            Scopes::DEFAULT_SCOPE,
-            Scopes::SCOPE_OPENID,
-            Scopes::SCOPE_CLAIM_NAME,
-            Scopes::SCOPE_CLAIM_EMAIL,
-            Scopes::SCOPE_CLAIM_PHONE,
+        $scopes = !empty($scopes) ? $scopes : Utils::implode([
+            OAuthScopeService::$defaultScope,
+            OAuthScopeService::SCOPE_OPENID,
+            OAuthScopeService::SCOPE_CLAIM_NAME,
+            OAuthScopeService::SCOPE_CLAIM_EMAIL,
+            OAuthScopeService::SCOPE_CLAIM_PHONE,
         ]);
 
         //Insert User
-        $result = $this->getOauthStorage()->setUserCustom($user_id, $user_password, $email, $name, $phone, $dial_code, $scopes);
+        $result = $this->storage->setCustomUser($user_id, $user_password, $email, $name, $phone, $dial_code, $scopes);
         if ($result) {
             log_info("Successfully Created User");
             log_info("User ID = $result");

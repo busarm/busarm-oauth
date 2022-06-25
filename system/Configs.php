@@ -14,7 +14,7 @@ class Configs
     |
     | Prefix appended to cookie name to prevent collisions
     */
-    const COOKIE_PREFIX = "oauth_";
+    const COOKIE_PREFIX = "oauth";
 
     /*
     |--------------------------------------------------------------------------

@@ -32,29 +32,6 @@ services:
     networks: 
       - local
 
-  # PHP Server
-  oauth-php:
-    restart: always
-    image: webdevops/php:8.0-alpine
-    depends_on:
-      - oauth-mysql
-    expose: 
-      - 9000
-    volumes:
-        - .:/var/www:rw
-        - ./php/conf.d/php.ini:/opt/docker/etc/php/conf.d/php.ini:ro
-    env_file:
-      # Add enviroment file
-      - .env
-    environment:
-        # PHP
-        PHP_MEMORY_LIMIT: 512M
-        PHP_DATE_TIMEZONE: UTC
-        PHP_DISPLAY_ERRORS: 1
-    networks: 
-      - local
-
-
   # Workspace Server - Handles background and system mgnt taks
   oauth-workspace:
     restart: always
@@ -79,13 +56,37 @@ services:
     networks: 
       - local
 
+  # PHP Server
+  oauth-php:
+    restart: always
+    image: webdevops/php:8.0-alpine
+    depends_on:
+      - oauth-mysql
+      - oauth-workspace
+    expose: 
+      - 9000
+    volumes:
+        - .:/var/www:rw
+        - ./php/conf.d/php.ini:/opt/docker/etc/php/conf.d/php.ini:ro
+    env_file:
+      # Add enviroment file
+      - .env
+    environment:
+        # PHP
+        PHP_MEMORY_LIMIT: 512M
+        PHP_DATE_TIMEZONE: UTC
+        PHP_DISPLAY_ERRORS: 1
+    networks: 
+      - local
+
   # Nginx Web server
   oauth:
     restart: always
     image: webdevops/nginx:alpine
     depends_on:
-      - oauth-php
       - oauth-mysql
+      - oauth-workspace
+      - oauth-php
     ports: 
       - 8000:80
     volumes:

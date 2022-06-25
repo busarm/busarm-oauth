@@ -35,7 +35,7 @@ if (empty($link)) {
     <tr>
         <td style='padding: 10px; display: flex; align-content: center; justify-content: center; text-align: center;'>
             <div style='margin:auto; text-align: center;'>
-                <a href="<?= $link ?>" style="margin:auto; background-color: <?= Configs::APP_THEME_PRIMARY_COLOR() ?>; border-radius:4px; color:#ffffff; display:inline-block; font-family:sans-serif; font-size:16px; font-weight:bold; line-height:40px; text-align:center; text-decoration:none; height:40px; width:200px; -webkit-text-size-adjust:none; mso-hide:all;" rel="noreferrer">
+                <a href="<?= $link ?>" style="margin:auto; background-color: <?= APP_THEME_PRIMARY_COLOR ?>; border-radius:4px; color:#ffffff; display:inline-block; font-family:sans-serif; font-size:16px; font-weight:bold; line-height:40px; text-align:center; text-decoration:none; height:40px; width:200px; -webkit-text-size-adjust:none; mso-hide:all;" rel="noreferrer">
                     Click to Login
                 </a>
             </div>

@@ -37,6 +37,6 @@ use System\URL;
         <li style="min-width: 60px;"><a href="<?= URL::appUrl(URL::APP_SUPPORT_PATH) ?>" target="_blank">Support</a></li>
     </ul>
     <ul class="copyright">
-        <li>&copy; <?= Configs::COMPANY_NAME() ?> All rights reserved.</li>
+        <li>&copy; <?= COMPANY_NAME ?> All rights reserved.</li>
     </ul>
 </footer>

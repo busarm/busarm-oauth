@@ -29,7 +29,7 @@ use System\URL;
         body {
             margin: auto !important;
             user-select: none;
-            background: <?= Configs::APP_THEME_PRIMARY_COLOR() ?> !important;
+            background: <?= APP_THEME_PRIMARY_COLOR ?> !important;
         }
 
         oauth-success body,
@@ -130,7 +130,7 @@ use System\URL;
 
         oauth-success .success-page .form button {
             outline: 0;
-            background: <?= Configs::APP_THEME_PRIMARY_COLOR() ?>;
+            background: <?= APP_THEME_PRIMARY_COLOR ?>;
             width: 100%;
             border: 0;
             padding: 15px;
@@ -160,7 +160,7 @@ use System\URL;
         }
 
         oauth-success .success-page .form .message a {
-            color: <?= Configs::APP_THEME_PRIMARY_COLOR() ?>;
+            color: <?= APP_THEME_PRIMARY_COLOR ?>;
             text-decoration: none;
         }
     </style>

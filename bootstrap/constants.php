@@ -2,9 +2,9 @@
 require_once "helpers.php";
 
 // Define environment variables
-define("ENV_DEV", "development");
-define("ENV_PROD", "production");
-define("ENV_TEST", "testing");
+const ENV_DEV = "development";
+const ENV_PROD = "production";
+const ENV_TEST = "testing";
 
 // Regions
 const REGION_DEV = "eu-west-2";

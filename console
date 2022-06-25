@@ -6,7 +6,7 @@ require_once(boolval(getenv('SEPARATE_VENDOR')) ? '/tmp/vendor/autoload.php' : F
 require_once('bootstrap/helpers.php');
 require_once('bootstrap/constants.php');
 
-use Application\Controllers\Task;
+use Application\Controllers\CLI\Task;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -15,7 +15,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use System\App;
 use System\Router;
-use System\Scopes;
+use  Application\Services\OAuthScopeService;
 
 /**
  *  Composer Command
@@ -87,7 +87,7 @@ $createClient = (new Command('client:create'))
     ->addOption('org', '', InputOption::VALUE_REQUIRED, "Organization id")
     ->addOption('name', '', InputOption::VALUE_REQUIRED, "Client name")
     ->addOption('redirect', '', InputOption::VALUE_OPTIONAL, "Client redirect urls (space sparated). e.g http://localhost:80 http://localhost:81")
-    ->addOption('scopes', '', InputOption::VALUE_OPTIONAL, "Client scopes (space sparated). e.g " . implode(' ', array_keys(Scopes::ALL_SCOPES)))
+    ->addOption('scopes', '', InputOption::VALUE_OPTIONAL, "Client scopes (space sparated). e.g " . implode(' ', array_keys(OAuthScopeService::$allScopes)))
     ->addOption('grants', '', InputOption::VALUE_OPTIONAL, "Client grant types (space sparated). e.g password client_credential refresh_token authorization_code")
     ->setCode(function (InputInterface $input, OutputInterface $output) {
         $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
@@ -125,7 +125,7 @@ $createUser = (new Command('user:create'))
     ->addOption('password', '', InputOption::VALUE_OPTIONAL, "User password")
     ->addOption('dial', '', InputOption::VALUE_OPTIONAL, "User phone number dial code")
     ->addOption('phone', '', InputOption::VALUE_OPTIONAL, "User phone number")
-    ->addOption('scopes', '', InputOption::VALUE_OPTIONAL, "User scopes (space sparated). e.g " . implode(' ', array_keys(Scopes::ALL_SCOPES)))
+    ->addOption('scopes', '', InputOption::VALUE_OPTIONAL, "User scopes (space sparated). e.g " . implode(' ', array_keys(OAuthScopeService::$allScopes)))
     ->setCode(function (InputInterface $input, OutputInterface $output) {
         $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
         (new App(new Router(Task::class, "create_user", [

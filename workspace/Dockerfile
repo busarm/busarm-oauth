@@ -17,11 +17,7 @@ RUN rm -rf /tmp/* /var/tmp/* && \
 
 WORKDIR /var/www
 
-# ADD ./ .
-
-# Init script
-# ADD ./workspace/init.sh /opt/init.sh
-# RUN sed -i 's/\r//g' /opt/init.sh
-# ENTRYPOINT [ "/opt/init.sh" ]
-
-CMD [ "/var/www//workspace/init.sh" ]
+# Startup script
+ADD ./startup.sh /opt/startup.sh
+RUN sed -i 's/\r//g' /opt/startup.sh
+ENTRYPOINT [ "/opt/startup.sh" ]

@@ -7,10 +7,10 @@ require_once(boolval(getenv('SEPARATE_VENDOR')) ? '/tmp/vendor/autoload.php' : F
 require_once(FCPATH . 'bootstrap/helpers.php');
 require_once(FCPATH . 'bootstrap/constants.php');
 
-use Application\Controllers\Authorize;
-use Application\Controllers\Misc;
-use Application\Controllers\Resources;
-use Application\Controllers\Token;
+use Application\Controllers\HTTP\Authorize;
+use Application\Controllers\HTTP\Misc;
+use Application\Controllers\HTTP\Resources;
+use Application\Controllers\HTTP\Token;
 use System\Router;
 
 // Set up router

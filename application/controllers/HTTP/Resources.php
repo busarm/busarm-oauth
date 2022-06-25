@@ -1,10 +1,11 @@
 <?php
 
-namespace Application\Controllers;
+namespace Application\Controllers\HTTP;
 
+use Application\Controllers\OAuthBaseController;
 use phpseclib\Crypt\RSA;
-use System\Scopes;
-use System\Server;
+use  Application\Services\OAuthScopeService;
+use System\Utils;
 
 /**
  * Created by PhpStorm.
@@ -12,7 +13,7 @@ use System\Server;
  * Date: 1/12/2018
  * Time: 12:20 PM
  **/
-class Resources extends Server
+class Resources extends OAuthBaseController
 {
 
     public function __construct()
@@ -22,13 +23,11 @@ class Resources extends Server
 
     /**
      * Get all scopes
-     * @api resources/scopes
-     * @method Get 
      * */
     public function scopes()
     {
         if ($this->validateAccessToken()) {
-            $this->response->setParameters(array('success' => true, 'data' => Scopes::ALL_SCOPES));
+            $this->response->setParameters(array('success' => true, 'data' => OAuthScopeService::$allScopes));
         }
         $this->response->send();
         die;
@@ -36,24 +35,20 @@ class Resources extends Server
 
     /**
      * Delete Access token and refresh token
-     * @api resources/removeAccess
-     * @method POST
-     * @param access_token String Required
-     * @param refresh_token String Optional
-     * */
+     */
     public function removeAccess()
     {
         // Validate permission
-        $this->validatePermission([Scopes::SCOPE_SYSTEM, Scopes::SCOPE_SYSTEM]);
+        $this->validatePermission([OAuthScopeService::SCOPE_SYSTEM, OAuthScopeService::SCOPE_SYSTEM]);
 
         $access_token = $this->request->request('access_token');
         $refresh_token = $this->request->request('refresh_token');
         $done = false;
         if (!empty($access_token)) {
-            $done = $this->getOauthStorage()->unsetAccessToken($access_token);
+            $done = $this->storage->unsetAccessToken($access_token);
         }
         if (!empty($refresh_token)) {
-            $done = $this->getOauthStorage()->unsetRefreshToken($refresh_token);
+            $done = $this->storage->unsetRefreshToken($refresh_token);
         }
         if ($done) {
             $this->response->setParameters($this->success('Successfully cleared access'));
@@ -66,18 +61,16 @@ class Resources extends Server
 
     /**
      * Obtain user info
-     * @api resources/getUser
-     * @method GET|POST 
-     * */
+     */
     public function getUser()
     {
         $user_id = $this->request->request('user_id') ?? $this->request->query('user_id');
 
         // If user_id requested - Validate permission
-        if (!empty($user_id) && $this->validatePermission([Scopes::SCOPE_SYSTEM, Scopes::SCOPE_ADMIN])) {
-            $user = $this->getOauthStorage()->getSingleUserInfo($user_id);
+        if (!empty($user_id) && $this->validatePermission([OAuthScopeService::SCOPE_SYSTEM, OAuthScopeService::SCOPE_ADMIN])) {
+            $user = $this->storage->getCustomUser($user_id);
         } else {
-            $user =  $this->getOauthStorage()->getSingleUserInfoForClaims($this->getTokenInfo('user_id'), array_keys(Scopes::findOpenIdScope($this->getTokenInfo('scope')) ?: []), false);
+            $user =  $this->storage->getCustomUserWIthClaims($this->getCurrentToken('user_id'), array_keys(OAuthScopeService::findOpenIdScope($this->getCurrentToken('scope')) ?: []), false);
         }
 
         if (!empty($user)) {
@@ -92,17 +85,14 @@ class Resources extends Server
 
     /**
      * Get Bulk users info
-     * @api resources/fetchUsers
-     * @method GET|POST
-     * @param user_ids Array or Comma separated string. Required 
-     * */
+     */
     public function fetchUsers()
     {
         // Validate permission
-        $this->validatePermission([Scopes::SCOPE_SYSTEM, Scopes::SCOPE_ADMIN]);
+        $this->validatePermission([OAuthScopeService::SCOPE_SYSTEM, OAuthScopeService::SCOPE_ADMIN]);
 
         if (!empty($user_ids = ($this->request->request('user_ids') ?? $this->request->query('user_ids')))) {
-            $users = $this->getOauthStorage()->getMultipleUserInfo($this->explode($user_ids, ','));
+            $users = $this->storage->getMultipleUsers(Utils::explode($user_ids, ','));
             if (!empty($users)) {
                 $this->response->setParameters($this->success($users));
             } else {
@@ -118,21 +108,12 @@ class Resources extends Server
     }
 
     /**
-     * Insert New Oauth User
-     * @api resources/createUser
-     * @method POST
-     * @param name String Required
-     * @param email String Required
-     * @param password String Required
-     * @param phone String Required
-     * @param dial_code String Required
-     * @param scope Array Required 
-     * @param force Boolean Optional
-     *  */
+     * Create OAuth User
+     */
     public function createUser()
     {
         // Validate permission
-        $this->validatePermission([Scopes::SCOPE_SYSTEM, Scopes::SCOPE_ADMIN]);
+        $this->validatePermission([OAuthScopeService::SCOPE_SYSTEM, OAuthScopeService::SCOPE_ADMIN]);
 
         $name = $this->request->request('name');
         $email = $this->request->request('email');
@@ -151,7 +132,7 @@ class Resources extends Server
         }
 
         //Check if scope is valid
-        $scope = array_keys(Scopes::findScope($scope) ?: []);
+        $scope = array_keys(OAuthScopeService::findScope($scope) ?: []);
         if (empty($scope)) {
             $this->response->setStatusCode(400);
             $this->response->setParameters($this->error('Invalid requested scope(s)', 'invalid_scopes'));
@@ -159,16 +140,16 @@ class Resources extends Server
             die;
         }
         // Add claim scopes if openid scope is included
-        else if (in_array(Scopes::SCOPE_OPENID, $scope)) {
-            array_merge($scope, Scopes::CLAIM_SCOPES);
+        else if (in_array(OAuthScopeService::SCOPE_OPENID, $scope)) {
+            array_merge($scope, OAuthScopeService::CLAIM_SCOPES);
         }
 
         // Process params
-        $scope = $this->implode($scope);
+        $scope = Utils::implode($scope);
         $user_id = sha1(uniqid(!empty($email) ? $email : (!empty($phone) ? $phone : $name)));
 
         // Check if user exists
-        if ($email && ($user = $this->getOauthStorage()->getUser($email))) {
+        if ($email && ($user = $this->storage->getUser($email))) {
             if ($force) {
                 $this->response->setParameters($this->error(sprintf("User with email %s already exists", $email), 'duplicate_user'));
             } else {
@@ -176,7 +157,7 @@ class Resources extends Server
             }
         } else {
             // Insert User
-            $result = $this->getOauthStorage()->setUserCustom($user_id, $password, $email, $name, $phone, $dial_code, $scope);
+            $result = $this->storage->setCustomUser($user_id, $password, $email, $name, $phone, $dial_code, $scope);
             if ($result) {
                 $this->response->setParameters($this->success(['user_id' => $user_id, 'existing' => false]));
             } else {
@@ -190,26 +171,16 @@ class Resources extends Server
 
 
     /**
-     * Update Existing Oauth User
-     * @api resources/updateUser
-     * @method POST
-     * @param user_id String Optional
-     * @param name String Optional
-     * @param email String Optional
-     * @param password String Optional
-     * @param phone String Optional
-     * @param dial_code String Optional
-     * @param scope Array Optional
-     * @param remove_scope Array Optional
+     * Update OAuth User
      */
     public function updateUser()
     {
         $user_id = $this->request->request('user_id') ?? $this->request->query('user_id');
         if (!empty($user_id)) {
             // Validate permission if specific user is requested
-            $this->validatePermission([Scopes::SCOPE_SYSTEM, Scopes::SCOPE_ADMIN]);
+            $this->validatePermission([OAuthScopeService::SCOPE_SYSTEM, OAuthScopeService::SCOPE_ADMIN]);
         } else {
-            $user_id = $this->getTokenInfo('user_id');
+            $user_id = $this->getCurrentToken('user_id');
         }
 
         if (!empty($user_id)) {
@@ -222,28 +193,28 @@ class Resources extends Server
             $scope = $this->request->request('scope') ?: null;
             $remove_scope = $this->request->request('remove_scope') ?: null;
 
-            //Check if scope is valid if it's available
-            $scope = array_keys(Scopes::findScope($scope) ?: []);
+            // Check if scope is valid if it's available
+            $scope = array_keys(OAuthScopeService::findScope($scope) ?: []);
 
-            //Check if user exists
-            $user = $this->getOauthStorage()->getUser(!empty($user_id) ? $user_id : $email);
+            // Check if user exists
+            $user = $this->storage->getUser(!empty($user_id) ? $user_id : $email);
             if (!empty($user)) {
 
-                //Merge current scope with new scopes
-                $mergedScopes = array_unique(array_merge($this->explode($user["scope"]), $scope ?: []));
+                // Merge current scope with new scopes
+                $mergedScopes = array_unique(array_merge(Utils::explode($user["scope"]), $scope ?: []));
 
-                //Remove Scopes
-                $newScopes = array_diff($mergedScopes, $this->explode($remove_scope));
+                // Remove Scopes
+                $newScopes = array_diff($mergedScopes, Utils::explode($remove_scope));
 
                 //Update User
-                $result = $this->getOauthStorage()->setUserCustom(
+                $result = $this->storage->setCustomUser(
                     $user_id,
                     $password,
                     $email ?? $user["email"],
                     $name ?? $user["name"],
                     $phone ?? $user["phone"],
                     $dial_code ?? $user["dial_code"],
-                    $this->implode($newScopes)
+                    Utils::implode($newScopes)
                 );
                 if ($result) {
                     $this->response->setParameters($this->success('Update Successful'));
@@ -262,20 +233,12 @@ class Resources extends Server
     }
 
     /**
-     * Insert new oauth client credentials
-     * @api resources/createClient
-     * @method POST
-     * @param client_name String Required
-     * @param org_id String Required
-     * @param redirect_url String Required
-     * @param grant_types Array|String Required
-     * @param scope Array Required
-     * @param user_id String Optional 
-     * */
+     * Create OAuth client
+     */
     public function createClient()
     {
         // Validate permission
-        $this->validatePermission([Scopes::SCOPE_SYSTEM, Scopes::SCOPE_ADMIN]);
+        $this->validatePermission([OAuthScopeService::SCOPE_SYSTEM, OAuthScopeService::SCOPE_ADMIN]);
 
         $client_name = $this->request->request('client_name');
         $org_id = $this->request->request('org_id');
@@ -292,8 +255,8 @@ class Resources extends Server
             die;
         }
 
-        //Check if scope is valid
-        $scope = array_keys(Scopes::findScope($scope) ?: []);
+        // Check if scope is valid
+        $scope = array_keys(OAuthScopeService::findScope($scope) ?: []);
         if (empty($scope)) {
             $this->response->setStatusCode(400);
             $this->response->setParameters($this->error('Invalid requested scope(s)', 'invalid_scopes'));
@@ -301,27 +264,27 @@ class Resources extends Server
             die;
         }
         // Add claim scopes if openid scope is included
-        else if (in_array(Scopes::SCOPE_OPENID, $scope)) {
-            array_merge($scope, Scopes::CLAIM_SCOPES);
+        else if (in_array(OAuthScopeService::SCOPE_OPENID, $scope)) {
+            array_merge($scope, OAuthScopeService::CLAIM_SCOPES);
         }
 
         // Process params
         $client_id = str_replace(' ', '_', strtolower($client_name)) . '_' . crc32(uniqid($client_name));
         $client_secret = sha1(uniqid($client_id));
-        $grant_types = $this->implode($grant_types);
-        $scope = $this->implode($scope);
-        $redirect_uri = $this->implode($redirect_uri);
+        $grant_types = Utils::implode($grant_types);
+        $scope = Utils::implode($scope);
+        $redirect_uri = Utils::implode($redirect_uri);
 
-        //Insert Client
-        $result = $this->getOauthStorage()->setClientDetailsCustom($org_id, $client_id, $client_name, $client_secret, $redirect_uri, $grant_types, $scope, $user_id);
+        // Insert Client
+        $result = $this->storage->setCustomClientDetails($org_id, $client_id, $client_name, $client_secret, $redirect_uri, $grant_types, $scope, $user_id);
         if ($result) {
 
-            //Insert jwt public keys for client
+            // Insert jwt public keys for client
             $algo = 'sha256';
             $rsa = new RSA();
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
-            if (!empty($keys) && $this->getOauthStorage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
+            if (!empty($keys) && $this->storage->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
                 $this->response->setParameters($this->success([
                     'client_id' => $client_id,
                     'client_secret' => $client_secret,
@@ -350,25 +313,16 @@ class Resources extends Server
     }
 
     /**
-     * Update Existing Oauth Client
-     * @api resources/updateClient
-     * @method POST
-     * @param client_id String Required
-     * @param client_name String Optional
-     * @param client_secret String Optional
-     * @param redirect_uri String Optional
-     * @param grant_types String Optional
-     * @param scope Array Optional
-     * @param remove_scope Array Optional
+     * Update OAuth Client
      */
     public function updateClient()
     {
         $client_id = $this->request->request('client_id') ?? $this->request->query('client_id');
         if (!empty($client_id)) {
             // Validate permission if specific user is requested
-            $this->validatePermission([Scopes::SCOPE_SYSTEM, Scopes::SCOPE_ADMIN]);
+            $this->validatePermission([OAuthScopeService::SCOPE_SYSTEM, OAuthScopeService::SCOPE_ADMIN]);
         } else {
-            $client_id = $this->getTokenInfo('client_id');
+            $client_id = $this->getCurrentToken('client_id');
         }
 
         if (!empty($client_id)) {
@@ -380,26 +334,26 @@ class Resources extends Server
             $scope = $this->request->request('scope');
             $remove_scope = $this->request->request('remove_scope') ?: null;
 
-            //Check if scope is valid if it's available
-            $scope = array_keys(Scopes::findScope($scope) ?: []);
+            // Check if scope is valid if it's available
+            $scope = array_keys(OAuthScopeService::findScope($scope) ?: []);
 
-            //Check if user exists
-            $client = $this->getOauthStorage()->getClientDetailsCustom($client_id);
+            // Check if user exists
+            $client = $this->storage->getCustomClientDetails($client_id);
             if (!empty($client)) {
 
-                //Merge current scope with new scopes
-                $mergedScopes = array_unique(array_merge($this->explode($client["scope"]), $scope ?: []));
+                // Merge current scope with new scopes
+                $mergedScopes = array_unique(array_merge(Utils::explode($client["scope"]), $scope ?: []));
 
-                //Remove Scopes
-                $newScopes = array_diff($mergedScopes, $this->explode($remove_scope));
+                // Remove Scopes
+                $newScopes = array_diff($mergedScopes, Utils::explode($remove_scope));
 
                 // Process params
-                $grant_types = $this->implode($grant_types);
-                $newScopes = $this->implode($newScopes);
-                $redirect_uri = $this->implode($redirect_uri);
+                $grant_types = Utils::implode($grant_types);
+                $newScopes = Utils::implode($newScopes);
+                $redirect_uri = Utils::implode($redirect_uri);
 
-                //Update User
-                $result = $this->getOauthStorage()->setClientDetailsCustom(
+                // Update User
+                $result = $this->storage->setCustomClientDetails(
                     $client["org_id"],
                     $client["client_id"],
                     !empty($client_name) ? $client_name : $client["client_name"],
@@ -426,17 +380,14 @@ class Resources extends Server
     }
 
     /**
-     * Update client's Public and Private Key pair
-     * @api resources/updateClientKeys
-     * @param client_id String Optional
-     * @method POST
-     * */
+     * Update OAuth client's Public and Private Key pair
+     */
     public function updateClientKeys()
     {
         // Validate permission
-        $this->validatePermission([Scopes::SCOPE_SYSTEM, Scopes::SCOPE_ADMIN]);
+        $this->validatePermission([OAuthScopeService::SCOPE_SYSTEM, OAuthScopeService::SCOPE_ADMIN]);
 
-        $client_id = $this->request->request('client_id') ?? $this->request->query('client_id') ?? $this->getClientInfo('client_id');
+        $client_id = $this->request->request('client_id') ?? $this->request->query('client_id') ?? $this->getCurrentClient('client_id');
         if (!empty($client_id)) {
 
             $algo = 'sha256';
@@ -444,7 +395,7 @@ class Resources extends Server
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
 
-            if (!empty($keys) && $this->getOauthStorage()->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
+            if (!empty($keys) && $this->storage->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
                 $this->response->setParameters($this->success([
                     'client_id' => $client_id,
                     'public_key' => base64_encode($keys['publickey']),
@@ -464,22 +415,19 @@ class Resources extends Server
 
     /**
      * Get Public key for client
-     * @api resources/getPublicKey
-     * @param client_id String Optional
-     * @method POST
-     * */
+     */
     public function getPublicKey()
     {
         $client_id = $this->request->request('client_id') ?? $this->request->query('client_id');
         if (!empty($client_id)) {
             // Validate permission if specific client is requested
-            $this->validatePermission([Scopes::SCOPE_SYSTEM, Scopes::SCOPE_ADMIN]);
+            $this->validatePermission([OAuthScopeService::SCOPE_SYSTEM, OAuthScopeService::SCOPE_ADMIN]);
         } else {
-            $client_id = $this->getClientInfo('client_id');
+            $client_id = $this->getCurrentClient('client_id');
         }
 
         if (!empty($client_id)) {
-            if (!empty($key = $this->getOauthStorage()->getPublicKey($client_id))) {
+            if (!empty($key = $this->storage->getPublicKey($client_id))) {
                 $this->response->setParameters($this->success([
                     'client_id' => $client_id,
                     'public_key' => base64_encode($key),
@@ -499,9 +447,7 @@ class Resources extends Server
 
     /**
      * Get Public Private Key Pairs
-     * @api resources/generateKeyPair
-     * @method GET|POST
-     * */
+     */
     public function generateKeyPair()
     {
         $size = intval($this->request->request('size') ?? $this->request->query('size') ?? 1024);

@@ -1,8 +1,8 @@
 <?php
-namespace Application\Controllers;
+namespace Application\Controllers\HTTP;
 
 use System\App;
-use System\CIPHER;
+use System\Encrypter;
 use System\Configs;
 use System\URL;
 
@@ -37,7 +37,7 @@ class Misc
     {
         $data = $this->request->query("data");
         if (!empty($data)) {
-            $link = CIPHER::decrypt(Configs::ENCRYPTION_KEY(), $data);
+            $link = Encrypter::decrypt(ENCRYPTION_KEY, $data);
             if($link) {
                 return URL::redirect($link);
             }

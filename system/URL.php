@@ -26,7 +26,7 @@ class URL
      */
     public static function appUrl($path = '')
     {
-        return trim(Configs::APP_URL(), ' /') . '/' . $path;
+        return trim(APP_URL, ' /') . '/' . $path;
     }
 
     /**
@@ -37,7 +37,7 @@ class URL
      */
     public static function assetUrl($path = '')
     {
-        return trim(Configs::ASSET_URL(), ' /') . '/' . $path;
+        return trim(ASSET_URL, ' /') . '/' . $path;
     }
 
     /**
@@ -158,7 +158,7 @@ class URL
     public static function generateSecureLink($link)
     {
         if ($link) {
-            $data = CIPHER::encrypt(Configs::ENCRYPTION_KEY(), $link);
+            $data = Encrypter::encrypt(ENCRYPTION_KEY, $link);
             if ($data) {
                 return URL::baseUrl('misc/link', ['data' => $data]);
             }
