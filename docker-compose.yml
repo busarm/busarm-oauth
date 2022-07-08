@@ -84,8 +84,6 @@ services:
     restart: always
     image: webdevops/nginx:alpine
     depends_on:
-      - oauth-mysql
-      - oauth-workspace
       - oauth-php
     ports: 
       - 8000:80
