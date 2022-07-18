@@ -103,6 +103,29 @@ class OAuthBaseController
         }
     }
 
+    /**
+     * Throttle requests
+     * // TODO Use Cache instead of cookie
+     *
+     * @param string $name
+     * @param integer $limit
+     * @param integer $seconds
+     * @return void
+     */
+    protected function throttle ($name, $limit = 0, $seconds = 60) {
+        $key = md5('throttle:'.static::class.':'.$name);
+        $count = (Utils::getCookie($key, IPADDRESS) ?? 0) + 1;
+        if ($limit > 0 && $count >= $limit) {
+            $this->response->setStatusCode(429);
+            $this->response->setParameters($this->error("Too many request. Please try again later", 'throttle_limit'));
+            $this->response->send();
+            die();
+        }
+        else {
+            Utils::setCookie($key, $count, $seconds, IPADDRESS);
+        }
+    }
+
     /** 
      * Validate Scope or Permission
      * @param string|array $scope

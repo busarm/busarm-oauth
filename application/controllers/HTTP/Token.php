@@ -24,6 +24,8 @@ class Token extends OAuthBaseController
      */
     public function request()
     {
+        $this->throttle('token-request', 5, 60);
+        
         $result = $this->server->grantAccessToken($this->request, $this->response);
         if ($result) {
             $this->response->setParameters($result);

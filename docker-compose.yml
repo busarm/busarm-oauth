@@ -62,7 +62,6 @@ services:
     image: webdevops/php:8.0-alpine
     depends_on:
       - oauth-mysql
-      - oauth-workspace
     expose: 
       - 9000
     volumes:
