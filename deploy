@@ -114,16 +114,13 @@ function deploySLS($stage = STAGE_DEV, $region = REGION_DEV, $function = '', $co
         $args[] = '--verbose';
     }
     $output = new ConsoleOutput(ConsoleOutput::VERBOSITY_DEBUG, true, new OutputFormatter(true));
-    if (run('git', ['push'], $output)->isSuccessful()) {
-        run('sls', [
-            'deploy',
-            '--stage=' . $stage,
-            '--region=' . $region,
-            '--verbose',
-            ...$args,
-            $function
-        ], $output, true, 900);
-    }
+    run('sls', [
+        'deploy',
+        '--stage=' . $stage,
+        '--region=' . $region,
+        ...$args,
+        $function
+    ], $output, true, 900);
 }
 
 
