@@ -5,10 +5,10 @@ env:
   secrets-manager:
     # Databse
     DB_NAME: oauth
-    DB_HOST: prod/busarm:db_host
-    DB_PORT: prod/busarm:db_port
-    DB_USER: prod/busarm:db_username
-    DB_PASS: prod/busarm:db_password
+    DB_HOST: "prod/busarm:db_host"
+    DB_PORT: "prod/busarm:db_port"
+    DB_USER: "prod/busarm:db_username"
+    DB_PASS: "prod/busarm:db_password"
 install:
     runtime-versions:
         docker: 18
