@@ -2,9 +2,9 @@ version: 0.2
 env:
   variables:
     SLS_STAGE: "Dev"
+    DB_NAME: oauth
   secrets-manager:
     # Databse
-    DB_NAME: oauth
     DB_HOST: "dev/busarm:db_host"
     DB_PORT: "dev/busarm:db_port"
     DB_USER: "dev/busarm:db_username"
