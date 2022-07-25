@@ -134,12 +134,11 @@ https://documenter.getpostman.com/view/20461972/UVyytYJ5
     -   Set up Serverless on PC. Visit https://serverless.com
         -   Configure Serverless credentials with profile name `busarm`
 -   Set up database
-    -   Run migration script
-        -   Access workspace container. Run `docker-compose exec oauth-workspace bash`
-        -   Go to app folder. Run `cd /var/www`
-        -   Run migration. Run `composer bref:cli <CONSOLE LAMBDA FUNCTION> migrate`
--   Run command `php deploy sls --dev` for staging
--   Run command `php deploy sls --prod` for production
+-   Set up AWS Codepipeline for auto serverless deployment
+    -   See https://github.com/Busarm/busarm-aws-cf/blob/master/cicd-build-ext.yaml
+-   Push changes to repo.
+    -   Push to `develop` branch for Staging
+    -   Push to `master` branch for Production
 
 ## Console Application
 
