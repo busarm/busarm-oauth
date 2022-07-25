@@ -1,7 +1,17 @@
 service: Busarm-Oauth
+frameworkVersion: ^3.21.0
 
 provider:
     name: aws
+    ecr:
+        scanOnPush: true
+        images:
+            busarm-oauth:
+                path: ./
+                file: Dockerfile.sls
+            busarm-oauth-console:
+                path: ./
+                file: Dockerfile.console.sls
     runtime: provided.al2
     profile: busarm
     region: ${opt:region, ''}
@@ -16,7 +26,8 @@ provider:
         BREF_BINARY_RESPONSES: "1" # For bref to return binary responses. Bref will automatically encode responses to base64
         SEPARATE_VENDOR: "0"
         # App
-        APP_VERSION: ${git:describe}
+        APP_VERSION: ${param:APP_VERSION}
+        APP_DEPLOY_DATE: ${param:APP_DEPLOY_DATE}
         APP_NAME: "Busarm Oauth"
         APP_THEME_PRIMARY_COLOR: "#267272"
         APP_THEME_SECONDARY_COLOR: "#e9ffb7"
@@ -33,7 +44,7 @@ provider:
         ASSET_URL: ${self:custom.assetUrl.${self:provider.stage}}
         PARTNER_URL: ${self:custom.partnerUrl.${self:provider.stage}}
         # Databse
-        DB_NAME: 13243546576879_oauth
+        DB_NAME: oauth
         DB_HOST: ${self:custom.secret.${self:provider.stage}.db_host}
         DB_PORT: ${self:custom.secret.${self:provider.stage}.db_port}
         DB_USER: ${self:custom.secret.${self:provider.stage}.db_username}
@@ -51,15 +62,14 @@ provider:
             - "*/*"
     vpc:
         securityGroupIds:
-            - sg-0f8d9dd9d6c8486db
+            - sg-01779fc0d4ec8930e
         subnetIds:
-            - subnet-00c055bcb994cd571
-            - subnet-0effe477213b0ed11
+            - subnet-0b3cb32233833f746
+            - subnet-07ca1983b3b5c7b68
 
 plugins:
   - ./vendor/bref/bref
   - serverless-plugin-log-retention
-  - serverless-plugin-git-variables
   - serverless-plugin-canary-deployments
   - serverless-prune-plugin
 package:
@@ -75,6 +85,14 @@ package:
         - .logs/**
         - .htaccess
         - node_modules/**
+
+params:
+  Prod:
+    APP_VERSION: 'release-1.0'
+    APP_DEPLOY_DATE: ''
+  Dev:
+    APP_VERSION: 'staging-1.0'
+    APP_DEPLOY_DATE: ''
 
 custom:
     bref:
@@ -115,25 +133,6 @@ custom:
     stopTime:
         Dev: "22:00"
         Prod: ""
-    # Git vars to show in ENV
-    gitVariablesEnvWhitelist:
-        [
-            "GIT_COMMIT_SHORT",
-            "GIT_COMMIT_LONG",
-            "GIT_BRANCH",
-            "GIT_IS_DIRTY",
-            "GIT_REPOSITORY",
-            "GIT_TAGS",
-        ]
-    # Git vars to show in AWS Tags
-    gitVariablesTagsWhitelist:
-        [
-            "GIT_COMMIT_SHORT",
-            "GIT_COMMIT_LONG",
-            "GIT_BRANCH",
-            "GIT_IS_DIRTY",
-            "GIT_REPOSITORY",
-        ]
     # Trafic shifting Deployment
     deploymentSettings:
         stages:
@@ -160,13 +159,11 @@ custom:
 functions:
     # Console
     Console:
-        handler: console
+        image:
+            name: busarm-oauth-console
         description: "Busarm Console & Cron Job Scheduler"
         memorySize: ${self:custom.avgMem.${self:provider.stage}}
         timeout: 28
-        layers:
-            - ${bref:layer.php-80}
-            - ${bref:layer.console} # Console layer
         package:
             exclude:
                 - "public/**"
@@ -175,12 +172,11 @@ functions:
             alias: Live
 
     Authorize:
-        handler: "public/index.php"
+        image:
+            name: busarm-oauth
         description: "Allow user to authorize access to their account"
         memorySize: ${self:custom.avgMem.${self:provider.stage}}
         timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
-        layers:
-            - ${bref:layer.php-80-fpm}
         events:
             - http:
                   path: "/authorize/{any+}"
@@ -195,12 +191,11 @@ functions:
             alias: Live
 
     Resources:
-        handler: "public/index.php"
+        image:
+            name: busarm-oauth
         description: "Retrieve oauth resources e.g user details with client credentials and access token"
         memorySize: ${self:custom.highMem.${self:provider.stage}}
         timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
-        layers:
-            - ${bref:layer.php-80-fpm}
         events:
             - http:
                   path: "/resources/{any+}"
@@ -219,12 +214,11 @@ functions:
             alias: Live
 
     Token:
-        handler: "public/index.php"
+        image:
+            name: busarm-oauth
         description: "Generate and manage oauth access tokens"
         memorySize: ${self:custom.highMem.${self:provider.stage}}
         timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
-        layers:
-            - ${bref:layer.php-80-fpm}
         events:
             - http:
                   path: "/token/{any+}"
@@ -242,12 +236,11 @@ functions:
             type: AllAtOnce
             alias: Live
     Misc:
-        handler: "public/index.php"
+        image:
+            name: busarm-oauth
         description: "Perform Miscellaneous tasks"
         memorySize: ${self:custom.avgMem.${self:provider.stage}}
         timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
-        layers:
-            - ${bref:layer.php-80-fpm}
         events:
             - http:
                   path: "/misc/{any+}"

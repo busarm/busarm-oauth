@@ -4,7 +4,6 @@ namespace Application\Services;
 
 use Exception;
 use PHPMailer\PHPMailer\PHPMailer;
-use System\Configs;
 
 class MailService
 {

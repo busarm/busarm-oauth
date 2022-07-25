@@ -1,0 +1,36 @@
+version: 0.2
+env:
+  variables:
+    SLS_STAGE: "Dev"
+  secrets-manager:
+    # Databse
+    DB_NAME: oauth
+    DB_HOST: dev/busarm:db_host
+    DB_PORT: dev/busarm:db_port
+    DB_USER: dev/busarm:db_username
+    DB_PASS: dev/busarm:db_password
+install:
+    runtime-versions:
+        docker: 18
+        php: 8.0
+phases:
+    build:
+        commands:
+            - echo Build started on `date`
+            
+            - echo Installing composer..
+            - composer install
+
+    post_build:
+        commands:
+            - echo Build completed on `date`
+
+            - echo Migrate DB
+            - composer migration:migrate
+
+            - echo Deploying serverless
+            - sls deploy --stage=$SLS_STAGE --region=$AWS_REGION --verbose --param="APP_VERSION=$CODEBUILD_RESOLVED_SOURCE_VERSION" --param="APP_DEPLOY_DATE=$CODEBUILD_START_TIME"
+
+cache:
+    paths:
+        - "vendor/**/*"
