@@ -14,14 +14,14 @@ install:
         docker: 18
         php: 8.0
 phases:
-    pre_build:
-        commands:
-            - echo Check for internet connection
-            - ping -c 5 google.com
+    # pre_build:
+    #     commands:
+    #         - echo Check for internet connection
+    #         - curl google.com
     build:
         commands:
             - echo Build started on `date`
-            
+
             - echo Installing composer..
             - composer install
 
