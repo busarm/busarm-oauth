@@ -1,19 +1,23 @@
 version: 0.2
 env:
-  variables:
-    SLS_STAGE: "Dev"
-    DB_NAME: oauth
-  secrets-manager:
-    # Databse
-    DB_HOST: "dev/busarm:db_host"
-    DB_PORT: "dev/busarm:db_port"
-    DB_USER: "dev/busarm:db_username"
-    DB_PASS: "dev/busarm:db_password"
+    variables:
+        SLS_STAGE: "Dev"
+        DB_NAME: oauth
+    secrets-manager:
+        # Databse
+        DB_HOST: "dev/busarm:db_host"
+        DB_PORT: "dev/busarm:db_port"
+        DB_USER: "dev/busarm:db_username"
+        DB_PASS: "dev/busarm:db_password"
 install:
     runtime-versions:
         docker: 18
         php: 8.0
 phases:
+    pre_build:
+        commands:
+            - echo Check for internet connection
+            - ping -c 5 google.com
     build:
         commands:
             - echo Build started on `date`
