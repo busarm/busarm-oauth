@@ -13,7 +13,6 @@ provider:
                 path: ./
                 file: Dockerfile.console.sls
     runtime: provided.al2
-    profile: busarm
     region: ${opt:region, ''}
     stage: ${opt:stage, ''}
     stackName: Busarm-Oauth-${self:provider.stage}
