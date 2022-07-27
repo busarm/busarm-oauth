@@ -127,10 +127,10 @@ custom:
         - X-Amz-User-Agent
     corsCache: "max-age=3600"
     startTime:
-        Dev: "08:00"
+        Dev: "00:00" # Default 08:00 UTC
         Prod: ""
     stopTime:
-        Dev: "22:00"
+        Dev: "14:00" # Default 22:00 UTC
         Prod: ""
     # Trafic shifting Deployment
     deploymentSettings:

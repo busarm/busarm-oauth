@@ -33,7 +33,8 @@ phases:
             - composer migration:migrate
 
             - echo Deploying serverless
-            - sls deploy --stage=$SLS_STAGE --region=$AWS_REGION --verbose --param="APP_VERSION=$CODEBUILD_RESOLVED_SOURCE_VERSION" --param="APP_DEPLOY_DATE=$CODEBUILD_START_TIME"
+            - sls deploy --stage=$SLS_STAGE --region=$AWS_REGION --verbose --conceal --param="APP_VERSION=$CODEBUILD_RESOLVED_SOURCE_VERSION" --param="APP_DEPLOY_DATE=$CODEBUILD_START_TIME"
 cache:
     paths:
         - "vendor/**/*"
+        - "node_modules/**/*"

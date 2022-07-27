@@ -1,14 +1,14 @@
 version: 0.2
 env:
-  variables:
-    SLS_STAGE: "Prod"
-    DB_NAME: oauth
-  secrets-manager:
-    # Databse
-    DB_HOST: "prod/busarm:db_host"
-    DB_PORT: "prod/busarm:db_port"
-    DB_USER: "prod/busarm:db_username"
-    DB_PASS: "prod/busarm:db_password"
+    variables:
+        SLS_STAGE: "Prod"
+        DB_NAME: oauth
+    secrets-manager:
+        # Databse
+        DB_HOST: "prod/busarm:db_host"
+        DB_PORT: "prod/busarm:db_port"
+        DB_USER: "prod/busarm:db_username"
+        DB_PASS: "prod/busarm:db_password"
 install:
     runtime-versions:
         docker: 18
@@ -22,7 +22,7 @@ phases:
     build:
         commands:
             - echo Build started on `date`
-            
+
             - echo Installing composer..
             - composer install --no-dev
     post_build:
@@ -33,7 +33,7 @@ phases:
             - composer migration:migrate
 
             - echo Deploying serverless
-            - sls deploy --stage=$SLS_STAGE --region=$AWS_REGION --verbose --param="APP_VERSION=$CODEBUILD_RESOLVED_SOURCE_VERSION" --param="APP_DEPLOY_DATE=$CODEBUILD_START_TIME"
+            - sls deploy --stage=$SLS_STAGE --region=$AWS_REGION --verbose --conceal --param="APP_VERSION=$CODEBUILD_RESOLVED_SOURCE_VERSION" --param="APP_DEPLOY_DATE=$CODEBUILD_START_TIME"
 cache:
     paths:
         - "vendor/**/*"
