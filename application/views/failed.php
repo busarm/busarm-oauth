@@ -139,6 +139,19 @@ use System\URL;
             color: <?= APP_THEME_PRIMARY_COLOR ?>;
             text-decoration: none;
         }
+        oauth-failed .img {
+            margin: auto;
+            height: 100%;
+            padding: 0;
+            image-resolution: from-image;
+            image-rendering: auto;
+            object-fit: contain;
+            border: 0;
+            background: transparent;
+        }
+        oauth-failed .img.icon {
+            height: 100px;
+        }
     </style>
 </head>
 
@@ -150,7 +163,7 @@ use System\URL;
                 <?= app()->view('components/logo') ?>
                 <br />
                 <div>
-                    <img class="logo icon" src="<?= URL::assetUrl('public/images/icons/Warning.png') ?>">
+                    <img class="img icon" src="<?= URL::assetUrl('public/images/icons/Warning.png') ?>" alt="Failed">
                 </div>
                 <br>
                 <?php

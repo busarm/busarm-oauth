@@ -162,7 +162,6 @@ use System\URL;
                     <h3> <span style="color:#DF632D"><?= ucfirst($client_name ?? $org_name) ?></span> is requesting access to your account</h3>
                     <?php if (!empty($user_name) || !empty($user_email)) : ?>
                         <div>
-                            <img class="icon" src="<?= URL::assetUrl('public/images/icons/Name_104px.png') ?>">
                             <div>
                                 <?php if ($user_name) : ?>
                                     <strong><?= $user_name ?> </strong>

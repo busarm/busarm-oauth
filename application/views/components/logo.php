@@ -21,6 +21,6 @@ use System\URL;
 </style>
 <app-logo>
     <div>
-        <img class="logo logo_txt" src="<?= URL::assetUrl('public/images/logo/dark/logo_txt_512px.png') ?>">
+        <img class="logo logo_txt" src="<?= URL::assetUrl('public/images/logo/dark/logo_txt_512px.png') ?>" alt="<?= COMPANY_NAME ?>">
     </div>
 </app-logo>
