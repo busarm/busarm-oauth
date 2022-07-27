@@ -2,7 +2,6 @@
 
 use Database\BaseMigration;
 
-echo "Connecting to DB  - " . getenv('DB_NAME') . "on Host - " . getenv('DB_HOST');
 return
     [
         'paths' => [

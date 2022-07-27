@@ -18,7 +18,7 @@ final class InsertDefaults extends BaseMigration
                 'scope' => $scope,
                 'type' => in_array($scope, OAuthScopeService::CLAIM_SCOPES) ? 'claims' : 'roles',
                 'description' => $desc,
-                'is_default' => $scope === OAuthScopeService::DEFAULT_SCOPE
+                'is_default' => $scope === OAuthScopeService::$defaultScope
             ])->saveData());
         }
     }

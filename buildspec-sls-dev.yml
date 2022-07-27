@@ -12,19 +12,19 @@ env:
 install:
     runtime-versions:
         docker: 18
+        nodejs: 14
         php: 8.0
 phases:
-    # pre_build:
-    #     commands:
-    #         - echo Check for internet connection
-    #         - curl google.com
+    pre_build:
+        commands:
+            - npm install --global serverless
+            - npm install
     build:
         commands:
             - echo Build started on `date`
 
             - echo Installing composer..
             - composer install
-
     post_build:
         commands:
             - echo Build completed on `date`
@@ -34,7 +34,6 @@ phases:
 
             - echo Deploying serverless
             - sls deploy --stage=$SLS_STAGE --region=$AWS_REGION --verbose --param="APP_VERSION=$CODEBUILD_RESOLVED_SOURCE_VERSION" --param="APP_DEPLOY_DATE=$CODEBUILD_START_TIME"
-
 cache:
     paths:
         - "vendor/**/*"
