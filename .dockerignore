@@ -1,0 +1,10 @@
+composer.lock
+.env
+.env.*
+.git/**
+.vscode/**
+.serverless/**
+.uploads/**
+.cache/**
+.logs/**
+node_modules/**
