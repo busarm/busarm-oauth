@@ -247,7 +247,6 @@ class App
                 return $content;
             } else {
                 echo $content;
-                exit;
             }
         } else {
             if ($return) {

@@ -1,6 +1,5 @@
 <?php
 
-use System\Configs;
 use System\URL;
 
 ?>

@@ -9,7 +9,6 @@
  * @var string $action
  */
 
-use System\Configs;
 use System\URL;
 
 ?>
@@ -21,10 +20,11 @@ use System\URL;
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <link rel="icon" type="image/png" href="<?= URL::assetUrl('public/images/favicon/dark/favicon-16x16.png') ?>" sizes="16x16" />
-    <link rel="icon" type="image/png" href="<?= URL::assetUrl('public/images/favicon/dark/favicon-32x32.png') ?>" sizes="32x32" />
-    <link rel="icon" type="image/png" href="<?= URL::assetUrl('public/images/favicon/dark/favicon-64x64.png') ?>" sizes="64x64" />
-    <link rel="icon" type="image/png" href="<?= URL::assetUrl('public/images/favicon/dark/favicon-96x96.png') ?>" sizes="96x96" />
+
+    <link rel="icon" type="image/png" href="<?= URL::assetUrl('public/images/favicon/light/icon_16px.png') ?>" sizes="16x16" />
+    <link rel="icon" type="image/png" href="<?= URL::assetUrl('public/images/favicon/light/icon_32px.png') ?>" sizes="32x32" />
+    <link rel="icon" type="image/png" href="<?= URL::assetUrl('public/images/favicon/light/icon_64px.png') ?>" sizes="64x64" />
+    <link rel="icon" type="image/png" href="<?= URL::assetUrl('public/images/favicon/light/icon_96px.png') ?>" sizes="96x96" />
 
     <link rel="stylesheet" type="text/css" href="<?= URL::GOOGLE_FONT_URL ?>" />
 
@@ -84,27 +84,8 @@ use System\URL;
             -moz-osx-font-smoothing: grayscale;
         }
 
-        oauth-authorize .auth-page .logo.icon {
-            margin: auto;
-            height: 100%;
-            padding: 0;
-            image-resolution: from-image;
-            image-rendering: auto;
-            object-fit: contain;
-            border: 0;
-            background: transparent;
-        }
-
-        oauth-authorize .auth-page .logo.logo_icon {
-            height: 80px;
-        }
-
         oauth-authorize .auth-page .icon {
             height: 40px;
-        }
-
-        oauth-authorize .auth-page .logo.logo_txt {
-            height: 25px;
         }
 
         oauth-authorize .auth-page .form {
@@ -174,12 +155,8 @@ use System\URL;
     <oauth-authorize>
         <div class="auth-page">
             <div class="form">
-                <div>
-                    <img class="logo logo_icon" src="<?= URL::assetUrl('public/images/logo/dark/logo_256px.png') ?>">
-                </div>
-                <div>
-                    <img class="logo logo_txt" src="<?= URL::assetUrl('public/images/logo/dark/logo_txt_512px.png') ?>">
-                </div>
+                <!-- Logo -->
+                <?= app()->view('components/logo') ?>
                 <br>
                 <form id="login-form" class="form" method="post" action="<?= $action ?? null ?>">
                     <h3> <span style="color:#DF632D"><?= ucfirst($client_name ?? $org_name) ?></span> is requesting access to your account</h3>

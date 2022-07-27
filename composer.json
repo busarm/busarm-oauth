@@ -26,8 +26,6 @@
     },
     "scripts": {
         "bref:cli": "vendor/bin/bref cli",
-        "deploy:dev": "php deploy sls --dev --verbose",
-        "deploy:prod": "php deploy sls --prod --verbose",
         "migration:generate": "phinx-migrations generate --overwrite --configuration database/phinx.php --name app",
         "migration:create": "phinx create --configuration database/phinx.php",
         "migration:migrate": "phinx migrate --configuration database/phinx.php",
