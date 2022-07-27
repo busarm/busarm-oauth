@@ -155,7 +155,7 @@ $app->addCommands([
 ]);
 ```
 
-### Run Console commands
+### Run Console commands (Locally)
 
 -   Start Local Server (See instructions above).
 -   Go into the application's contaner. Run `docker-compose exec oauth-workspace bash`
@@ -163,3 +163,10 @@ $app->addCommands([
 -   List available commands `php console list`
 -   Get command help `php console <command> --help`
 -   Run `php console <command> <arg1> <arg2> <arg...>`
+
+### Run Console commands (Staging/Production)
+
+-   Set up Serverless profile.
+    -   See https://www.serverless.com/framework/docs/providers/aws/cli-reference/config-credentials
+-   Run command: `composer bref:cli -- -p <PROFILE> -r <REGION> <SERVICE NAME>-<STAGE>-<FUNCTION> -- <command> <arg1> <arg2> <arg...>` .
+    -   e.g `composer bref:cli -- -p busarm -r eu-west-2 Busarm-Oauth-Dev-Console -- client:create --org=1 --name="Test APP" --redirect="https://app.test.com/hook/oauth/authorize" --scope="openid name email phone public user tester" --grants="password client_credential refresh_token authorization_code"`

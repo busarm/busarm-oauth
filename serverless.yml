@@ -87,10 +87,10 @@ package:
 
 params:
   Prod:
-    APP_VERSION: 'release-1.0'
+    APP_VERSION: 'build-prod-1'
     APP_DEPLOY_DATE: ''
   Dev:
-    APP_VERSION: 'staging-1.0'
+    APP_VERSION: 'build-dev-1'
     APP_DEPLOY_DATE: ''
 
 custom:
