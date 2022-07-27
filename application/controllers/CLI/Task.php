@@ -31,10 +31,11 @@ class Task extends OAuthBaseController
     {
         $result = $this->storage->setOrganizationDetails($org_name);
         if ($result) {
-            log_info("Successfully Added Organization");
-            log_info("Organizatoin ID = $result");
+            log_debug("Successfully Added Organization");
+            log_debug("Organizatoin ID = $result");
+        } else {
+            exit("Failed to create org");
         }
-        die;
     }
 
     /**
@@ -64,23 +65,22 @@ class Task extends OAuthBaseController
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
             if (!empty($keys) && $this->storage->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
-                log_info("Successfully Created Client");
-                log_info("Client ID = $client_id");
-                log_info("Client Secret = $client_secret");
-                log_info("Client Grant_types = $grant_types");
-                log_info("Client Scopes = $scopes");
-                log_info("Client Redirect Url = $redirect_uri");
-                log_info("Client Public Key = " . $keys['publickey']);
-                log_info("Client Public Key ALGO = $algo");
+                log_debug("Successfully Created Client");
+                log_debug("Client ID = $client_id");
+                log_debug("Client Secret = $client_secret");
+                log_debug("Client Grant_types = $grant_types");
+                log_debug("Client Scopes = $scopes");
+                log_debug("Client Redirect Url = $redirect_uri");
+                log_debug("Client Public Key = " . $keys['publickey']);
+                log_debug("Client Public Key ALGO = $algo");
             } else {
-                log_info("Successfully Created Client");
-                log_info("Client ID = $client_id");
-                log_info("Client Secret = $client_secret");
-                log_info("Client Grant_types = $grant_types");
-                log_info("Client Scopes = $scopes");
-                log_info("Client Redirect Url = $redirect_uri");
+                log_debug("Successfully Created Client");
+                log_debug("Client ID = $client_id");
+                log_debug("Client Secret = $client_secret");
+                log_debug("Client Grant_types = $grant_types");
+                log_debug("Client Scopes = $scopes");
+                log_debug("Client Redirect Url = $redirect_uri");
             }
-            die;
         } else {
             exit("Failed to create client");
         }
@@ -100,10 +100,9 @@ class Task extends OAuthBaseController
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
             if (!empty($keys) && $this->storage->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
-                log_info("Successfully Updated Client Keys");
-                log_info("Client Public Key = " . $keys['publickey']);
-                log_info("Client Public Key ALGO = $algo");
-                die;
+                log_debug("Successfully Updated Client Keys");
+                log_debug("Client Public Key = " . $keys['publickey']);
+                log_debug("Client Public Key ALGO = $algo");
             } else {
                 exit("Failed to update client keys");
             }
@@ -140,15 +139,14 @@ class Task extends OAuthBaseController
         //Insert User
         $result = $this->storage->setCustomUser($user_id, $user_password, $email, $name, $phone, $dial_code, $scopes);
         if ($result) {
-            log_info("Successfully Created User");
-            log_info("User ID = $result");
-            log_info("User Name = $name");
-            log_info("User Email = $email");
+            log_debug("Successfully Created User");
+            log_debug("User ID = $result");
+            log_debug("User Name = $name");
+            log_debug("User Email = $email");
             if (empty($password)) {
-                log_info("User Password = $user_password");
+                log_debug("User Password = $user_password");
             }
-            log_info("User Scopes = $scopes");
-            die;
+            log_debug("User Scopes = $scopes");
         } else {
             exit("Failed to create user");
         }
