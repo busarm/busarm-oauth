@@ -17,7 +17,7 @@ class MailService
      * @param integer $mail_timeout
      * @param string $mail_charset
      */
-    protected function __construct(private $mail_protocol = 'smtp', private $mail_timeout = 10, private $mail_charset = 'utf-8')
+    public function __construct(private $mail_protocol = 'smtp', private $mail_timeout = 10, private $mail_charset = 'utf-8')
     {
         $this->mail = new PHPMailer(true);
 

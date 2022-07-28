@@ -186,12 +186,13 @@ class Authorize extends OAuthBaseController
 
                     if ($is_authorized = $this->server->validateAuthorizeRequest($this->request, $this->response)) {
 
-                        // Reinitialize response
+                        // Re-initialize response
                         $this->response = new \OAuth2\Response();
                         $this->server->handleAuthorizeRequest($this->request, $this->response, $is_authorized, $user_id);
 
                         $message = $this->getEmailAuthView($this->response->getHttpHeader("Location"));
 
+                        // Send email
                         if ((new MailService)->send("Email Authorization", $message, $email)) {
                             try {
                                 // Save to cookie to prevent duplicate 
