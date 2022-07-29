@@ -9,8 +9,7 @@
  * @var string $content
  */
 
-use System\Configs;
-use System\URL;
+use Application\Helpers\URL;
 
 if (empty($content)) {
     exit;

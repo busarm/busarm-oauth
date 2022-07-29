@@ -143,19 +143,19 @@ class OAuthStorageService extends Pdo
         }
 
         $fields = [];
-        if (in_array(OAuthScopeService::SCOPE_CLAIM_PROFILE, $claims)) {
+        if (in_array(SCOPE_CLAIM_PROFILE, $claims)) {
             $fields[] = 'name';
             $fields[] = 'email';
             $fields[] = 'phone';
             $fields[] = 'dial_code';
         } else {
-            if (in_array(OAuthScopeService::SCOPE_CLAIM_NAME, $claims)) {
+            if (in_array(SCOPE_CLAIM_NAME, $claims)) {
                 $fields[] = 'name';
             }
-            if (in_array(OAuthScopeService::SCOPE_CLAIM_EMAIL, $claims)) {
+            if (in_array(SCOPE_CLAIM_EMAIL, $claims)) {
                 $fields[] = 'email';
             }
-            if (in_array(OAuthScopeService::SCOPE_CLAIM_PHONE, $claims)) {
+            if (in_array(SCOPE_CLAIM_PHONE, $claims)) {
                 $fields[] = 'phone';
                 $fields[] = 'dial_code';
             }
@@ -346,11 +346,11 @@ class OAuthStorageService extends Pdo
         $stmt->execute([$user_id]);
         if ($result = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $user_scopes = array_map('strtolower', explode(' ', $result['scope']));
-            if (in_array(OAuthScopeService::SCOPE_OWNER, $user_scopes)) {
+            if (in_array(SCOPE_OWNER, $user_scopes)) {
                 $found = array_keys(OAuthScopeService::$allScopes);
             } else {
                 $scopes = !is_array($scope) ? explode(' ', $scope) : $scope;
-                $scopes = in_array(OAuthScopeService::SCOPE_OWNER, $scopes) ? array_keys(OAuthScopeService::$allScopes) : $scopes;
+                $scopes = in_array(SCOPE_OWNER, $scopes) ? array_keys(OAuthScopeService::$allScopes) : $scopes;
                 foreach ($scopes as $scope) {
                     if (in_array(strtolower($scope), $user_scopes)) {
                         $found[] = $scope;
@@ -377,11 +377,11 @@ class OAuthStorageService extends Pdo
         $stmt->execute([$client_id]);
         if ($result = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $client_scopes = array_map('strtolower', explode(' ', $result['scope']));
-            if (in_array(OAuthScopeService::SCOPE_OWNER, $client_scopes)) {
+            if (in_array(SCOPE_OWNER, $client_scopes)) {
                 $found = array_keys(OAuthScopeService::$allScopes);
             } else {
                 $scopes = !is_array($scope) ? explode(' ', $scope) : $scope;
-                $scopes = in_array(OAuthScopeService::SCOPE_OWNER, $scopes) ? array_keys(OAuthScopeService::$allScopes) : $scopes;
+                $scopes = in_array(SCOPE_OWNER, $scopes) ? array_keys(OAuthScopeService::$allScopes) : $scopes;
                 foreach ($scopes as $scope) {
                     if (in_array(strtolower($scope), $client_scopes)) {
                         $found[] = $scope;

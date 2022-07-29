@@ -13,39 +13,23 @@ use OAuth2\Storage\Memory;
  */
 class OAuthScopeService extends Scope
 {
-    const SCOPE_OWNER = '*';
-    const SCOPE_SYSTEM = 'system';
-    const SCOPE_ADMIN = 'admin';
-    const SCOPE_STAFF = 'staff';
-    const SCOPE_PARTNER = 'partner';
-    const SCOPE_AGENT = 'agent';
-    const SCOPE_USER = 'user';
-    const SCOPE_DEVELOPER = 'developer';
-    const SCOPE_TESTER = 'tester';
-    const SCOPE_PUBLIC = 'public';
-    const SCOPE_OPENID = 'openid';
-    const SCOPE_CLAIM_NAME = 'name';
-    const SCOPE_CLAIM_EMAIL = 'email';
-    const SCOPE_CLAIM_PHONE = 'phone';
-    const SCOPE_CLAIM_PROFILE = 'profile';
-
-    public static $defaultScope = self::SCOPE_PUBLIC;
+    public static $defaultScope = SCOPE_PUBLIC;
     public static $allScopes = [
-        self::SCOPE_OWNER => "Access everything",
-        self::SCOPE_SYSTEM => "Access system resources",
-        self::SCOPE_ADMIN => "Access administrator resources",
-        self::SCOPE_STAFF => "Access staff only resources",
-        self::SCOPE_PARTNER => "Access partner resources",
-        self::SCOPE_AGENT => "Access agent resources",
-        self::SCOPE_USER => "Access user resources",
-        self::SCOPE_DEVELOPER => "Access developer only resources",
-        self::SCOPE_TESTER => "Perform tests and access test resources",
-        self::SCOPE_PUBLIC => "Access any publicly available resource",
-        self::SCOPE_OPENID => "Request access to private user information",
-        self::SCOPE_CLAIM_NAME => "Get user name",
-        self::SCOPE_CLAIM_EMAIL => "Get user email",
-        self::SCOPE_CLAIM_PHONE => "Get user name",
-        self::SCOPE_CLAIM_PROFILE => "Get user profile information",
+        SCOPE_OWNER => "Access everything",
+        SCOPE_SYSTEM => "Access system resources",
+        SCOPE_ADMIN => "Access administrator resources",
+        SCOPE_STAFF => "Access staff only resources",
+        SCOPE_PARTNER => "Access partner resources",
+        SCOPE_AGENT => "Access agent resources",
+        SCOPE_USER => "Access user resources",
+        SCOPE_DEVELOPER => "Access developer only resources",
+        SCOPE_TESTER => "Perform tests and access test resources",
+        SCOPE_PUBLIC => "Access any publicly available resource",
+        SCOPE_OPENID => "Request access to private user information",
+        SCOPE_CLAIM_NAME => "Get user name",
+        SCOPE_CLAIM_EMAIL => "Get user email",
+        SCOPE_CLAIM_PHONE => "Get user name",
+        SCOPE_CLAIM_PROFILE => "Get user profile information",
     ];
 
     /**
@@ -54,13 +38,13 @@ class OAuthScopeService extends Scope
     protected $storage;
 
     const CLAIM_SCOPES = [
-        self::SCOPE_OPENID,
-        self::SCOPE_CLAIM_NAME,
-        self::SCOPE_CLAIM_EMAIL,
-        self::SCOPE_CLAIM_PHONE,
-        self::SCOPE_CLAIM_PROFILE,
+        SCOPE_OPENID,
+        SCOPE_CLAIM_NAME,
+        SCOPE_CLAIM_EMAIL,
+        SCOPE_CLAIM_PHONE,
+        SCOPE_CLAIM_PROFILE,
     ];
-    
+
     /**
      * Constructor
      * @param array $scopes ['name' => 'description'][]
@@ -69,10 +53,10 @@ class OAuthScopeService extends Scope
      */
     public function __construct($scopes = [], $defaultScope = null)
     {
-        if(!empty($scopes)) {
+        if (!empty($scopes)) {
             self::$allScopes = array_unique(array_merge(self::$allScopes, $scopes));
         }
-        if(!empty($defaultScope)) {
+        if (!empty($defaultScope)) {
             self::$defaultScope = $defaultScope;
         }
         parent::__construct(new Memory(array(
@@ -96,9 +80,9 @@ class OAuthScopeService extends Scope
     public function checkScope($required_scope, $available_scope)
     {
         $required_scope = explode(' ', trim($required_scope));
-        $required_scope = in_array(OAuthScopeService::SCOPE_OWNER, $required_scope) ? array_keys(OAuthScopeService::$allScopes) : $required_scope;
+        $required_scope = in_array(SCOPE_OWNER, $required_scope) ? array_keys(OAuthScopeService::$allScopes) : $required_scope;
         $available_scope = explode(' ', trim($available_scope));
-        $available_scope = in_array(OAuthScopeService::SCOPE_OWNER, $available_scope) ? array_keys(OAuthScopeService::$allScopes) : $available_scope;
+        $available_scope = in_array(SCOPE_OWNER, $available_scope) ? array_keys(OAuthScopeService::$allScopes) : $available_scope;
 
         return (count(array_diff($required_scope, $available_scope)) == 0);
     }
@@ -111,7 +95,7 @@ class OAuthScopeService extends Scope
     public static function findScope($scopes)
     {
         $scopes = !is_array($scopes) ? explode(' ', $scopes) : $scopes;
-        $scopes = in_array(OAuthScopeService::SCOPE_OWNER, $scopes) ? array_keys(OAuthScopeService::$allScopes) : $scopes;
+        $scopes = in_array(SCOPE_OWNER, $scopes) ? array_keys(OAuthScopeService::$allScopes) : $scopes;
 
         $availableScopes =  array_keys(self::$allScopes);
 
@@ -133,9 +117,9 @@ class OAuthScopeService extends Scope
     public static function findOpenIdScope($scopes)
     {
         $scopes = !is_array($scopes) ? explode(' ', $scopes) : $scopes;
-        $scopes = in_array(OAuthScopeService::SCOPE_OWNER, $scopes) ? array_keys(OAuthScopeService::$allScopes) : $scopes;
+        $scopes = in_array(SCOPE_OWNER, $scopes) ? array_keys(OAuthScopeService::$allScopes) : $scopes;
 
-        if (!in_array(OAuthScopeService::SCOPE_OPENID, $scopes)) return false;
+        if (!in_array(SCOPE_OPENID, $scopes)) return false;
 
         $found = [];
         foreach ($scopes as $scope) {

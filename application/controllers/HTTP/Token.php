@@ -16,7 +16,7 @@ class Token extends OAuthBaseController
 {
     public function __construct()
     {
-        parent::__construct(false, true);
+        parent::__construct(false);
     }
 
     /**
@@ -24,27 +24,22 @@ class Token extends OAuthBaseController
      */
     public function request()
     {
-        $this->throttle('token-request', 5, 60);
-        
-        $result = $this->server->grantAccessToken($this->request, $this->response);
+        $result = $this->oauth->server->grantAccessToken($this->oauth->request, $this->oauth->response);
         if ($result) {
-            $this->response->setParameters($result);
+            app()->sendHttpResponse(200, $result);
         }
-        $this->response->send();
-        die();
+        app()->sendHttpResponse(401, $this->oauth->response->getParameters());
     }
-
 
     /**
      * Verify Token
      */
     public function verify()
     {
-        if ($this->validateAccessToken()) {
-            $this->response->setParameters(array('success' => true, 'message' => 'Api access granted'));
+        if ($this->oauth->validateAccessToken()) {
+            app()->sendHttpResponse(200, $this->success('Api access granted'));
         }
-        $this->response->send();
-        die;
+        app()->sendHttpResponse(401, $this->oauth->response->getParameters());
     }
 
     /**
@@ -52,11 +47,10 @@ class Token extends OAuthBaseController
      */
     public function info()
     {
-        if ($this->validateAccessToken()) {
-            $this->response->setParameters(array('success' => true, 'data' => $this->getCurrentToken()));
+        if ($this->oauth->validateAccessToken()) {
+            app()->sendHttpResponse(200, $this->success($this->oauth->getAuthToken()));
         }
-        $this->response->send();
-        die;
+        app()->sendHttpResponse(401, $this->oauth->response->getParameters());
     }
 
     /**
@@ -64,21 +58,19 @@ class Token extends OAuthBaseController
      */
     public function user()
     {
-        if ($this->validateAccessToken()) {
-            $user =  $this->storage->getCustomUserWIthClaims(
-                $this->getCurrentToken('user_id'),
-                array_keys(OAuthScopeService::findOpenIdScope($this->getCurrentToken('scope')) ?: []),
+        if ($this->oauth->validateAccessToken()) {
+            $user =  $this->oauth->storage->getCustomUserWIthClaims(
+                $this->oauth->getAuthToken('user_id'),
+                array_keys(OAuthScopeService::findOpenIdScope($this->oauth->getAuthToken('scope')) ?: []),
                 true
             );
             if (!empty($user)) {
-                $this->response->setParameters($this->success($user));
+                $this->oauth->response->setError(200, $this->success($user));
             } else {
-                $this->response->setStatusCode(404);
-                $this->response->setParameters($this->error('Users does not exist', 'invalid_user'));
+                $this->oauth->response->setError(404, $this->error('Users does not exist', 'invalid_user'));
             }
         }
-        $this->response->send();
-        die;
+        app()->sendHttpResponse(401, $this->oauth->response->getParameters());
     }
 
     /**
@@ -87,23 +79,20 @@ class Token extends OAuthBaseController
     public function invalidate()
     {
         $done = false;
-        $access_token = $this->validateAccessToken() ? ($this->getCurrentToken('id') ?? $this->getCurrentToken('jti')) : null;
-        $refresh_token = $this->request->request('refresh_token');
+        $access_token = $this->oauth->validateAccessToken() ? ($this->oauth->getAuthToken('id') ?? $this->oauth->getAuthToken('jti')) : null;
+        $refresh_token = $this->oauth->request->request('refresh_token');
 
         if (!empty($access_token)) {
-            $done = $this->storage->unsetAccessToken($access_token);
+            $done = $this->oauth->storage->unsetAccessToken($access_token);
         }
         if (!empty($refresh_token)) {
-            $done = $this->storage->unsetRefreshToken($refresh_token);
+            $done = $this->oauth->storage->unsetRefreshToken($refresh_token);
         }
 
         if ($done) {
-            $this->response->setParameters(array('success' => true, 'msg' => 'Successfully cleared access'));
+            app()->sendHttpResponse(200, $this->success('Successfully cleared access'));
         } else {
-            $this->response->setStatusCode(400);
-            $this->response->setParameters(array('success' => false, 'msg' => 'Failed to invalidate access'));
+            app()->sendHttpResponse(400, $this->error('Failed to invalidate access'));
         }
-        $this->response->send();
-        die;
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-use System\URL;
+use Application\Helpers\URL;
 
 ?>
 <style>

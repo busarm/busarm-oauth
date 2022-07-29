@@ -7,15 +7,6 @@
 |
 */
 
-# APPLICATION ENVIRONMENT
-if (env('ENV') == ENV_PROD || strtolower(env('ENV')) == "prod" || strtolower(env('STAGE')) == "prod") {
-    define('ENVIRONMENT', ENV_PROD);
-} else if (env('ENV') == ENV_TEST || strtolower(env('ENV')) == "dev" || strtolower(env('STAGE')) == "dev") {
-    define('ENVIRONMENT', ENV_TEST);
-} else {
-    define('ENVIRONMENT', ENV_DEV);
-}
-
 define('IPADDRESS', get_ip_address());
 define('LOCALHOST', getHostByName(getHostName()));
 define("BASE_SCHEME", (is_https() ? "https" : "http") . "://");

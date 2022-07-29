@@ -43,11 +43,14 @@
             "System\\": "system",
             "Application\\": "application",
             "Application\\Controllers\\": "application/controllers",
+            "Application\\Enums\\": "application/enums",
+            "Application\\Exceptions\\": "application/exceptions",
+            "Application\\Helpers\\": "application/helpers",
+            "Application\\Interfaces\\": "application/interfaces",
+            "Application\\Middlewares\\": "application/middlewares",
             "Application\\Models\\": "application/models",
             "Application\\Services\\": "application/services",
-            "Application\\Interfaces\\": "application/interfaces",
-            "Application\\Traits\\": "application/traits",
-            "Application\\Enums\\": "application/enums"
+            "Application\\Traits\\": "application/traits"
         }
     }
 }

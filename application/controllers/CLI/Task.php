@@ -2,10 +2,10 @@
 
 namespace Application\Controllers\CLI;
 
-use Application\Controllers\OAuthBaseController;
 use phpseclib\Crypt\RSA;
-use  Application\Services\OAuthScopeService;
-use System\Utils;
+use Application\Helpers\Utils;
+use Application\Controllers\OAuthBaseController;
+use Application\Services\OAuthScopeService;
 
 /**
  * Created by PhpStorm.
@@ -18,7 +18,7 @@ class Task extends OAuthBaseController
 {
     public function __construct()
     {
-        parent::__construct(false, true, true);
+        parent::__construct(false, true);
     }
 
     /**
@@ -29,7 +29,7 @@ class Task extends OAuthBaseController
      */
     public function create_org($org_name)
     {
-        $result = $this->storage->setOrganizationDetails($org_name);
+        $result = $this->oauth->storage->setOrganizationDetails($org_name);
         if ($result) {
             log_debug("Successfully Added Organization");
             log_debug("Organizatoin ID = $result");
@@ -52,11 +52,11 @@ class Task extends OAuthBaseController
     {
         $client_id = str_replace(' ', '_', strtolower($client_name)) . '_' . crc32(uniqid($client_name));
         $client_secret = md5(uniqid($client_id));
-        $grant_types = !empty($grant_types) ? $grant_types : Utils::implode(array_keys($this->server->getGrantTypes()));
+        $grant_types = !empty($grant_types) ? $grant_types : Utils::implode(array_keys($this->oauth->server->getGrantTypes()));
         $scopes = !empty($scopes) ? $scopes : OAuthScopeService::$defaultScope;
 
         //Insert Client
-        $result = $this->storage->setCustomClientDetails($org_id, $client_id, $client_name, $client_secret, $redirect_uri, $grant_types, $scopes);
+        $result = $this->oauth->storage->setCustomClientDetails($org_id, $client_id, $client_name, $client_secret, $redirect_uri, $grant_types, $scopes);
         if ($result) {
 
             //Insert jwt public keys for client
@@ -64,7 +64,7 @@ class Task extends OAuthBaseController
             $rsa = new RSA();
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
-            if (!empty($keys) && $this->storage->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
+            if (!empty($keys) && $this->oauth->storage->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
                 log_debug("Successfully Created Client");
                 log_debug("Client ID = $client_id");
                 log_debug("Client Secret = $client_secret");
@@ -99,7 +99,7 @@ class Task extends OAuthBaseController
             $rsa = new RSA();
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
-            if (!empty($keys) && $this->storage->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
+            if (!empty($keys) && $this->oauth->storage->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
                 log_debug("Successfully Updated Client Keys");
                 log_debug("Client Public Key = " . $keys['publickey']);
                 log_debug("Client Public Key ALGO = $algo");
@@ -130,14 +130,14 @@ class Task extends OAuthBaseController
         $user_password = !empty($password) ? $password : bin2hex(random_bytes(5));
         $scopes = !empty($scopes) ? $scopes : Utils::implode([
             OAuthScopeService::$defaultScope,
-            OAuthScopeService::SCOPE_OPENID,
-            OAuthScopeService::SCOPE_CLAIM_NAME,
-            OAuthScopeService::SCOPE_CLAIM_EMAIL,
-            OAuthScopeService::SCOPE_CLAIM_PHONE,
+            SCOPE_OPENID,
+            SCOPE_CLAIM_NAME,
+            SCOPE_CLAIM_EMAIL,
+            SCOPE_CLAIM_PHONE,
         ]);
 
         //Insert User
-        $result = $this->storage->setCustomUser($user_id, $user_password, $email, $name, $phone, $dial_code, $scopes);
+        $result = $this->oauth->storage->setCustomUser($user_id, $user_password, $email, $name, $phone, $dial_code, $scopes);
         if ($result) {
             log_debug("Successfully Created User");
             log_debug("User ID = $result");

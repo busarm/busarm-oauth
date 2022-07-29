@@ -5,6 +5,7 @@ namespace System;
 use Psr\Log\LogLevel;
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use System\Interfaces\LoggerInterface;
 
 /**
  * Created by VSCODE.
@@ -12,7 +13,7 @@ use Symfony\Component\Console\Output\ConsoleOutput;
  * Date: 21/5/2022
  * Time: 1:17 AM
  */
-class Logger
+class Logger implements LoggerInterface
 {
     /** @var ConsoleLogger */
     private $logger;

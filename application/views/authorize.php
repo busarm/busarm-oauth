@@ -9,7 +9,7 @@
  * @var string $action
  */
 
-use System\URL;
+use Application\Helpers\URL;
 
 ?>
 
@@ -156,7 +156,7 @@ use System\URL;
         <div class="auth-page">
             <div class="form">
                 <!-- Logo -->
-                <?= app()->view('components/logo') ?>
+                <?= app()->loader->view('components/logo') ?>
                 <br>
                 <form id="login-form" class="form" method="post" action="<?= $action ?? null ?>">
                     <h3> <span style="color:#DF632D"><?= ucfirst($client_name ?? $org_name) ?></span> is requesting access to your account</h3>
@@ -197,7 +197,7 @@ use System\URL;
             </div>
         </div>
         <!-- Footer -->
-        <?= app()->view('components/footer') ?>
+        <?= app()->loader->view('components/footer') ?>
 
     </oauth-authorize>
 </body>

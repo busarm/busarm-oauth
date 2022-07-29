@@ -1,6 +1,8 @@
 <?php
 
-namespace System;
+namespace Application\Helpers;
+
+use System\Encrypter;
 
 /**
  * Created by VSCODE.

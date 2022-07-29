@@ -14,13 +14,26 @@ use Throwable;
 
 class Encrypter
 {
-    const METHOD = "AES-256-CBC";
-    const KEY_HASH_ALGO = "md5";
-    const KEY_HASH_INTERATIONS = 16;
-    const KEY_HASH_LENGTH = 64;
-    const KEY_SALT_LENGTH = 16;
-    const KEY_IV_LENGTH = 16;
-    const HMAC_HASH_ALGO = "sha1";
+    /**
+     * For a list of available cipher methods, use { @see openssl_get_cipher_methods() }.
+     * @var string
+     */
+    public static $METHOD = "AES-256-CBC";
+    /**
+     * Name of selected hashing algorithm (i.e. "md5", "sha256", "haval160,4", etc..) See `hash_algos` for a list of supported algorithms
+     * @var string
+     */
+    public static $KEY_HASH_ALGO = "md5";
+    /**
+     * Name of selected hashing algorithm (i.e. "md5", "sha256", "haval160,4", etc..) See `hash_algos` for a list of supported algorithms
+     * @var string
+     */
+    public static $HMAC_HASH_ALGO = "sha1";
+    
+    public static $KEY_HASH_INTERATIONS = 16;
+    public static $KEY_HASH_LENGTH = 64;
+    public static $KEY_SALT_LENGTH = 16;
+    public static $KEY_IV_LENGTH = 16;
 
     /**
      * Encrypter Data for client
@@ -32,12 +45,12 @@ class Encrypter
     public static function encrypt($passphrase, $plain)
     {
         if (!empty($passphrase)) {
-            $salt = openssl_random_pseudo_bytes(self::KEY_SALT_LENGTH);
-            $iv = openssl_random_pseudo_bytes(self::KEY_IV_LENGTH);
-            $key = hash_pbkdf2(self::KEY_HASH_ALGO, $passphrase, $salt, self::KEY_HASH_INTERATIONS, self::KEY_HASH_LENGTH, true);
-            $crypt = base64_encode(openssl_encrypt($plain, self::METHOD, $key, OPENSSL_RAW_DATA, $iv));
+            $salt = openssl_random_pseudo_bytes(self::$KEY_SALT_LENGTH);
+            $iv = openssl_random_pseudo_bytes(self::$KEY_IV_LENGTH);
+            $key = hash_pbkdf2(self::$KEY_HASH_ALGO, $passphrase, $salt, self::$KEY_HASH_INTERATIONS, self::$KEY_HASH_LENGTH, true);
+            $crypt = base64_encode(openssl_encrypt($plain, self::$METHOD, $key, OPENSSL_RAW_DATA, $iv));
             $hash = self::digest($crypt, md5($passphrase));
-            $data =  $crypt . '*' . bin2hex($salt) . '*' . bin2hex($iv) . '*' . $hash;            
+            $data =  $crypt . '*' . bin2hex($salt) . '*' . bin2hex($iv) . '*' . $hash;
             return base64_encode($data);
         }
         return false;
@@ -62,9 +75,9 @@ class Encrypter
                 if ($crypt && $salt && $iv && $hash) {
                     $salt = hex2bin($salt);
                     $iv = hex2bin($iv);
-                    $key = hash_pbkdf2(self::KEY_HASH_ALGO, $passphrase, $salt, self::KEY_HASH_INTERATIONS, self::KEY_HASH_LENGTH, true);
+                    $key = hash_pbkdf2(self::$KEY_HASH_ALGO, $passphrase, $salt, self::$KEY_HASH_INTERATIONS, self::$KEY_HASH_LENGTH, true);
                     if ($hash == self::digest($crypt, md5($passphrase))) {
-                        return openssl_decrypt(base64_decode($crypt), self::METHOD, $key, OPENSSL_RAW_DATA, $iv);
+                        return openssl_decrypt(base64_decode($crypt), self::$METHOD, $key, OPENSSL_RAW_DATA, $iv);
                     }
                 }
             }
@@ -83,6 +96,6 @@ class Encrypter
      */
     public static function digest($data, $key)
     {
-        return hash_hmac(self::HMAC_HASH_ALGO, $data, $key);
+        return hash_hmac(self::$HMAC_HASH_ALGO, $data, $key);
     }
 }

@@ -7,7 +7,7 @@
  * @var string $redirect_url
  */
 
-use System\URL;
+use Application\Helpers\URL;
 
 ?>
 
@@ -169,7 +169,7 @@ use System\URL;
         <div class="login-page">
             <div class="form">
                 <!-- Logo -->
-                <?= app()->view('components/logo') ?>
+                <?= app()->loader->view('components/logo') ?>
                 <br>
                 <form id="login-form" class="form" method="post" action="<?= $action ?? null ?>">
                     <h2> Login </h2>
@@ -187,7 +187,7 @@ use System\URL;
             </div>
         </div>
         <!-- Footer -->
-        <?= app()->view('components/footer') ?>
+        <?= app()->loader->view('components/footer') ?>
 
     </oauth-login>
 </body>

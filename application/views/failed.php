@@ -5,7 +5,7 @@
  * @var string $desc
  */
 
-use System\URL;
+use Application\Helpers\URL;
 
 ?>
 
@@ -160,7 +160,7 @@ use System\URL;
         <div class="failed-page">
             <div class="form">
                 <!-- Logo -->
-                <?= app()->view('components/logo') ?>
+                <?= app()->loader->view('components/logo') ?>
                 <br />
                 <div>
                     <img class="img icon" src="<?= URL::assetUrl('public/images/icons/Warning.png') ?>" alt="Failed">
@@ -182,7 +182,7 @@ use System\URL;
             </div>
         </div>
         <!-- Footer -->
-        <?= app()->view('components/footer') ?>
+        <?= app()->loader->view('components/footer') ?>
 
     </oauth-failed>
 </body>

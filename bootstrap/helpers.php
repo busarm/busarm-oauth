@@ -173,7 +173,6 @@ if (!function_exists('app')) {
     }
 }
 
-
 if (!function_exists('out')) {
     /**
      * Send output of data

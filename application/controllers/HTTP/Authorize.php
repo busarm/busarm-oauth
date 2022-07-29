@@ -6,10 +6,9 @@ use Application\Controllers\OAuthBaseController;
 use Application\Services\MailService;
 use Exception;
 use GuzzleHttp\RequestOptions;
-use System\Configs;
 use  Application\Services\OAuthScopeService;
-use System\URL;
-use System\Utils;
+use Application\Helpers\URL;
+use Application\Helpers\Utils;
 
 /**
  * Created by PhpStorm.
@@ -27,7 +26,7 @@ class Authorize extends OAuthBaseController
 
     public function __construct()
     {
-        parent::__construct(false, true);
+        parent::__construct(false);
     }
 
     /**
@@ -44,38 +43,38 @@ class Authorize extends OAuthBaseController
      */
     public function request()
     {
-        $client_id = $this->request->query("client_id");
-        $redirect_uri = $this->request->query("redirect_uri");
-        $state = $this->request->query("state");
-        $scope = $this->request->query("scope");
-        $response_type = $this->request->query("response_type");
+        $client_id = $this->oauth->request->query("client_id");
+        $redirect_uri = $this->oauth->request->query("redirect_uri");
+        $state = $this->oauth->request->query("state");
+        $scope = $this->oauth->request->query("scope");
+        $response_type = $this->oauth->request->query("response_type");
 
         // Use openId and implicit grant if requested
         if (
-            !$this->server->getScopeUtil()->checkScope($scope, OAuthScopeService::SCOPE_OPENID)
+            !$this->oauth->server->getScopeUtil()->checkScope($scope, SCOPE_OPENID)
             && str_contains($response_type, 'id_token')
         ) {
-            $this->server->setConfig('allow_implicit', true);
-            $this->server->setConfig('use_openid_connect', true);
+            $this->oauth->server->setConfig('allow_implicit', true);
+            $this->oauth->server->setConfig('use_openid_connect', true);
         }
 
         // If email request - Validate and Send authorization url
-        if (!empty($email = $this->request->query("email"))) {
+        if (!empty($email = $this->oauth->request->query("email"))) {
             if ($userInfo = $this->processEmailRequest($email, $redirect_uri, $state, $scope)) {
                 $this->showEmailSuccess($userInfo);
             } else {
-                $this->showError("authorization_failed", $this->response->getParameter("error_description") ?? "Invalid request", $redirect_uri);
+                $this->showError("authorization_failed", $this->oauth->response->getParameter("error_description") ?? "Invalid request", $redirect_uri);
             }
         }
 
         // If Logged in
-        else if ($user_id = $this->getLoginUser()) {
+        else if ($user_id = $this->auth->getLoginUser()) {
             if ($this->processAuthRequest($user_id, $client_id, $redirect_uri, $state, $scope, $response_type)) {
-                $this->server->handleAuthorizeRequest($this->request, $this->response, true, $user_id);
-                $this->response->send();
+                $this->oauth->server->handleAuthorizeRequest($this->oauth->request, $this->oauth->response, true, $user_id);
+                $this->oauth->response->send();
                 die();
             } else {
-                $this->showError("authorization_failed", $this->response->getParameter("error_description") ?? "Invalid request", $redirect_uri);
+                $this->showError("authorization_failed", $this->oauth->response->getParameter("error_description") ?? "Invalid request", $redirect_uri);
             }
         }
 
@@ -95,16 +94,16 @@ class Authorize extends OAuthBaseController
      */
     public function login()
     {
-        $redirect_url = $this->request->request("redirect_url", $this->request->query("redirect_url"));
+        $redirect_url = $this->oauth->request->request("redirect_url", $this->oauth->request->query("redirect_url"));
         if (!empty($redirect_url)) {
             if ($userInfo = $this->processLoginRequest()) { //Process Login
-                $this->startLoginSession($userInfo['user_id'], 86400);
+                $this->auth->startLoginSession($userInfo['user_id'], 86400);
                 URL::redirect($redirect_url);
             } else {
-                $this->clearLoginSession();
+                $this->auth->clearLoginSession();
                 $this->showLogin([
                     "redirect_url" => $redirect_url,
-                    "msg" => $this->response->getParameter("error_description")
+                    "msg" => $this->oauth->response->getParameter("error_description")
                 ]);
             }
         } else {
@@ -118,9 +117,9 @@ class Authorize extends OAuthBaseController
      */
     public function logout()
     {
-        $redirect_url = $this->request->request("redirect_url", $this->request->query("redirect_url"));
+        $redirect_url = $this->oauth->request->request("redirect_url", $this->oauth->request->query("redirect_url"));
         if (!empty($redirect_url)) {
-            $this->clearLoginSession();
+            $this->auth->clearLoginSession();
             Utils::deleteCookie(self::AUTH_REQ_TOKEN_PARAM);
             URL::redirect('authorize/login?redirect_url=' . urlencode($redirect_url));
         } else {
@@ -142,23 +141,23 @@ class Authorize extends OAuthBaseController
                 if ($count < $max_count) { 
                     $count += 1;
                     Utils::setCookie('request_count', $count, $timeout);
-                    if ($userInfo = ($this->storage->checkUserCredentials(@$data['username'], @$data['password']))) {
+                    if ($userInfo = ($this->oauth->storage->checkUserCredentials(@$data['username'], @$data['password']))) {
                         if (!empty($userInfo[@'user_id'])) {
                             return $userInfo;
                         } else {
                             $remaining_count = $max_count - $count;
-                            $this->response->setParameters($this->error("Invalid Username or Password. $remaining_count tries left", 'invalid_user'));
+                            $this->oauth->response->setParameters($this->error("Invalid Username or Password. $remaining_count tries left", 'invalid_user'));
                         }
                     } else {
                         $remaining_count = $max_count - $count;
-                        $this->response->setParameters($this->error("Invalid Username or Password. $remaining_count tries left", 'invalid_user'));
+                        $this->oauth->response->setParameters($this->error("Invalid Username or Password. $remaining_count tries left", 'invalid_user'));
                     }
                 } else {
                     $min = intval($timeout / 60);
-                    $this->response->setParameters($this->error("Maximum attempt reached. Please try again in $min minute(s)", 'max_request'));
+                    $this->oauth->response->setParameters($this->error("Maximum attempt reached. Please try again in $min minute(s)", 'max_request'));
                 }
             } else {
-                $this->response->setParameters($this->error('Session validation failed. Please try again', 'validation_error'));
+                $this->oauth->response->setParameters($this->error('Session validation failed. Please try again', 'validation_error'));
             }
         }
         return false;
@@ -175,22 +174,22 @@ class Authorize extends OAuthBaseController
      */
     private function processEmailRequest($email, $redirect_uri, $state, $scope)
     {
-        if ($user = $this->storage->getUser($email)) {
+        if ($user = $this->oauth->storage->getUser($email)) {
 
             $timeout = 600;
             $token = sha1(sprintf("%s:%s:%s:%s", $email, $redirect_uri, $state, $scope));
             if (Utils::getCookie(self::EMAIL_REQ_TOKEN_PARAM) !== $token) {
 
                 $user_id = $user['user_id'];
-                if (empty($scope) || $this->storage->scopeExistsForUser($scope, $user_id)) {
+                if (empty($scope) || $this->oauth->storage->scopeExistsForUser($scope, $user_id)) {
 
-                    if ($is_authorized = $this->server->validateAuthorizeRequest($this->request, $this->response)) {
+                    if ($is_authorized = $this->oauth->server->validateAuthorizeRequest($this->oauth->request, $this->oauth->response)) {
 
                         // Re-initialize response
-                        $this->response = new \OAuth2\Response();
-                        $this->server->handleAuthorizeRequest($this->request, $this->response, $is_authorized, $user_id);
+                        $this->oauth->response = new \OAuth2\Response();
+                        $this->oauth->server->handleAuthorizeRequest($this->oauth->request, $this->oauth->response, $is_authorized, $user_id);
 
-                        $message = $this->getEmailAuthView($this->response->getHttpHeader("Location"));
+                        $message = $this->getEmailAuthView($this->oauth->response->getHttpHeader("Location"));
 
                         // Send email
                         if ((new MailService)->send("Email Authorization", $message, $email)) {
@@ -206,7 +205,7 @@ class Authorize extends OAuthBaseController
                             $this->showError("authorization_failed", sprintf("Failed to send mail. Please contact <a href='%s' target='_blank'>support</a> for assistance", URL::appUrl(URL::APP_SUPPORT_PATH)), $redirect_uri);
                         }
                     } else {
-                        $msg = $this->response->getParameter("error_description");
+                        $msg = $this->oauth->response->getParameter("error_description");
                         $msg = !empty($msg) ? $msg : "Unexpected error encountered";
                         $this->showError("authorization_failed", sprintf("<span style='color:red'>$msg</span>. Please contact <a href='%s' target='_blank'>support</a> for assistance", URL::appUrl(URL::APP_SUPPORT_PATH)), $redirect_uri);
                     }
@@ -237,20 +236,20 @@ class Authorize extends OAuthBaseController
         $request_token = Utils::getCookie(self::AUTH_REQ_TOKEN_PARAM);
         $token = sha1(sprintf("%s:%s:%s:%s:%s", $user_id, $client_id, $redirect_uri, $state, $scope, $response_type));
 
-        $approve = $this->request->request("approve");
-        $decline = $this->request->request("decline");
+        $approve = $this->oauth->request->request("approve");
+        $decline = $this->oauth->request->request("decline");
 
         // Authorization approved
         if ($approve && $request_token == $token) {
 
-            $scope = !empty($scope) ? $scope : $this->server->getScopeUtil()->getDefaultScope();
+            $scope = !empty($scope) ? $scope : $this->oauth->server->getScopeUtil()->getDefaultScope();
 
-            if ($this->storage->scopeExistsForUser($scope, $user_id)) {
-                if ($this->server->validateAuthorizeRequest($this->request, $this->response)) {
+            if ($this->oauth->storage->scopeExistsForUser($scope, $user_id)) {
+                if ($this->oauth->server->validateAuthorizeRequest($this->oauth->request, $this->oauth->response)) {
                     return true;
                 } else {
                     Utils::deleteCookie(self::AUTH_REQ_TOKEN_PARAM);
-                    $this->showError($this->response->getParameter("error"), $this->response->getParameter("error_description"), $redirect_uri);
+                    $this->showError($this->oauth->response->getParameter("error"), $this->oauth->response->getParameter("error_description"), $redirect_uri);
                 }
             } else {
                 Utils::deleteCookie(self::AUTH_REQ_TOKEN_PARAM);
@@ -263,10 +262,10 @@ class Authorize extends OAuthBaseController
             $this->showError("authorization_declined", "Access declined by user", $redirect_uri);
         }
         // Client Id available
-        else if (!empty($client = $this->storage->getClientDetails($client_id))) {
+        else if (!empty($client = $this->oauth->storage->getClientDetails($client_id))) {
             Utils::setCookie(self::AUTH_REQ_TOKEN_PARAM, $token, 300);
-            $org = $this->storage->getOrganizationDetails($client['org_id']);
-            $user = $this->storage->getUser($user_id);
+            $org = $this->oauth->storage->getOrganizationDetails($client['org_id']);
+            $user = $this->oauth->storage->getUser($user_id);
             $scopes = OAuthScopeService::findScope($scope);
             return $this->showAuthorize([
                 'client_name' => $client['client_name'],
@@ -286,7 +285,7 @@ class Authorize extends OAuthBaseController
     private function showLogin($vars = array())
     {
         try {
-            echo app()->view("login", array_merge($vars, [
+            echo app()->loader->view("login", array_merge($vars, [
                 'csrf_token' => Utils::generateCsrfToken(),
                 'action' => ""
             ]), true);
@@ -304,7 +303,7 @@ class Authorize extends OAuthBaseController
     private function showAuthorize($vars = array())
     {
         try {
-            echo app()->view("authorize", $vars, true);
+            echo app()->loader->view("authorize", $vars, true);
             die;
         } catch (Exception $e) {
             app()->reportException($e); // Report
@@ -323,7 +322,7 @@ class Authorize extends OAuthBaseController
     private function showEmailSuccess($userInfo)
     {
         try {
-            echo app()->view("success", $userInfo, true);
+            echo app()->loader->view("success", $userInfo, true);
             die;
         } catch (Exception $e) {
             app()->reportException($e); // Report
@@ -350,7 +349,7 @@ class Authorize extends OAuthBaseController
             ]));
         } else {
             try {
-                echo app()->view("failed", [
+                echo app()->loader->view("failed", [
                     "msg" => ucfirst(str_replace('_', ' ', $error)),
                     "desc" => $error_description
                 ], true);
@@ -369,10 +368,10 @@ class Authorize extends OAuthBaseController
     private function loginRequestAvailable()
     {
         if (
-            !empty($username = $this->request->request('username')) &&
-            !empty($password = $this->request->request('password')) &&
-            !empty($csrf_token = $this->request->request('csrf_token')) &&
-            !empty($recaptcha_token = $this->request->request('recaptcha_token'))
+            !empty($username = $this->oauth->request->request('username')) &&
+            !empty($password = $this->oauth->request->request('password')) &&
+            !empty($csrf_token = $this->oauth->request->request('csrf_token')) &&
+            !empty($recaptcha_token = $this->oauth->request->request('recaptcha_token'))
         ) {
             return [
                 'username' => $username,
@@ -391,8 +390,8 @@ class Authorize extends OAuthBaseController
     private function getEmailAuthView($link)
     {
         try {
-            $content = app()->view("email/auth", ["link" => $link], true);
-            return app()->view("email/template/simple_mail", ["content" => $content], true);
+            $content = app()->loader->view("email/auth", ["link" => $link], true);
+            return app()->loader->view("email/template/simple_mail", ["content" => $content], true);
         } catch (Exception $e) {
             app()->reportException($e); // Report
             return $content;

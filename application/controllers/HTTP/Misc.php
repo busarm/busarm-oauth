@@ -1,10 +1,9 @@
 <?php
+
 namespace Application\Controllers\HTTP;
 
-use System\App;
 use System\Encrypter;
-use System\Configs;
-use System\URL;
+use Application\Helpers\URL;
 
 /**
  * Created by VSCode.
@@ -13,18 +12,13 @@ use System\URL;
  * Time: 3:34 PM
  */
 class Misc
-{ 
-    /** @var \OAuth2\Request */
-    protected $request;
-
-    /** @var \OAuth2\Response */
-    protected $response;
-
-    public function __construct()
+{
+    /**
+     * Ping server
+     */
+    public function ping()
     {
-        //Create request & response objects
-        $this->request = \OAuth2\Request::createFromGlobals();
-        $this->response = new \OAuth2\Response();
+        return "System Online";
     }
 
     /**
@@ -35,10 +29,10 @@ class Misc
      */
     public function link($data = null)
     {
-        $data = $this->request->query("data");
+        $data = app()->request->query("data");
         if (!empty($data)) {
             $link = Encrypter::decrypt(ENCRYPTION_KEY, $data);
-            if($link) {
+            if ($link) {
                 return URL::redirect($link);
             }
             return app()->showMessage(400, false, 'Invalid Request', 'Failed to process link');

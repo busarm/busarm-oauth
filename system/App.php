@@ -6,6 +6,15 @@ use DateInterval;
 use DateTime;
 use Exception;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use System\HttpException;
+use System\Interfaces\LoaderInterface;
+use System\Interfaces\MiddlewareInterface;
+use System\Interfaces\RequestInterface;
+use System\Interfaces\ResponseInterface;
+use System\Interfaces\RouteInterface;
+use System\Loader;
+use System\Middlewares\ResponseMiddleware;
+use Throwable;
 
 /**
  * Created by PhpStorm.
@@ -20,12 +29,6 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 
 class App
 {
-
-    const CONTROLLER_PATH =  "application/controllers/";
-    const VIEW_PATH =  "application/views/";
-    const MODEL_PATH =  "application/model/";
-    const CONFIG_PATH =  "configs/";
-
     const DEFAULT_CONFIGS = [
         'app',
         'database',
@@ -36,33 +39,63 @@ class App
     /** @var self */
     private static $instance;
 
+    /** @var MiddlewareInterface[] */
+    private $middlewares = [];
+
+    /** @var array */
+    public $singletons = [];
+
     /** @var \Bugsnag\Client */
     private $bugsnag;
 
-    /** @var Router */
-    private $router;
 
-    /** @var Logger */
-    private $logger;
+    /** @var RequestInterface */
+    public $request;
+
+    /** @var ResponseInterface */
+    public $response;
+
+    /** @var RouteInterface */
+    public $router;
+
+    /** @var LoggerInterface */
+    public $logger;
+
+    /** @var LoaderInterface */
+    public $loader;
 
     /**
-     * @param Router|null $router
+     * @param RouteInterface|null $router
      * @param array $configs List of custom config files in configuration directory to load. e.g aws, papertrail 
      */
-    public function __construct(Router $router = null, $configs = array())
+    public function __construct($configs = array())
     {
         self::$instance = &$this;
 
-        // Set up configs
-        $this->setUpConfigs($configs);
+        // Create request & response objects
+        $this->request = Request::createFromGlobals();
+        $this->response = new Response();
+
+        // Set Loader
+        $this->loader = new Loader();
+
+        // Set router
+        $this->router = new Router();
+
+        // Set logger
+        $this->logger = new Logger(ENVIRONMENT === ENV_DEV ? ConsoleOutput::VERBOSITY_DEBUG : ConsoleOutput::VERBOSITY_NORMAL);
+
+        // Set up default configs
+        $this->setUpConfigs(self::DEFAULT_CONFIGS);
 
         // Set up error reporting
         $this->setUpErrorReporting();
 
-        // Set router
-        $this->router = $router ?: new Router();
-        // Set logger
-        $this->logger = new Logger(ENVIRONMENT === ENV_DEV ? ConsoleOutput::VERBOSITY_DEBUG : ConsoleOutput::VERBOSITY_NORMAL);
+        // Set up custom configs
+        $this->setUpConfigs($configs);
+
+        // Add response middleware as the first in the chain
+        $this->addMiddleware(new ResponseMiddleware());
     }
 
     /**
@@ -105,18 +138,21 @@ class App
         return $this->logger;
     }
 
+
+    ############################
+    # Setup and Run
+    ############################
+
+
     /**
      * Set up configs
      * @param array $configs
      */
     private function setUpConfigs($configs = array())
     {
-        foreach (array_unique(array_merge(self::DEFAULT_CONFIGS, $configs)) as $config) {
-            $path = FCPATH . self::CONFIG_PATH . $config . '.php';
-            if (file_exists($path)) {
-                require_once $path;
-            } else {
-                throw new Exception("Config file $config.php not found");
+        if (!empty($configs)) {
+            foreach ($configs as $config) {
+                $this->addConfig((string) $config);
             }
         }
     }
@@ -151,24 +187,25 @@ class App
             \Bugsnag\Handler::register($this->bugsnag);
         }
         set_error_handler(function ($errno, $errstr, $errfile = null, $errline = null, $errcontext = []) {
-            if ($this->bugsnag) {
-                $this->bugsnag->notifyError("unexpected_error", $errstr);
-            }
+            $this->reportError("Internal Server Error", $errline);
             $this->showMessage(500, false, $errno, $errstr, $errline, $errfile, $errcontext);
         });
-        set_exception_handler(function ($e) {
-            if ($this->bugsnag) {
-                $this->bugsnag->notifyException($e);
+        set_exception_handler(function (Throwable $e) {
+            if ($e instanceof HttpException) {
+                if ($e->getCode() >= 500) $this->reportException($e);
+                $e->handler();
+            } else {
+                $this->reportException($e);
+                $trace = array_map(function ($instance) {
+                    return [
+                        'file' => $instance['file'] ?? null,
+                        'line' => $instance['line'] ?? null,
+                        'class' => $instance['class'] ?? null,
+                        'function' => $instance['function'] ?? null,
+                    ];
+                }, $e->getTrace());
+                $this->showMessage($e->getCode() >= 400 ? $e->getCode() : 500, false, "Unexpected Exception", $e->getMessage(), $e->getLine(), $e->getFile(), $trace);
             }
-            $trace = array_map(function ($instance) {
-                return [
-                    'file' => $instance['file'] ?? null,
-                    'line' => $instance['line'] ?? null,
-                    'class' => $instance['class'] ?? null,
-                    'function' => $instance['function'] ?? null,
-                ];
-            }, $e->getTrace());
-            $this->showMessage(500, false, "unexpected_exception", $e->getMessage(), $e->getLine(), $e->getFile(), $trace);
         });
     }
 
@@ -200,11 +237,11 @@ class App
         }
 
         // Initiate rerouting
-        if ($this->router->check('/ping')) {
-            $this->showMessage(200, true, "System Online");
-        } else if (!$this->router->process()) {
-            $this->showMessage(404, false, "Not found - " . $this->router->route);
-        }
+        if ($this->router) {
+            if (!$this->processMiddleware(array_merge($this->middlewares, $this->router->process()))) {
+                $this->showMessage(404, false, "Not found - " . $this->router->route);
+            }
+        } else throw new Exception("Router not configured. See `addRouter`");
     }
 
     /**
@@ -216,7 +253,43 @@ class App
     {
         // Check for CORS access request
         if (CHECK_CORS == TRUE) {
-            $this->check_cors();
+            $headers = [];
+            $allowed_cors_headers = ALLOWED_CORS_HEADERS;
+            $exposed_cors_headers = EXPOSED_CORS_HEADERS;
+            $allowed_cors_methods = ALLOWED_CORS_METHODS;
+            $max_cors_age = MAX_CORS_AGE;
+
+            // Convert the config items into strings
+            $allowed_headers = implode(', ', is_array($allowed_cors_headers) ? $allowed_cors_headers : []);
+            $exposed_cors_headers = implode(', ', is_array($exposed_cors_headers) ? $exposed_cors_headers : []);
+            $allowed_methods = implode(', ', is_array($allowed_cors_methods) ? $allowed_cors_methods : []);
+
+            // If we want to allow any domain to access the API
+            if (ALLOWED_ANY_CORS_DOMAIN == TRUE) {
+                $headers['Access-Control-Allow-Origin'] = '*';
+                $headers['Access-Control-Allow-Methods'] = $allowed_methods;
+                $headers['Access-Control-Allow-Headers'] = $allowed_headers;
+                $headers['Access-Control-Expose-Headers'] = $exposed_cors_headers;
+                $headers['Access-Control-Allow-Max-Age'] = $max_cors_age;
+            } else {
+                // We're going to allow only certain domains access
+                // Store the HTTP Origin header
+                $origin = env('HTTP_ORIGIN') ?? env('HTTP_REFERER') ?? '';
+                $allowed_origins = ALLOWED_CORS_ORIGINS;
+                // If the origin domain is in the allowed_cors_origins list, then add the Access Control headers
+                if (is_array($allowed_origins) && in_array(trim($origin, "/"), $allowed_origins)) {
+                    $headers['Access-Control-Allow-Origin'] = $origin;
+                    $headers['Access-Control-Allow-Methods'] = $allowed_methods;
+                    $headers['Access-Control-Allow-Headers'] = $allowed_headers;
+                    $headers['Access-Control-Expose-Headers'] = $exposed_cors_headers;
+                    $headers['Access-Control-Allow-Max-Age'] = $max_cors_age;
+                }
+            }
+
+            // If the request HTTP method is 'OPTIONS', kill the response and send it to the client
+            if (strtolower($method) === 'options') {
+                $this->sendHttpResponse(200, null, $headers);
+            }
         } else {
             if (strtolower($method) === 'options') {
                 // kill the response and send it to the client
@@ -226,88 +299,62 @@ class App
     }
 
     /**
-     * Load View
-     * @param $path
-     * @param array $vars
-     * @param bool $return
-     * @return string
-     * @throws Exception
+     * Add middleware
+     *
+     * @param MiddlewareInterface $middleware
+     * @return self
      */
-    public function view($path, $vars = array(), $return = false)
+    public function addMiddleware(MiddlewareInterface $middleware)
     {
-        if ($filePath = Utils::fileExists(FCPATH . self::VIEW_PATH . $path . ".php")) {
-            ob_start();
-            if (!empty($vars))
-                extract($vars);
-            include $filePath;
-            $content = ob_get_contents();
-            ob_end_clean();
-
-            if ($return) {
-                return $content;
-            } else {
-                echo $content;
-            }
-        } else {
-            if ($return) {
-                return null;
-            } else {
-                throw new Exception("File does not Exist");
-            }
-        }
+        $this->middlewares[] = $middleware;
+        return $this;
     }
 
     /**
-     * Checks allowed domains, and adds appropriate headers for HTTP access control (CORS)
-     * @credits Codeigniter
-     * 
-     * @access protected
-     * @return void
+     * Add router
+     *
+     * @param RouteInterface $router
+     * @return self
      */
-    protected function check_cors()
+    public function addRouter(RouteInterface $router)
     {
-        $allowed_cors_headers = ALLOWED_CORS_HEADERS;
-        $exposed_cors_headers = EXPOSED_CORS_HEADERS;
-        $allowed_cors_methods = ALLOWED_CORS_METHODS;
-        $max_cors_age = MAX_CORS_AGE;
-
-        // Convert the config items into strings
-        $allowed_headers = implode(', ', is_array($allowed_cors_headers) ? $allowed_cors_headers : []);
-        $exposed_cors_headers = implode(', ', is_array($exposed_cors_headers) ? $exposed_cors_headers : []);
-        $allowed_methods = implode(', ', is_array($allowed_cors_methods) ? $allowed_cors_methods : []);
-
-        // If we want to allow any domain to access the API
-        if (ALLOWED_ANY_CORS_DOMAIN == TRUE) {
-            header(HTTP_VERSION . " 200 OK", TRUE, 200);
-            header('Access-Control-Allow-Origin: *', true);
-            header('Access-Control-Allow-Methods: ' . $allowed_methods, true);
-            header('Access-Control-Allow-Headers: ' . $allowed_headers, true);
-            header('Access-Control-Expose-Headers: ' . $exposed_cors_headers, true);
-            header('Access-Control-Max-Age: ' . $max_cors_age, true);
-        } else {
-
-            // We're going to allow only certain domains access
-            // Store the HTTP Origin header
-            $origin = env('HTTP_ORIGIN') ?? env('HTTP_REFERER') ?? '';
-
-            $allowed_origins = ALLOWED_CORS_ORIGINS;
-
-            // If the origin domain is in the allowed_cors_origins list, then add the Access Control headers
-            if (is_array($allowed_origins) && in_array(trim($origin, "/"), $allowed_origins)) {
-                header(HTTP_VERSION . " 200 OK", true, 200);
-                header('Access-Control-Allow-Origin: ' . $origin, true);
-                header('Access-Control-Allow-Methods: ' . $allowed_methods, true);
-                header('Access-Control-Allow-Headers: ' . $allowed_headers, true);
-                header('Access-Control-Expose-Headers: ' . $exposed_cors_headers, true);
-                header('Access-Control-Max-Age: ' . $max_cors_age, true);
-            }
-        }
-
-        // If the request HTTP method is 'OPTIONS', kill the response and send it to the client
-        if (strtolower(env("REQUEST_METHOD")) === 'options') {
-            die();
-        }
+        $this->router = $router;
+        return $this;
     }
+
+    /**
+     * Add config file
+     * 
+     * @param string $config
+     * @return self
+     */
+    public function addConfig(string $config)
+    {
+        $this->loader->config($config);
+        return $this;
+    }
+
+    /**
+     * 
+     * Add middleware
+     *
+     * @param MiddlewareInterface[] $middlewares
+     * @param int $index
+     * @return mixed
+     */
+    public function processMiddleware(array $middlewares, $index = 0)
+    {
+        if (isset($middlewares[$index])) {
+            return $middlewares[$index]->handle(fn () => $this->processMiddleware($middlewares, ++$index));
+        }
+        return false;
+    }
+
+
+    ############################
+    # Response & Reports
+    ############################
+
 
     /**
      * Show Message
@@ -321,34 +368,44 @@ class App
      */
     public function showMessage($code, $status, $title, $msg = null, $line = null, $file = null,  $trace = [])
     {
-        !ob_get_contents() ?: ob_clean();
-        ob_start();
         if (is_cli()) {
             $this->logger->logError(PHP_EOL . "status\t-\tfalse" . PHP_EOL . "msg\t-\t" . ($msg ?? $title) . PHP_EOL .  "version\t-\t" . APP_VERSION . PHP_EOL . "line\t-\t$line" . PHP_EOL . "path\t-\t$file" . PHP_EOL, $trace);
         } else {
-
-            if (!headers_sent()) {
-                header(HTTP_VERSION . ' ' . $code . ' ' . ($msg ? $title : ''), TRUE, $code);
-                header("Content-type: application/json");
-                header('Access-Control-Allow-Origin: *', true);
-                header('Access-Control-Allow-Methods: *', true);
-            }
-
             $data = ['status' => $status, 'msg' => $msg ?? $title];
             if ($code !== 200 || $code !== 201) {
                 $data['env'] = ENVIRONMENT;
                 $data['version'] = APP_VERSION;
                 $data['ip'] = IPADDRESS;
             }
+
+            // Show error info if not production
             if (ENVIRONMENT != ENV_PROD) {
                 if (!empty($line)) $data['line'] = $line;
                 if (!empty($file)) $data['file_path'] = $file;
                 if (!empty($trace)) $data['backtrace'] = $trace;
             }
-            echo json_encode($data, JSON_PRETTY_PRINT);
+
+            $this->response->setParameters($data);
+            $this->response->setStatusCode($code, ($msg ? $title : ''));
+            $this->response->send();
         }
-        ob_flush();
-        exit;
+        die;
+    }
+
+
+    /**
+     * Show Http Response
+     * @param string $code Code
+     * @param array $data Data
+     * @param array $headers Headers
+     */
+    public function sendHttpResponse($code, $data = [], $headers = [])
+    {
+        $this->response->setParameters(is_array($data) ? $data : ['status' => $code < 300, 'msg' => $data]);
+        $this->response->setHttpHeaders($headers);
+        $this->response->setStatusCode($code);
+        $this->response->send();
+        die;
     }
 
     /**

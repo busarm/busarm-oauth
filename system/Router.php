@@ -2,19 +2,44 @@
 
 namespace System;
 
+use System\Interfaces\RouteInterface;
+use System\Middlewares\RouteMiddleware;
+
 /**
  * Created by VSCODE.
  * User: Samuel
  * Date: 21/5/2022
  * Time: 1:17 AM
  */
-class Router
+class Router implements RouteInterface
 {
 
     const GET_METHOD =  "GET";
     const POST_METHOD =  "POST";
     const PUT_METHOD =  "PUT";
     const DELETE_METHOD =  "DELETE";
+
+    const MATCH_ALPHA = "alpha";
+    const MATCH_ALPHA_NUM = "alpha-dash";
+    const MATCH_ALPHA_NUM_DASH = "alpha-num-dash";
+    const MATCH_NUM = "num";
+    const MATCH_ANY = "any";
+
+    const PATH_EXCLUDE_LIST = ["$", "<", ">", " ", "[", "]", "{", "}", "^", "\\", "|", "%"];
+    const MATCH_ESCAPE_LIST = [
+        "/" => "\/",
+        "." => "\.",
+    ];
+    const MATCHER_REGX = [
+        "/\(" . self::MATCH_ALPHA . "\)/" => "([a-zA-Z]+)",
+        "/\(" . self::MATCH_ALPHA_NUM . "\)/" => "([a-zA-Z-_]+)",
+        "/\(" . self::MATCH_ALPHA_NUM_DASH . "\)/" => "([a-zA-Z0-9-_]+)",
+        "/\(" . self::MATCH_NUM . "\)/" => "([0-9]+)",
+        "/\(" . self::MATCH_ANY . "\)/" => "(.+)",
+        "/\{\w*\}/" => "(.+)"
+    ];
+
+    const ROUTE_SEPARATOR = "::";
 
     /** @var string Request controller */
     public $controller;
@@ -35,6 +60,14 @@ class Router
         self::POST_METHOD => [],
         self::PUT_METHOD => [],
         self::DELETE_METHOD => [],
+    ];
+
+    /** @var array HTTP routes */
+    public $middlewares = [
+        self::GET_METHOD => [],
+        self::POST_METHOD => [],
+        self::PUT_METHOD => [],
+        self::DELETE_METHOD => []
     ];
 
     /**
@@ -61,175 +94,171 @@ class Router
         if (empty($this->route)) {
             $this->route = env('REQUEST_URI');
         }
+        $this->route = explode('?', $this->route)[0];
     }
 
     /**
      * Process routing
-     * @return boolean
+     * @return \System\Interfaces\MiddlewareInterface[]
      */
-    public function process()
+    public function process(): array
     {
         // If custom routes
         if ($this->controller && $this->function) {
-            return $this->reroute($this->controller, $this->function, $this->params);
+            return [new RouteMiddleware($this->controller, $this->function, $this->params)];
         }
         // If http routes
         else {
-            if ($path = $this->check()) {
-                $routes = explode('::', $path);
-                $controller = $routes[0] ?? null;
-                $function = $routes[1] ?? null;
-                return $this->reroute($controller, $function);
+            foreach (($this->routes[$this->method] ?? []) as $match => $to) {
+                if ($params = $this->is_match($this->route, $match)) {
+                    $routes = explode(self::ROUTE_SEPARATOR, $to);
+                    $this->controller = $routes[0] ?? null;
+                    $this->function = $routes[1] ?? null;
+                    $this->params = is_array($params) ? $params : [];
+                    $routeMiddleware = $this->middlewares[$this->method][$match] ?? [];
+                    $routeMiddleware[] = new RouteMiddleware($this->controller, $this->function, $this->params);
+                    return $routeMiddleware;
+                }
             }
         }
-        return false;
+        return [];
     }
 
     /**
      * Set HTTP GET routes
      * 
-     * @param $path HTTP path. e.g /home. Regular expression is supported
-     * @param $class Application Controller class name e.g Home
-     * @param $function Application Controller (public) function. e.g index
+     * @param string $path HTTP path. e.g /home. See `MATCHER_REGX` for list of variable matching keywords
+     * @param string $class Application Controller class name e.g Home
+     * @param string $function Application Controller (public) function. e.g index
+     * @param \System\Interfaces\MiddlewareInterface[] $middlewares Array of Middleware Interface.
      * @return self
      */
-    public function get($path, $class, $function)
+    public function get($path, $class, $function, $middlewares = []): RouteInterface
     {
-        $this->routes[self::GET_METHOD][$path] = $class . '::' . $function;
+        $this->routes[self::GET_METHOD][$path] = $this->build_route($class, $function);
+        $this->middlewares[self::GET_METHOD][$path] = $middlewares;
         return $this;
     }
 
     /**
      * Set HTTP POST routes
      * 
-     * @param $path HTTP path. e.g /home. Regular expression is supported
-     * @param $class Application Controller class name e.g Home
-     * @param $method [Optional] Application Controller function. e.g index
+     * @param string $path HTTP path. e.g /home. See `MATCHER_REGX` for list of variable matching keywords
+     * @param string $class Application Controller class name e.g Home
+     * @param string $function Application Controller (public) function. e.g index
+     * @param \System\Interfaces\MiddlewareInterface[] $middlewares Array of Middleware Interface.
      * @return self
      */
-    public function post($path, $class, $function)
+    public function post($path, $class, $function, $middlewares = []): RouteInterface
     {
-        $this->routes[self::POST_METHOD][$path] = $class . '::' . $function;
+        $this->routes[self::POST_METHOD][$path] = $this->build_route($class, $function);
+        $this->middlewares[self::POST_METHOD][$path] = $middlewares;
         return $this;
     }
 
     /**
      * Set HTTP GET & POST routes
      * 
-     * @param $path HTTP path. e.g /home. Regular expression is supported
-     * @param $class Application Controller class name e.g Home
-     * @param $function Application Controller (public) function. e.g index
+     * @param string $path HTTP path. e.g /home. See `MATCHER_REGX` for list of variable matching keywords
+     * @param string $class Application Controller class name e.g Home
+     * @param string $function Application Controller (public) function. e.g index
+     * @param \System\Interfaces\MiddlewareInterface[] $middlewares Array of Middleware Interface.
      * @return self
      */
-    public function get_post($path, $class, $function)
+    public function get_post($path, $class, $function, $middlewares = []): RouteInterface
     {
-        $this->routes[self::GET_METHOD][$path] = $class . '::' . $function;
-        $this->routes[self::POST_METHOD][$path] = $class . '::' . $function;
+        $this->routes[self::GET_METHOD][$path] = $this->build_route($class, $function);
+        $this->routes[self::POST_METHOD][$path] = $this->build_route($class, $function);
+        $this->middlewares[self::GET_METHOD][$path] = $middlewares;
+        $this->middlewares[self::POST_METHOD][$path] = $middlewares;
         return $this;
     }
 
     /**
      * Set HTTP PUT routes
      * 
-     * @param $path HTTP path. e.g /home. Regular expression is supported
-     * @param $class Application Controller class name e.g Home
-     * @param $method [Optional] Application Controller function. e.g index
+     * @param string $path HTTP path. e.g /home. See `MATCHER_REGX` for list of variable matching keywords
+     * @param string $class Application Controller class name e.g Home
+     * @param string $function Application Controller (public) function. e.g index
+     * @param \System\Interfaces\MiddlewareInterface[] $middlewares Array of Middleware Interface.
      * @return self
      */
-    public function put($path, $class, $function)
+    public function put($path, $class, $function, $middlewares = []): RouteInterface
     {
-        $this->routes[self::PUT_METHOD][$path] = $class . '::' . $function;
+        $this->routes[self::PUT_METHOD][$path] = $this->build_route($class, $function);
+        $this->middlewares[self::PUT_METHOD][$path] = $middlewares;
         return $this;
     }
 
     /**
      * Set HTTP POST & PUT routes
      * 
-     * @param $path HTTP path. e.g /home. Regular expression is supported
-     * @param $class Application Controller class name e.g Home
-     * @param $method [Optional] Application Controller function. e.g index
+     * @param string $path HTTP path. e.g /home. See `MATCHER_REGX` for list of variable matching keywords
+     * @param string $class Application Controller class name e.g Home
+     * @param string $function Application Controller (public) function. e.g index
+     * @param \System\Interfaces\MiddlewareInterface[] $middlewares Array of Middleware Interface.
      * @return self
      */
-    public function post_put($path, $class, $function)
+    public function post_put($path, $class, $function, $middlewares = []): RouteInterface
     {
-        $this->routes[self::POST_METHOD][$path] = $class . '::' . $function;
-        $this->routes[self::PUT_METHOD][$path] = $class . '::' . $function;
+        $this->routes[self::POST_METHOD][$path] = $this->build_route($class, $function);
+        $this->routes[self::PUT_METHOD][$path] = $this->build_route($class, $function);
+        $this->middlewares[self::POST_METHOD][$path] = $middlewares;
+        $this->middlewares[self::PUT_METHOD][$path] = $middlewares;
         return $this;
     }
 
     /**
      * Set HTTP DELETE routes
      * 
-     * @param $path HTTP path. e.g /home. Regular expression is supported
-     * @param $class Application Controller class name e.g Home
-     * @param $method [Optional] Application Controller function. e.g index
+     * @param string $path HTTP path. e.g /home. See `MATCHER_REGX` for list of variable matching keywords
+     * @param string $class Application Controller class name e.g Home
+     * @param string $function Application Controller (public) function. e.g index
+     * @param \System\Interfaces\MiddlewareInterface[] $middlewares Array of Middleware Interface.
      * @return self
      */
-    public function delete($path, $class, $function)
+    public function delete($path, $class, $function, $middlewares = []): RouteInterface
     {
-        $this->routes[self::DELETE_METHOD][$path] = $class . '::' . $function;
+        $this->routes[self::DELETE_METHOD][$path] = $this->build_route($class, $function);
+        $this->middlewares[self::DELETE_METHOD][$path] = $middlewares;
         return $this;
+    }
+
+    /**
+     * Build controller -> function route
+     *
+     * @param string $class Class name
+     * @param string $function Function name
+     * @return string
+     */
+    private function build_route($class, $function)
+    {
+        return $class . self::ROUTE_SEPARATOR . $function;
     }
 
     /**
      * Check if path matches
      *
-     * @param string $path
-     * @param string $match
+     * @param string $path Request path
+     * @param string $route Route to compare to
      * @return boolean|array
      */
-    private function is_match($path, $match)
+    private function is_match($path, $route)
     {
-        $match = str_replace(['/', '.'], ['\/', '\.'], $match);
-        if (!empty($path) && preg_match("/$match/i", $path, $result)) {
-            return $result ?: true;
+        // Decode url
+        $path = urldecode($path);
+        // Remove unwanted characters from path
+        $path = str_replace(self::PATH_EXCLUDE_LIST, "", $path);
+        // Escape charaters to be a safe Regexp
+        $route = str_replace(array_keys(self::MATCH_ESCAPE_LIST), array_values(self::MATCH_ESCAPE_LIST), $route);
+        // Replace matching keywords with regexp 
+        $route = preg_replace(array_keys(self::MATCHER_REGX), array_values(self::MATCHER_REGX), $route);
+        // Search request path against route
+        $result = preg_match("/$route$/i", $path, $matches);
+        if (!empty($path) && $result >= 1) {
+            $params = array_splice($matches, 1);
+            return !empty($params) ? $params : true;
         }
-        return false;
-    }
-
-    /**
-     * Check route
-     * @param string $match 
-     * @return bool|array Result matched request route with either specified route or supplied match
-     */
-    public function check($match = null)
-    {
-        if (!empty($match)) {
-            return $this->is_match($this->route, $match) ? $match : false;
-        } else if (!empty($this->method)) {
-            foreach (($this->routes[$this->method] ?? []) as $match => $to) {
-                if ($this->is_match($this->route, $match)) return $to;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Process Route
-     *
-     * @param string $controller
-     * @param string $function
-     * @param string $params
-     * @return boolean|mixed
-     */
-    private function reroute($controller, $function, $params = [])
-    {
-        if (class_exists($controller)) {
-            // Load controller
-            $object = new $controller();
-            if (
-                method_exists($object, $function)
-                && is_callable(array($object, $function))
-            ) {
-                return call_user_func_array(
-                    array($object, $function),
-                    $params
-                );
-            }
-            app()->reportError("Route error", "Method can't be called: " . $function);
-            return false;
-        }
-        app()->reportError("Route error", "Class does not exist: " . $controller);
         return false;
     }
 }

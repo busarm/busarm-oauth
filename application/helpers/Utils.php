@@ -1,9 +1,10 @@
 <?php
 
-namespace System;
+namespace Application\Helpers;
 
 use DateTime;
 use DateTimeZone;
+use System\Encrypter;
 
 /**
  * Created by VSCODE.

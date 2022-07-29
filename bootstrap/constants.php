@@ -28,3 +28,12 @@ const BRANCHES_DEV = [
     '*-develop',
     '*-dev',
 ];
+
+// Application Environment
+if (env('ENV') == ENV_PROD || strtolower(env('ENV')) == "prod" || strtolower(env('STAGE')) == "prod") {
+    define('ENVIRONMENT', ENV_PROD);
+} else if (env('ENV') == ENV_TEST || strtolower(env('ENV')) == "dev" || strtolower(env('STAGE')) == "dev") {
+    define('ENVIRONMENT', ENV_TEST);
+} else {
+    define('ENVIRONMENT', ENV_DEV);
+}

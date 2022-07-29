@@ -65,13 +65,7 @@ https://documenter.getpostman.com/view/20461972/UVyytYJ5
 -   `public` - Contains public facing scripts and files
     -   `index.php` - Public facing launch point of the app
 -   `system` - Contains system framework files
-    -   `Configs.php` - Contains application environment configs to be accessd anywhere
-    -   `App.php` - Configure and Initialize application
-    -   `Router.php` - Configure and application routing
-    -   `Utils.php` - Configure and application utilities functions
-    -   `URL.php` - Configure and application urls and paths
-    -   `Encrypter.php` - Encryption / Decryption helper class
-    -   `Server.php` - Base controller class for Oauth Server. Processes Oauth requests.
+-   `workspace` - Contains docker set up for console workspace environment
 
 ## Database Migration
 
