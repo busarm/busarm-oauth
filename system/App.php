@@ -6,12 +6,16 @@ use DateInterval;
 use DateTime;
 use Exception;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use System\Dto\BaseDto;
+use System\Dto\ResponseDto;
 use System\HttpException;
+use System\Interfaces\ErrorReportingInterface;
 use System\Interfaces\LoaderInterface;
+use System\Interfaces\LoggerInterface;
 use System\Interfaces\MiddlewareInterface;
 use System\Interfaces\RequestInterface;
 use System\Interfaces\ResponseInterface;
-use System\Interfaces\RouteInterface;
+use System\Interfaces\RouterInterface;
 use System\Loader;
 use System\Middlewares\ResponseMiddleware;
 use Throwable;
@@ -33,7 +37,7 @@ class App
         'app',
         'database',
         'mail',
-        'services',
+        'services'
     ];
 
     /** @var self */
@@ -45,17 +49,13 @@ class App
     /** @var array */
     public $singletons = [];
 
-    /** @var \Bugsnag\Client */
-    private $bugsnag;
-
-
     /** @var RequestInterface */
     public $request;
 
     /** @var ResponseInterface */
     public $response;
 
-    /** @var RouteInterface */
+    /** @var RouterInterface */
     public $router;
 
     /** @var LoggerInterface */
@@ -64,8 +64,11 @@ class App
     /** @var LoaderInterface */
     public $loader;
 
+    /** @var ErrorReporter */
+    public $reporter;
+
     /**
-     * @param RouteInterface|null $router
+     * @param RouterInterface|null $router
      * @param array $configs List of custom config files in configuration directory to load. e.g aws, papertrail 
      */
     public function __construct($configs = array())
@@ -75,6 +78,9 @@ class App
         // Create request & response objects
         $this->request = Request::createFromGlobals();
         $this->response = new Response();
+
+        // Set error reporter
+        $this->reporter = new ErrorReporter();
 
         // Set Loader
         $this->loader = new Loader();
@@ -89,7 +95,7 @@ class App
         $this->setUpConfigs(self::DEFAULT_CONFIGS);
 
         // Set up error reporting
-        $this->setUpErrorReporting();
+        $this->setUpErrorHandlers();
 
         // Set up custom configs
         $this->setUpConfigs($configs);
@@ -106,36 +112,6 @@ class App
     public static function &getInstance()
     {
         return self::$instance;
-    }
-
-    /**
-     * Get Bugsnag Client
-     *
-     * @return \Bugsnag\Client
-     */
-    public function getBugsnag()
-    {
-        return $this->bugsnag;
-    }
-
-    /**
-     * Get Router
-     *
-     * @return Logger
-     */
-    public function getRouter()
-    {
-        return $this->router;
-    }
-
-    /**
-     * Get Logger
-     *
-     * @return Logger
-     */
-    public function getLogger()
-    {
-        return $this->logger;
     }
 
 
@@ -158,44 +134,20 @@ class App
     }
 
     /**
-     * Set up environment
+     * Set up error handlers
      */
-    private function setUpErrorReporting()
+    private function setUpErrorHandlers()
     {
-        // Error Reporting
-        switch (ENVIRONMENT) {
-            case ENV_DEV:
-            case ENV_TEST:
-                error_reporting(E_ALL);
-                ini_set('display_errors', 1);
-                break;
-            case ENV_PROD:
-                ini_set('display_errors', 0);
-                error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT & ~E_USER_NOTICE & ~E_USER_DEPRECATED);
-                break;
-            default:
-                header(HTTP_VERSION . ' 503 Service Unavailable.', TRUE, 503);
-                echo 'The application environment is not set correctly.';
-                exit(1); // EXIT_ERROR
-        }
-
-        // Error Handlers
-        if ($key = BUGSNAG_KEY) {
-            $this->bugsnag = \Bugsnag\Client::make($key);
-            $this->bugsnag->setReleaseStage(ENVIRONMENT);
-            $this->bugsnag->setAppType(is_cli() ? "Console" : "HTTP");
-            \Bugsnag\Handler::register($this->bugsnag);
-        }
         set_error_handler(function ($errno, $errstr, $errfile = null, $errline = null, $errcontext = []) {
-            $this->reportError("Internal Server Error", $errline);
+            $this->reporter->reportError("Internal Server Error", $errline);
             $this->showMessage(500, false, $errno, $errstr, $errline, $errfile, $errcontext);
         });
         set_exception_handler(function (Throwable $e) {
             if ($e instanceof HttpException) {
-                if ($e->getCode() >= 500) $this->reportException($e);
+                if ($e->getCode() >= 500) $this->reporter->reportException($e);
                 $e->handler();
             } else {
-                $this->reportException($e);
+                $this->reporter->reportException($e);
                 $trace = array_map(function ($instance) {
                     return [
                         'file' => $instance['file'] ?? null,
@@ -218,7 +170,7 @@ class App
     {
         // Preflight Checking
         if (!is_cli()) {
-            $this->preflight($this->router->method);
+            $this->preflight($this->router->getRequestMethod());
         }
 
         // If offline or on maintenance mode
@@ -239,7 +191,7 @@ class App
         // Initiate rerouting
         if ($this->router) {
             if (!$this->processMiddleware(array_merge($this->middlewares, $this->router->process()))) {
-                $this->showMessage(404, false, "Not found - " . $this->router->route);
+                $this->showMessage(404, false, "Not found - " . $this->router->getRequestPath());
             }
         } else throw new Exception("Router not configured. See `addRouter`");
     }
@@ -299,6 +251,18 @@ class App
     }
 
     /**
+     * Add config file
+     * 
+     * @param string $config
+     * @return self
+     */
+    public function addConfig(string $config)
+    {
+        $this->loader->config($config);
+        return $this;
+    }
+
+    /**
      * Add middleware
      *
      * @param MiddlewareInterface $middleware
@@ -313,24 +277,24 @@ class App
     /**
      * Add router
      *
-     * @param RouteInterface $router
+     * @param RouterInterface $router
      * @return self
      */
-    public function addRouter(RouteInterface $router)
+    public function addRouter(RouterInterface $router)
     {
         $this->router = $router;
         return $this;
     }
 
     /**
-     * Add config file
+     * Add error reporter
      * 
      * @param string $config
      * @return self
      */
-    public function addConfig(string $config)
+    public function addErrorReporter(ErrorReportingInterface $reporter)
     {
-        $this->loader->config($config);
+        $this->reporter = $reporter;
         return $this;
     }
 
@@ -369,23 +333,47 @@ class App
     public function showMessage($code, $status, $title, $msg = null, $line = null, $file = null,  $trace = [])
     {
         if (is_cli()) {
-            $this->logger->logError(PHP_EOL . "status\t-\tfalse" . PHP_EOL . "msg\t-\t" . ($msg ?? $title) . PHP_EOL .  "version\t-\t" . APP_VERSION . PHP_EOL . "line\t-\t$line" . PHP_EOL . "path\t-\t$file" . PHP_EOL, $trace);
+            if (!$status || $code !== 200 || $code !== 201) {
+                $this->logger->logError(
+                    PHP_EOL . "success\t-\tfalse" .
+                        PHP_EOL . "message\t-\t" . ($msg ?? $title) .
+                        PHP_EOL . "version\t-\t" . APP_VERSION .
+                        PHP_EOL . "line\t-\t$line" .
+                        PHP_EOL . "path\t-\t$file" .
+                        PHP_EOL,
+                    $trace
+                );
+            } else {
+                $this->logger->logInfo(
+                    PHP_EOL . "success\t-\ttrue" .
+                        PHP_EOL . "message\t-\t" . ($msg ?? $title) .
+                        PHP_EOL . "version\t-\t" . APP_VERSION .
+                        PHP_EOL . "line\t-\t$line" .
+                        PHP_EOL . "path\t-\t$file" .
+                        PHP_EOL,
+                    $trace
+                );
+            }
         } else {
-            $data = ['status' => $status, 'msg' => $msg ?? $title];
+            $response = new ResponseDto();
+            $response->success = $status;
+            $response->message = $msg ?? $title;
+
+            // Show env info if not successful
             if ($code !== 200 || $code !== 201) {
-                $data['env'] = ENVIRONMENT;
-                $data['version'] = APP_VERSION;
-                $data['ip'] = IPADDRESS;
+                $response->env = ENVIRONMENT;
+                $response->version = APP_VERSION;
+                $response->ip = IPADDRESS;
             }
 
             // Show error info if not production
             if (ENVIRONMENT != ENV_PROD) {
-                if (!empty($line)) $data['line'] = $line;
-                if (!empty($file)) $data['file_path'] = $file;
-                if (!empty($trace)) $data['backtrace'] = $trace;
+                $response->line = !empty($line) ? $line : null;
+                $response->file = !empty($file) ? $file : null;
+                $response->trace = !empty($trace) ? $trace : null;
             }
 
-            $this->response->setParameters($data);
+            $this->response->setParameters($response->toArray());
             $this->response->setStatusCode($code, ($msg ? $title : ''));
             $this->response->send();
         }
@@ -396,45 +384,29 @@ class App
     /**
      * Show Http Response
      * @param string $code Code
-     * @param array $data Data
+     * @param mixed $data Data
      * @param array $headers Headers
      */
-    public function sendHttpResponse($code, $data = [], $headers = [])
+    public function sendHttpResponse($code, $data = null, $headers = [])
     {
-        $this->response->setParameters(is_array($data) ? $data : ['status' => $code < 300, 'msg' => $data]);
+        if (!is_array($data)) {
+            if ($data instanceof BaseDto) {
+                $data = $data->toArray();
+            } else if (is_object($data)) {
+                $data = (array) $data;
+            } else {
+                $response = new ResponseDto();
+                $response->success = $code < 300;
+                $response->message = $data;
+                $data = $response->toArray();
+            }
+        }
+
+        $this->response->setParameters($data);
         $this->response->setHttpHeaders($headers);
         $this->response->setStatusCode($code);
         $this->response->send();
         die;
-    }
-
-    /**
-     * Report Error
-     *
-     * @param string $heading
-     * @param string $message
-     * @return void
-     */
-    public static function reportError($heading, $message)
-    {
-        if (!empty(self::$instance->bugsnag)) {
-            self::$instance->bugsnag->notifyError($heading, $message);
-        }
-        log_error($message);
-    }
-
-    /**
-     * Report Exception
-     *
-     * @param \Throwable $exception
-     * @return void
-     */
-    public static function reportException($exception)
-    {
-        if (!empty(self::$instance->bugsnag)) {
-            self::$instance->bugsnag->notifyException($exception);
-        }
-        log_exception($exception);
     }
 
     /**

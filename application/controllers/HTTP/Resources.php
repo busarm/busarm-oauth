@@ -4,7 +4,7 @@ namespace Application\Controllers\HTTP;
 
 use Application\Controllers\OAuthBaseController;
 use phpseclib\Crypt\RSA;
-use  Application\Services\OAuthScopeService;
+use Application\Services\OAuthScopeService;
 use Application\Helpers\Utils;
 
 /**
@@ -18,7 +18,7 @@ class Resources extends OAuthBaseController
 
     public function __construct()
     {
-        parent::__construct(false);
+        parent::__construct();
     }
 
     /**
@@ -26,7 +26,7 @@ class Resources extends OAuthBaseController
      * */
     public function scopes()
     {
-        app()->sendHttpResponse(200, $this->success(OAuthScopeService::$allScopes));
+        return $this->success(OAuthScopeService::$allScopes);
     }
 
     /**

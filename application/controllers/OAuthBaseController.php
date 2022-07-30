@@ -2,10 +2,11 @@
 
 namespace Application\Controllers;
 
-use Application\Services\OAuthStorageService;
+use Application\Dto\OAuthErrorDto;
+use Application\Exceptions\AuthorizationException;
 use Application\Services\OAuthService;
 use Application\Services\AuthService;
-use Application\Helpers\Utils;
+use System\Dto\ResponseDto;
 
 /**
  * Created by PhpStorm.
@@ -15,9 +16,7 @@ use Application\Helpers\Utils;
  */
 class OAuthBaseController
 {
-    const ACCESS_TYPE_CLIENT = 'client';
-    const ACCESS_TYPE_TOKEN = 'token';
-
+    
     /** @var OAuthService */
     protected $oauth;
 
@@ -26,46 +25,51 @@ class OAuthBaseController
 
     /**
      * Server constructor.
-     * @param boolean $validateAccess Validate access to server
-     * @param boolean $useJWT Use JWT Token
      * @param boolean $isCLI Is CLI Application
      */
-    protected function __construct($validateAccess = false,  $isCLI = false)
+    protected function __construct($isCLI = false)
     {
         // Check cli
         if ($isCLI && !is_cli()) {
-            app()->showMessage(403, false, 'Unauthorized request');
+            throw new AuthorizationException('Unauthorized request');
         }
 
         // Create OAuth Service
         $this->oauth = OAuthService::getInstance();
-        
+
         // Create Auth Service
         $this->auth = AuthService::getInstance();
-
-        // Validate Access
-        if ($validateAccess && !$this->oauth->validateClient() && !$this->oauth->validateAccessToken()) {
-            app()->sendHttpResponse(401, $this->oauth->response->getParameters());
-        }
     }
 
     /**
      * Get success response
+     * @return ResponseDto
      */
-    public function success($data)
+    public function success($data): ResponseDto
     {
+        $dto = new ResponseDto();
         if (is_string($data)) {
-            return ['success' => true, 'message' => $data];
+            $dto->success = true;
+            $dto->message = $data;
+            return $dto;
         } else {
-            return ['success' => true, 'data' => $data];
+            $dto = new ResponseDto();
+            $dto->success = true;
+            $dto->data = $data;
         }
+        return $dto;
     }
 
     /**
      * Get success response
+     * @return OAuthErrorDto
      */
-    public function error($message, $type = 'unexpected_error')
+    public function error($message, $type = 'unexpected_error'): OAuthErrorDto
     {
-        return ['success' => false, 'error' => $type, 'error_description' => $message];
+        $dto = new OAuthErrorDto();
+        $dto->success = false;
+        $dto->error = $type;
+        $dto->error_description = $message;
+        return $dto;
     }
 }

@@ -195,7 +195,7 @@ if (!function_exists('log_error')) {
      */
     function log_error($message)
     {
-        return app()->getLogger()->logError($message);
+        return app()->logger->logError($message);
     }
 }
 
@@ -205,7 +205,7 @@ if (!function_exists('log_exception')) {
      */
     function log_exception($exception)
     {
-        return app()->getLogger()->logError($exception->getMessage(), $exception->getTrace());
+        return app()->logger->logError($exception->getMessage(), $exception->getTrace());
     }
 }
 
@@ -215,7 +215,7 @@ if (!function_exists('log_info')) {
      */
     function log_info($message)
     {
-        return app()->getLogger()->logInfo($message);
+        return app()->logger->logInfo($message);
     }
 }
 
@@ -225,7 +225,7 @@ if (!function_exists('log_debug')) {
      */
     function log_debug($message)
     {
-        return app()->getLogger()->logDebug($message);
+        return app()->logger->logDebug($message);
     }
 }
 
@@ -235,7 +235,7 @@ if (!function_exists('log_warning')) {
      */
     function log_warning($message)
     {
-        return app()->getLogger()->logWarning($message);
+        return app()->logger->logWarning($message);
     }
 }
 

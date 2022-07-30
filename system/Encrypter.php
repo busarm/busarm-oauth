@@ -20,19 +20,19 @@ class Encrypter
      */
     public static $METHOD = "AES-256-CBC";
     /**
-     * Name of selected hashing algorithm (i.e. "md5", "sha256", "haval160,4", etc..) See `hash_algos` for a list of supported algorithms
+     * Name of selected hashing algorithm (i.e. "md5", "sha256", "haval160,4", etc..) @see `hash_algos` for a list of supported algorithms
      * @var string
      */
     public static $KEY_HASH_ALGO = "md5";
     /**
-     * Name of selected hashing algorithm (i.e. "md5", "sha256", "haval160,4", etc..) See `hash_algos` for a list of supported algorithms
+     * Name of selected hashing algorithm (i.e. "md5", "sha256", "haval160,4", etc..) @see `hash_algos` for a list of supported algorithms
      * @var string
      */
     public static $HMAC_HASH_ALGO = "sha1";
     
-    public static $KEY_HASH_INTERATIONS = 16;
-    public static $KEY_HASH_LENGTH = 64;
-    public static $KEY_SALT_LENGTH = 16;
+    public static $KEY_HASH_INTERATIONS = 8;
+    public static $KEY_HASH_LENGTH = 16;
+    public static $KEY_SALT_LENGTH = 8;
     public static $KEY_IV_LENGTH = 16;
 
     /**

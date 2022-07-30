@@ -14,14 +14,6 @@ use Application\Helpers\URL;
 class Misc
 {
     /**
-     * Ping server
-     */
-    public function ping()
-    {
-        return "System Online";
-    }
-
-    /**
      * Process secure link
      *
      * @param string $link

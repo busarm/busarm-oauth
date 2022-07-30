@@ -19,13 +19,13 @@ use System\Interfaces\MiddlewareInterface;
 class ThrottleMiddleware implements MiddlewareInterface
 {
 
-    public function __construct(private $id, private $limit = 0, private $seconds = 60)
+    public function __construct(private $limit = 0, private $seconds = 60, private $name = null)
     {
     }
 
     public function handle(callable $next = null): mixed
     {
-        $key = md5('throttle:' . $this->id);
+        $key = md5('throttle:' . ($this->name ?? app()->router->getRequestPath()));
         $count = (Utils::getCookie($key, IPADDRESS) ?? 0) + 1;
         if ($this->limit > 0 && $count >= $this->limit) {
             throw new ThrottleException("Too many request. Please try again later");

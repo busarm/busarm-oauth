@@ -70,7 +70,7 @@ class MailService
 
             return $this->mail->send();
         } catch (Exception $e) {
-            app()->reportException($e); // Report
+            app()->reporter->reportException($e); // Report
         }
 
         return false;

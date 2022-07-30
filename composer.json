@@ -43,6 +43,7 @@
             "System\\": "system",
             "Application\\": "application",
             "Application\\Controllers\\": "application/controllers",
+            "Application\\Dto\\": "application/dto",
             "Application\\Enums\\": "application/enums",
             "Application\\Exceptions\\": "application/exceptions",
             "Application\\Helpers\\": "application/helpers",

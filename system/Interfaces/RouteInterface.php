@@ -2,8 +2,8 @@
 
 namespace System\Interfaces;
 
-use OAuth2\RequestInterface;
-use OAuth2\ResponseInterface;
+use Closure;
+use System\Interfaces\MiddlewareInterface;
 
 /**
  * Created by VSCODE.
@@ -13,76 +13,98 @@ use OAuth2\ResponseInterface;
  */
 interface RouteInterface
 {
+    /**  @return Closure|null */
+    public function getCallable(): Closure|null;
+    /**  @return string */
+    public function getController(): string|null;
+    /**  @return string */
+    public function getFunction(): string|null;
+    /**  @return string */
+    public function getParams(): array|null;
+    /**  @return string */
+    public function getMethod(): string|null;
+    /**  @return string */
+    public function getPath(): string|null;
+    /**  @return MiddlewareInterface[] */
+    public function getMiddlewares(): array;
     
+    /**
+     * Set route params 
+     * 
+     * @return self 
+     */
+    public function withParams(array $params): self;
+
+    /**
+     * Set callable route destination
+     * 
+     * @param string $callable Function to execute for route
+     * @return self
+     */
+    public function call(Closure $callable): self;
+
+    /**
+     * Set controller route destination
+     * 
+     * @param string $controller Application Controller class name e.g Home
+     * @param string $function Application Controller (public) function. e.g index
+     * @return self
+     */
+    public function to(string $controller, string $function): self;
+
+    /**
+     * Add route middlewares
+     * 
+     * @param MiddlewareInterface[] $middlewares Array of Middleware Interface.
+     * @return self
+     */
+    public function middlewares(array $middlewares = []): self;
+
+    /**
+     * Add route middleware
+     * 
+     * @param MiddlewareInterface $middlewares
+     * @return self
+     */
+    public function middleware(MiddlewareInterface $middleware): self;
+
     /**
      * Set HTTP GET routes
      * 
-     * @param string $path HTTP path. e.g /home. Regular expression is supported
-     * @param string $class Application Controller class name e.g Home
-     * @param string $function Application Controller (public) function. e.g index
-     * @param \System\Interfaces\MiddlewareInterface[] $middlewares Array of Middleware Interface.
-     * @return self
+     * @param string $path HTTP path. e.g /home. See `Router::MATCHER_REGX` for list of parameters matching keywords
+     * @return static
      */
-    public function get($path, $class, $function, $middlewares = []): RouteInterface;
+    public static function get(string $path): RouteInterface;
 
     /**
      * Set HTTP POST routes
      * 
-     * @param string $path HTTP path. e.g /home. Regular expression is supported
-     * @param string $class Application Controller class name e.g Home
-     * @param string $function Application Controller (public) function. e.g index
-     * @param \System\Interfaces\MiddlewareInterface[] $middlewares Array of Middleware Interface.
-     * @return self
+     * @param string $path HTTP path. e.g /home. See `Router::MATCHER_REGX` for list of parameters matching keywords
+     * @return static
      */
-    public function post($path, $class, $function, $middlewares = []): RouteInterface;
-
-    /**
-     * Set HTTP GET & POST routes
-     * 
-     * @param string $path HTTP path. e.g /home. Regular expression is supported
-     * @param string $class Application Controller class name e.g Home
-     * @param string $function Application Controller (public) function. e.g index
-     * @param \System\Interfaces\MiddlewareInterface[] $middlewares Array of Middleware Interface.
-     * @return self
-     */
-    public function get_post($path, $class, $function, $middlewares = []): RouteInterface;
+    public static function post(string $path): RouteInterface;
 
     /**
      * Set HTTP PUT routes
      * 
-     * @param string $path HTTP path. e.g /home. Regular expression is supported
-     * @param string $class Application Controller class name e.g Home
-     * @param string $function Application Controller (public) function. e.g index
-     * @param \System\Interfaces\MiddlewareInterface[] $middlewares Array of Middleware Interface.
-     * @return self
+     * @param string $path HTTP path. e.g /home. See `Router::MATCHER_REGX` for list of parameters matching keywords
+     * @return static
      */
-    public function put($path, $class, $function, $middlewares = []): RouteInterface;
+    public static function put(string $path): RouteInterface;
 
     /**
-     * Set HTTP POST & PUT routes
+     * Set HTTP PATCH routes
      * 
-     * @param string $path HTTP path. e.g /home. Regular expression is supported
-     * @param string $class Application Controller class name e.g Home
-     * @param string $function Application Controller (public) function. e.g index
-     * @param \System\Interfaces\MiddlewareInterface[] $middlewares Array of Middleware Interface.
-     * @return self
+     * @param string $path HTTP path. e.g /home. See `Router::MATCHER_REGX` for list of parameters matching keywords
+     * @return static
      */
-    public function post_put($path, $class, $function, $middlewares = []): RouteInterface;
+    public static function patch(string $path): RouteInterface;
 
     /**
      * Set HTTP DELETE routes
      * 
-     * @param string $path HTTP path. e.g /home. Regular expression is supported
-     * @param string $class Application Controller class name e.g Home
-     * @param string $function Application Controller (public) function. e.g index
-     * @param \System\Interfaces\MiddlewareInterface[] $middlewares Array of Middleware Interface.
-     * @return self
+     * @param string $path HTTP path. e.g /home. See `Router::MATCHER_REGX` for list of parameters matching keywords
+     * @return static
      */
-    public function delete($path, $class, $function, $middlewares = []): RouteInterface;
-    
-    /**
-     * Process routing
-     * @return \System\Interfaces\MiddlewareInterface[] 
-     */
-    public function process(): array;
+    public static function delete(string $path): RouteInterface;
 }

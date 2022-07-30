@@ -6,7 +6,7 @@ use Application\Controllers\OAuthBaseController;
 use Application\Services\MailService;
 use Exception;
 use GuzzleHttp\RequestOptions;
-use  Application\Services\OAuthScopeService;
+use Application\Services\OAuthScopeService;
 use Application\Helpers\URL;
 use Application\Helpers\Utils;
 
@@ -26,7 +26,7 @@ class Authorize extends OAuthBaseController
 
     public function __construct()
     {
-        parent::__construct(false);
+        parent::__construct();
     }
 
     /**
@@ -146,18 +146,19 @@ class Authorize extends OAuthBaseController
                             return $userInfo;
                         } else {
                             $remaining_count = $max_count - $count;
-                            $this->oauth->response->setParameters($this->error("Invalid Username or Password. $remaining_count tries left", 'invalid_user'));
+                            $this->oauth->response->setParameters($this->error("Invalid Username or Password. $remaining_count tries left", 'invalid_user')->toArray());
                         }
                     } else {
                         $remaining_count = $max_count - $count;
-                        $this->oauth->response->setParameters($this->error("Invalid Username or Password. $remaining_count tries left", 'invalid_user'));
+                        $this->oauth->response->setParameters($this->error("Invalid Username or Password. $remaining_count tries left", 'invalid_user')->toArray());
                     }
                 } else {
                     $min = intval($timeout / 60);
-                    $this->oauth->response->setParameters($this->error("Maximum attempt reached. Please try again in $min minute(s)", 'max_request'));
+                    $this->oauth->response->setParameters($this->error("Maximum attempt reached. Please try again in $min minute(s)", 'max_request')->toArray());
                 }
             } else {
-                $this->oauth->response->setParameters($this->error('Session validation failed. Please try again', 'validation_error'));
+                // TODO Throw custom OAuthHttpException
+                $this->oauth->response->setParameters($this->error('Session validation failed. Please try again', 'validation_error')->toArray());
             }
         }
         return false;
@@ -198,7 +199,7 @@ class Authorize extends OAuthBaseController
                                 Utils::setCookie(self::EMAIL_REQ_TOKEN_PARAM, $token, $timeout);
                                 return $user;
                             } catch (Exception $e) {
-                                app()->reportException($e); // Report
+                                app()->reporter->reportException($e); // Report
                                 $this->showError("authorization_failed", sprintf("Unknown error. Please contact <a href='%s' target='_blank'>support</a> for assistance", URL::appUrl(URL::APP_SUPPORT_PATH)), $redirect_uri);
                             }
                         } else {
@@ -291,7 +292,7 @@ class Authorize extends OAuthBaseController
             ]), true);
             die;
         } catch (Exception $e) {
-            app()->reportException($e); // Report
+            app()->reporter->reportException($e); // Report
             echo $e->getMessage();
             die;
         }
@@ -306,7 +307,7 @@ class Authorize extends OAuthBaseController
             echo app()->loader->view("authorize", $vars, true);
             die;
         } catch (Exception $e) {
-            app()->reportException($e); // Report
+            app()->reporter->reportException($e); // Report
             echo $e->getMessage();
             die;
         }
@@ -325,7 +326,7 @@ class Authorize extends OAuthBaseController
             echo app()->loader->view("success", $userInfo, true);
             die;
         } catch (Exception $e) {
-            app()->reportException($e); // Report
+            app()->reporter->reportException($e); // Report
             echo $e->getMessage();
             die;
         }
@@ -340,7 +341,7 @@ class Authorize extends OAuthBaseController
     private function showError($error, $error_description = '', $redirect_uri = '')
     {
         // Report
-        app()->reportError(ucfirst(str_replace('_', ' ', $error)), $error_description);
+        app()->reporter->reportError(ucfirst(str_replace('_', ' ', $error)), $error_description);
 
         if (!empty($redirect_uri)) {
             URL::redirect(URL::parseUrl($redirect_uri, [
@@ -355,7 +356,7 @@ class Authorize extends OAuthBaseController
                 ], true);
                 die;
             } catch (Exception $e) {
-                app()->reportException($e); // Report
+                app()->reporter->reportException($e); // Report
                 echo $e->getMessage();
                 die;
             }
@@ -393,7 +394,7 @@ class Authorize extends OAuthBaseController
             $content = app()->loader->view("email/auth", ["link" => $link], true);
             return app()->loader->view("email/template/simple_mail", ["content" => $content], true);
         } catch (Exception $e) {
-            app()->reportException($e); // Report
+            app()->reporter->reportException($e); // Report
             return $content;
         }
     }

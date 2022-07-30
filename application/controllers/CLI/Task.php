@@ -18,7 +18,7 @@ class Task extends OAuthBaseController
 {
     public function __construct()
     {
-        parent::__construct(false, true);
+        parent::__construct(true);
     }
 
     /**

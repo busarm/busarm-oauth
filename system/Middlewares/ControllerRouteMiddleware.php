@@ -11,9 +11,9 @@ use System\Interfaces\MiddlewareInterface;
  * Date: 28/7/2022
  * Time: 5:22 PM
  */
-class RouteMiddleware implements MiddlewareInterface
+class ControllerRouteMiddleware implements MiddlewareInterface
 {
-    public function __construct(private $controller = null, private $function = null, private $params = [])
+    public function __construct(private $controller, private $function, private $params = [])
     {
     }
 

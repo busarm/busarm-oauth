@@ -3,7 +3,7 @@
 namespace Application\Controllers\HTTP;
 
 use Application\Controllers\OAuthBaseController;
-use  Application\Services\OAuthScopeService;
+use Application\Services\OAuthScopeService;
 
 /**
  * Created by PhpStorm.
@@ -16,7 +16,7 @@ class Token extends OAuthBaseController
 {
     public function __construct()
     {
-        parent::__construct(false);
+        parent::__construct();
     }
 
     /**

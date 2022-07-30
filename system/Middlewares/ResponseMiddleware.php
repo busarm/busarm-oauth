@@ -2,6 +2,8 @@
 
 namespace System\Middlewares;
 
+use System\Dto\BaseDto;
+use System\Dto\ResponseDto;
 use System\Interfaces\MiddlewareInterface;
 use System\Interfaces\ResponseInterface;
 
@@ -16,10 +18,12 @@ class ResponseMiddleware implements MiddlewareInterface
     public function handle(callable $next = null): mixed
     {
         $response = $next ? $next() : null;
-        if ($response) {
+        if ($response !== false) {
             if ($response instanceof ResponseInterface) {
                 $response->send('json', true);
-            } else if (is_array($response)) {
+            } else if ($response instanceof BaseDto) {
+                app()->sendHttpResponse(200, $response->toArray());
+            } else if (is_array($response) || is_object($response)) {
                 app()->sendHttpResponse(200, $response);
             } else {
                 return app()->showMessage(200, true, $response);
