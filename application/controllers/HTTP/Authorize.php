@@ -193,7 +193,7 @@ class Authorize extends OAuthBaseController
                         $message = $this->getEmailAuthView($this->oauth->response->getHttpHeader("Location"));
 
                         // Send email
-                        if ((new MailService)->send("Email Authorization", $message, $email)) {
+                        if (MailService::getInstance()->send("Email Authorization", $message, $email)) {
                             try {
                                 // Save to cookie to prevent duplicate 
                                 Utils::setCookie(self::EMAIL_REQ_TOKEN_PARAM, $token, $timeout);

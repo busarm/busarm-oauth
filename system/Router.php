@@ -124,9 +124,9 @@ class Router implements RouterInterface
 
     /**
      * @param Route $route 
-     * @return self
+     * @return RouterInterface
      */
-    public function addRoute(RouteInterface $route): self
+    public function addRoute(RouteInterface $route): RouterInterface
     {
         $this->routes[] = $route;
         return $this;
@@ -134,9 +134,9 @@ class Router implements RouterInterface
 
     /**
      * @param Route[] $route 
-     * @return self
+     * @return RouterInterface
      */
-    public function addRoutes(array $routes): self
+    public function addRoutes(array $routes): RouterInterface
     {
         $this->routes = array_merge($this->routes, $routes);
         return $this;

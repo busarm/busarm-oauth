@@ -11,13 +11,7 @@ class AuthService implements SingletonInterface
     use Singleton;
     
     const LOGIN_USER_KEY = 'login_user';
-
-    public function __construct()
-    {
-        // Set singleton instance
-        $this->setInstance($this);
-    }
-
+    
     /**
      * Start Login session
      *

@@ -6,6 +6,7 @@ use Application\Dto\OAuthErrorDto;
 use Application\Exceptions\AuthorizationException;
 use Application\Services\OAuthService;
 use Application\Services\AuthService;
+use System\Dto\BaseDto;
 use System\Dto\ResponseDto;
 
 /**
@@ -43,6 +44,8 @@ class OAuthBaseController
 
     /**
      * Get success response
+     *
+     * @param BaseDto|string|array|object $data
      * @return ResponseDto
      */
     public function success($data): ResponseDto
@@ -62,9 +65,12 @@ class OAuthBaseController
 
     /**
      * Get success response
+     *
+     * @param string $message
+     * @param string $type
      * @return OAuthErrorDto
      */
-    public function error($message, $type = 'unexpected_error'): OAuthErrorDto
+    public function error(string $message, $type = 'unexpected_error'): OAuthErrorDto
     {
         $dto = new OAuthErrorDto();
         $dto->success = false;

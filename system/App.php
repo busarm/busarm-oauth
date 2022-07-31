@@ -49,6 +49,12 @@ class App
     /** @var array */
     public $singletons = [];
 
+    /** @var array */
+    public $bindings = [
+        RequestInterface::class => Request::class,
+        ResponseInterface::class => Response::class,
+    ];
+
     /** @var RequestInterface */
     public $request;
 
@@ -64,7 +70,7 @@ class App
     /** @var LoaderInterface */
     public $loader;
 
-    /** @var ErrorReporter */
+    /** @var ErrorReportingInterface */
     public $reporter;
 
     /**
@@ -76,7 +82,7 @@ class App
         self::$instance = &$this;
 
         // Create request & response objects
-        $this->request = Request::createFromGlobals();
+        $this->request = new Request();
         $this->response = new Response();
 
         // Set error reporter
@@ -251,6 +257,59 @@ class App
     }
 
     /**
+     * Add singleton
+     * 
+     * @param string $className
+     * @param object|null $object
+     * @return self
+     */
+    public function addSingleton($className, $object = null)
+    {
+        $this->singletons[$className] = !empty($object) ? DI::instantiate($className, false) : $object;
+        return $this;
+    }
+
+    /**
+     * Get singleton
+     *
+     * @param string $className
+     * @param object $default
+     * @return self
+     */
+    public function getSingleton($className, $default = null)
+    {
+        return $this->singletons[$className] ?? $default;
+    }
+
+    /**
+     * Add interface binding
+     *
+     * @param string $interfaceName
+     * @param string $className
+     * @return self
+     */
+    public function addBinding($interfaceName, $className)
+    {
+        if (!in_array($interfaceName, class_implements($className))) {
+            throw new Exception("Binding error: $className does not implement $interfaceName");
+        }
+        $this->bindings[$interfaceName] = $className;
+        return $this;
+    }
+
+    /**
+     * Get interface binding
+     *
+     * @param string $interfaceName
+     * @param string $default
+     * @return self
+     */
+    public function getBinding($interfaceName, $default = null)
+    {
+        return $this->bindings[$interfaceName] ?? $default;
+    }
+
+    /**
      * Add config file
      * 
      * @param string $config
@@ -374,7 +433,7 @@ class App
             }
 
             $this->response->setParameters($response->toArray());
-            $this->response->setStatusCode($code, ($msg ? $title : ''));
+            $this->response->setStatusCode($code < 600 ? $code : 500, ($msg ? $title : ''));
             $this->response->send();
         }
         die;
@@ -404,7 +463,7 @@ class App
 
         $this->response->setParameters($data);
         $this->response->setHttpHeaders($headers);
-        $this->response->setStatusCode($code);
+        $this->response->setStatusCode($code < 600 ? $code : 500);
         $this->response->send();
         die;
     }

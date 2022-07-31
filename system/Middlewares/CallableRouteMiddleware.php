@@ -3,6 +3,7 @@
 namespace System\Middlewares;
 
 use Closure;
+use System\DI;
 use System\HttpException;
 use System\Interfaces\MiddlewareInterface;
 
@@ -21,7 +22,7 @@ class CallableRouteMiddleware implements MiddlewareInterface
     public function handle(callable $next = null): mixed
     {
         if (is_callable($this->callable)) {
-            return ($this->callable)(...$this->params);
+            return ($this->callable)(...array_merge(DI::resolveCallableDependencies($this->callable), $this->params));
         }
         throw new HttpException(500, "Callable route can't be executed");
     }

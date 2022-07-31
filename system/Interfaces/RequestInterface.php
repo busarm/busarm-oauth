@@ -33,7 +33,19 @@ interface RequestInterface
     public function headers($name, $default = null);
 
     /**
-     * @return mixed
+     * @return array
      */
-    public function getAllQueryParameters();
+    public function getQueryList();
+    /**
+     * @return array
+     */
+    public function getRequestList();
+    /**
+     * @return array
+     */
+    public function getServerList();
+    /**
+     * @return array
+     */
+    public function getHeaderList();
 }

@@ -91,9 +91,9 @@ class Route implements RouteInterface
     /**
      * Set route params 
      * 
-     * @return self 
+     * @return RouteInterface 
      */
-    public function withParams(array $params): self
+    public function withParams(array $params): RouteInterface
     {
         $clone = clone $this;
         $clone->params = $params;
@@ -105,9 +105,9 @@ class Route implements RouteInterface
      * Set callable route destination
      * 
      * @param string $callable Function to execute for route
-     * @return self
+     * @return RouteInterface
      */
-    public function call(Closure $callable): self
+    public function call(Closure $callable): RouteInterface
     {
         $this->callable = $callable;
         $this->controller = null;
@@ -120,9 +120,9 @@ class Route implements RouteInterface
      * 
      * @param string $controller Application Controller class name e.g Home
      * @param string $function Application Controller (public) function. e.g index
-     * @return self
+     * @return RouteInterface
      */
-    public function to(string $controller, string $function): self
+    public function to(string $controller, string $function): RouteInterface
     {
         $this->controller = $controller;
         $this->function = $function;
@@ -134,9 +134,9 @@ class Route implements RouteInterface
      * Add route middlewares
      * 
      * @param MiddlewareInterface[] $middlewares Array of Middleware Interface.
-     * @return self
+     * @return RouteInterface
      */
-    public function middlewares(array $middlewares = []): self
+    public function middlewares(array $middlewares = []): RouteInterface
     {
         $this->middlewares = array_merge($this->middlewares, $middlewares);
         return $this;
@@ -146,9 +146,9 @@ class Route implements RouteInterface
      * Add route middleware
      * 
      * @param MiddlewareInterface $middlewares
-     * @return self
+     * @return RouteInterface
      */
-    public function middleware(MiddlewareInterface $middleware): self
+    public function middleware(MiddlewareInterface $middleware): RouteInterface
     {
         $this->middlewares[] = $middleware;
         return $this;
@@ -158,7 +158,7 @@ class Route implements RouteInterface
      * Set HTTP GET routes
      * 
      * @param string $path HTTP path. e.g /user. See `Router::MATCHER_REGX` for list of parameters matching keywords
-     * @return static
+     * @return RouteInterface
      */
     public static function get(string $path): RouteInterface
     {

@@ -36,6 +36,7 @@ app()->router->addRoutes([
         new ThrottleMiddleware(5, 60, 'authorize-request')
     ]),
     Route::get('/authorize/login')->to(Authorize::class, 'login'),
+    Route::post('/authorize/login')->to(Authorize::class, 'login'),
     Route::get('/authorize/logout')->to(Authorize::class, 'logout'),
 ]);
 
@@ -143,7 +144,7 @@ app()->router->addRoutes([
     Route::get('/resources/getPublicKey')->to(Resources::class, 'getPublicKey')->middlewares([
         new AuthenticateMiddleware(),
     ]),
-    Route::get('/resources/getPublicKeyById')->to(Resources::class, 'getPublicKey')->middlewares([
+    Route::get('/resources/getPublicKeyById')->to(Resources::class, 'getPublicKeyById')->middlewares([
         new AuthenticateMiddleware(),
         new AuthorizeMiddleware(SCOPE_SYSTEM, SCOPE_ADMIN),
     ]),

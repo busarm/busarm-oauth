@@ -2,6 +2,7 @@
 
 namespace System\Middlewares;
 
+use System\DI;
 use System\HttpException;
 use System\Interfaces\MiddlewareInterface;
 
@@ -21,7 +22,7 @@ class ControllerRouteMiddleware implements MiddlewareInterface
     {
         if (class_exists($this->controller)) {
             // Load controller
-            $object = new $this->controller();
+            $object = DI::instantiate($this->controller);
             if (
                 // Load method
                 method_exists($object, $this->function)
@@ -29,7 +30,7 @@ class ControllerRouteMiddleware implements MiddlewareInterface
             ) {
                 return call_user_func_array(
                     array($object, $this->function),
-                    $this->params
+                    array_merge(DI::resolveMethodDependencies($this->controller, $this->function), $this->params)
                 );
             }
             throw new HttpException(500, "Function not found or can't be executed: " . $this->controller . '::' . $this->function);

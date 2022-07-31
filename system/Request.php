@@ -24,21 +24,25 @@ class Request implements RequestInterface
 
     /**
      * Constructor.
-     *
-     * @param array  $query      - The GET parameters
-     * @param array  $request    - The POST parameters
-     * @param array  $attributes - The request attributes (parameters parsed from the PATH_INFO, ...)
-     * @param array  $cookies    - The COOKIE parameters
-     * @param array  $files      - The FILES parameters
-     * @param array  $server     - The SERVER parameters
-     * @param string $content    - The raw body data
-     * @param array  $headers    - The headers
-     *
-     * @api
      */
-    public function __construct(array $query = array(), array $request = array(), array $attributes = array(), array $cookies = array(), array $files = array(), array $server = array(), $content = null, array $headers = null)
+    public function __construct()
     {
-        $this->initialize($query, $request, $attributes, $cookies, $files, $server, $content, $headers);
+        $this->initialize($_GET, $_POST, array(), $_COOKIE, $_FILES, $_SERVER);
+        $contentType = $this->server('CONTENT_TYPE', '');
+        $requestMethod = $this->server('REQUEST_METHOD', 'GET');
+        if (
+            0 === strpos($contentType, 'application/x-www-form-urlencoded')
+            && in_array(strtoupper($requestMethod), array('PUT', 'DELETE'))
+        ) {
+            parse_str($this->getContent(), $data);
+            $this->request = $data;
+        } elseif (
+            0 === strpos($contentType, 'application/json')
+            && in_array(strtoupper($requestMethod), array('POST', 'PUT', 'DELETE'))
+        ) {
+            $data = json_decode($this->getContent(), true);
+            $this->request = $data;
+        }
     }
 
     /**
@@ -111,13 +115,36 @@ class Request implements RequestInterface
 
         return isset($headers[$name]) ? $headers[$name] : $default;
     }
+    /**
+     * @return array
+     */
+    public function getQueryList()
+    {
+        return $this->query;
+    }
 
     /**
      * @return array
      */
-    public function getAllQueryParameters()
+    public function getRequestList()
     {
-        return $this->query;
+        return $this->request;
+    }
+
+    /**
+     * @return array
+     */
+    public function getServerList()
+    {
+        return $this->server;
+    }
+
+    /**
+     * @return array
+     */
+    public function getHeaderList()
+    {
+        return $this->headers;
     }
 
     /**
@@ -210,40 +237,9 @@ class Request implements RequestInterface
 
         // PHP_AUTH_USER/PHP_AUTH_PW
         if (isset($headers['PHP_AUTH_USER'])) {
-            $headers['AUTHORIZATION'] = 'Basic '.base64_encode($headers['PHP_AUTH_USER'].':'.$headers['PHP_AUTH_PW']);
+            $headers['AUTHORIZATION'] = 'Basic ' . base64_encode($headers['PHP_AUTH_USER'] . ':' . $headers['PHP_AUTH_PW']);
         }
 
         return $headers;
-    }
-
-    /**
-     * Creates a new request with values from PHP's super globals.
-     *
-     * @return Request - A new request
-     *
-     * @api
-     */
-    public static function createFromGlobals()
-    {
-        $class = get_called_class();
-
-        /** @var Request $request */
-        $request = new $class($_GET, $_POST, array(), $_COOKIE, $_FILES, $_SERVER);
-
-        $contentType = $request->server('CONTENT_TYPE', '');
-        $requestMethod = $request->server('REQUEST_METHOD', 'GET');
-        if (0 === strpos($contentType, 'application/x-www-form-urlencoded')
-            && in_array(strtoupper($requestMethod), array('PUT', 'DELETE'))
-        ) {
-            parse_str($request->getContent(), $data);
-            $request->request = $data;
-        } elseif (0 === strpos($contentType, 'application/json')
-            && in_array(strtoupper($requestMethod), array('POST', 'PUT', 'DELETE'))
-        ) {
-            $data = json_decode($request->getContent(), true);
-            $request->request = $data;
-        }
-
-        return $request;
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace System\Dto;
 
 use ReflectionObject;
@@ -23,45 +24,17 @@ class ResponseDto extends BaseDto
     public string|null $file_path;
     /** @var array */
     public array|null $backtrace;
-    
-    /**
-     * Load response with object
-     *
-     * @param object|null $data
-     * @return static
-     */
-    static function withObject(object $data = null): static
-    {
-        $response = new static();
-        if ($data) {
-            $reflectClass = new ReflectionObject($response);
-            foreach ($reflectClass->getProperties() as $property) {
-                if (isset($data->{$property->getName()})) {
-                    $content = $data->{$property->getName()};
-                    $response->{$property->getName()} = self::parseType($property->getType() || self::getType($content), $content);
-                }
-            }
-        }
-        return $response;
-    }
 
     /**
-     * Load response with array
+     * Load dto with array
      *
-     * @param object|null $data
+     * @param array|object|null $data
      * @return static
      */
-    static function withArray(array $data = null): static
+    public static function with(array|object|null $data): static
     {
         $response = new static();
-        if ($data) {
-            $reflectClass = new ReflectionObject($response);
-            foreach ($reflectClass->getProperties() as $property) {
-                if (isset($data[$property->getName()])) {
-                    $response->{$property->getName()} = self::parseType($property->getType(), $data[$property->getName()]);
-                }
-            }
-        }
+        if ($data) $response->load((array)$data);
         return $response;
     }
 }

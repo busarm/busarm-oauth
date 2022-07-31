@@ -3,7 +3,6 @@
 namespace System\Middlewares;
 
 use System\Dto\BaseDto;
-use System\Dto\ResponseDto;
 use System\Interfaces\MiddlewareInterface;
 use System\Interfaces\ResponseInterface;
 

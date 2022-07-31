@@ -65,9 +65,9 @@ class Token extends OAuthBaseController
                 true
             );
             if (!empty($user)) {
-                $this->oauth->response->setError(200, $this->success($user));
+                app()->sendHttpResponse(200, $this->success($user));
             } else {
-                $this->oauth->response->setError(404, $this->error('Users does not exist', 'invalid_user'));
+                app()->sendHttpResponse(404, $this->error('Users does not exist', 'invalid_user'));
             }
         }
         app()->sendHttpResponse(401, $this->oauth->response->getParameters());

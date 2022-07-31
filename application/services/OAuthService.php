@@ -77,9 +77,6 @@ class OAuthService implements SingletonInterface
 
         // Set up Scopes with db scope data
         $this->server->setScopeUtil(new OAuthScopeService($this->storage->getAllScopesList(), $this->storage->getDefaultScope()));
-
-        // Set singleton instance
-        $this->setInstance();
     }
 
 
@@ -93,13 +90,13 @@ class OAuthService implements SingletonInterface
         $scope = is_array($scope) ? Utils::implode($scope) : $scope;
         switch ($this->accessType ?? '') {
             case self::ACCESS_TYPE_TOKEN: {
-                    if (!$this->server->getScopeUtil()->checkScope($scope, $this->oauth->getAuthToken('scope'))) {
+                    if (!$this->server->getScopeUtil()->checkScope($scope, $this->getAuthToken('scope'))) {
                         throw new AuthorizationException("Access denied. Token doesn't have required '$scope' scope(s)");
                     }
                     return true;
                 }
             case self::ACCESS_TYPE_CLIENT: {
-                    if (!$this->server->getScopeUtil()->checkScope($scope, $this->oauth->getAuthClient('scope'))) {
+                    if (!$this->server->getScopeUtil()->checkScope($scope, $this->getAuthClient('scope'))) {
                         throw new AuthorizationException("Access denied. Client doesn't have required '$scope' scope(s)");
                     }
                     return true;
@@ -117,7 +114,7 @@ class OAuthService implements SingletonInterface
         if (!empty($this->authToken) && $this->accessType == self::ACCESS_TYPE_TOKEN) return true;
         else if ($result = $this->server->getAccessTokenData($this->request, $this->response)) {
             $this->authToken = $result;
-            $this->authClient = $this->storage->getClientDetails($this->oauth->getAuthToken('client_id') ?? null);
+            $this->authClient = $this->storage->getClientDetails($this->getAuthToken('client_id') ?? null);
             $this->accessType = self::ACCESS_TYPE_TOKEN;
             return true;
         }
@@ -135,17 +132,17 @@ class OAuthService implements SingletonInterface
         // Get credentials from Authorization header
         $authorization = app()->request->headers("authorization", '');
         $credentials = strpos($authorization, 'Basic ') !== false ? Utils::explode(base64_decode(str_replace('Basic ', '', $authorization)), ':') : [];
-        $client_id = count($credentials) == 2 ? $credentials[0] : null;
-        $client_secret = count($credentials) == 2 ? $credentials[1] : null;
+        $clientId = count($credentials) == 2 ? $credentials[0] : null;
+        $clientSecret = count($credentials) == 2 ? $credentials[1] : null;
 
         // Get from header or body
-        if (empty($client_id) && empty($client_secret)) {
-            $client_id = app()->request->headers("client_id") ?? app()->request->request("client_id");
-            $client_secret = app()->request->headers("client_secret") ?? app()->request->request("client_secret");
+        if (empty($clientId) && empty($clientSecret)) {
+            $clientId = app()->request->headers("client_id") ?? app()->request->request("client_id");
+            $clientSecret = app()->request->headers("client_secret") ?? app()->request->request("client_secret");
         }
 
-        if ($this->storage->checkClientCredentials($client_id, $client_secret)) {
-            $this->authClient = $this->storage->getClientDetails($client_id);
+        if ($this->storage->checkClientCredentials($clientId, $clientSecret)) {
+            $this->authClient = $this->storage->getClientDetails($clientId);
             if (!empty($this->authClient)) {
                 $this->accessType = self::ACCESS_TYPE_CLIENT;
                 return true;

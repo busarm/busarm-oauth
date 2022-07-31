@@ -63,4 +63,18 @@ interface ResponseInterface
      * @param bool $continue
      */
     public function send($format = 'json', $continue = false);
+    
+    /**
+     * @param array $data
+     * @param int $code response code
+     * @param bool $continue
+     */
+    public function json($data, $code = 200, $continue = false);
+
+    /**
+     * @param array $data
+     * @param int $code response code
+     * @param bool $continue
+     */
+    public function xml($data, $code = 200, $continue = false);
 }

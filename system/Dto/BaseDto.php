@@ -6,6 +6,7 @@ use ReflectionNamedType;
 use ReflectionObject;
 use ReflectionType;
 use ReflectionUnionType;
+use System\HttpException;
 
 abstract class BaseDto
 {
@@ -36,13 +37,13 @@ abstract class BaseDto
     public static function parseType($type, $data)
     {
         if ($type instanceof ReflectionUnionType) {
-            $type = self::getType($data);
+            $type = self::resolveType($data, $type->getTypes());
         }
         if ($type instanceof ReflectionNamedType) {
             $type = $type->getName();
         }
 
-        $type = strtolower($type);
+        $type = strtolower((string)$type);
 
         if ($type == 'string') {
             $data = is_array($data) || is_object($data) ? json_encode($data) : (string) $data;
@@ -64,34 +65,52 @@ abstract class BaseDto
     }
 
     /**
-     * Get data type
+     * Resolve data type
      *
      * @param interger $data
+     * @param ReflectionNamedType[] $types
      * @return string
      */
-    public static function getType($data)
+    public static function resolveType($data, $types = [])
     {
-        if (is_int($data) || is_numeric($data)) return 'integer';
-        if ($data === 'true' || $data === 'false' || is_bool($data)) return 'bool';
-        if (is_array($data)) return 'array';
-        if (is_object($data)) return 'object';
-        if (is_string($data)) return 'string';
+        if (!in_array('null', $types)) {
+            if (is_int($data) || is_numeric($data)) {
+                if (in_array('bool', $types) || in_array('boolean', $types)) return 'bool';
+                return 'int';
+            } else if ($data === 'true' || $data === 'false' || is_bool($data)) return 'bool';
+            else if (is_array($data)) return 'array';
+            else if (is_object($data)) return 'object';
+            else if (is_string($data)) return 'string';
+        }
         return 'mixed';
     }
 
     /**
-     * Load response with object
+     * Load data from array
      *
      * @param object|null $data
-     * @return static
+     * @param bool $force
+     * @return void
      */
-    abstract static function withObject(object $data = null): static;
+    public function load(array $data = null, $force = false)
+    {
+        if ($data) {
+            $reflectClass = new ReflectionObject($this);
+            foreach ($reflectClass->getProperties() as $property) {
+                if (isset($data[$property->getName()])) {
+                    $this->{$property->getName()} = self::parseType($property->getType(), $data[$property->getName()]);
+                } else if ($force && !$property->hasDefaultValue() && !$property->getType()->allowsNull()) {
+                    throw new HttpException(400, sprintf("Dto error: `%s` field cannot be null", $property->getName()));
+                } else $this->{$property->getName()} = null;
+            }
+        }
+    }
 
     /**
-     * Load response with array
+     * Load dto with array
      *
-     * @param object|null $data
+     * @param array|object|null $data
      * @return static
      */
-    abstract static function withArray(array $data = null): static;
+    public abstract static function with(array|object|null $data): static;
 }

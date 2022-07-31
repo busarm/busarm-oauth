@@ -4,40 +4,44 @@ namespace Application\Services;
 
 use Exception;
 use PHPMailer\PHPMailer\PHPMailer;
+use System\Interfaces\SingletonInterface;
+use System\Traits\Singleton;
 
-class MailService
+class MailService implements SingletonInterface
 {
+    use Singleton;
+
     /**
      * @var PHPMailer
      */
-    private $mail;
+    private $mailer;
 
     /**
-     * @param string $mail_protocol [mail, smtp, sendmail]
-     * @param integer $mail_timeout
-     * @param string $mail_charset
+     * @param string $protocol [mail, smtp, sendmail]
+     * @param integer $timeout
+     * @param string $charset [us-ascii, iso-8859-1, utf-8]
      */
-    public function __construct(private $mail_protocol = 'smtp', private $mail_timeout = 10, private $mail_charset = 'utf-8')
+    public function __construct(private $protocol = 'smtp', private $timeout = 10, private $charset = 'utf-8')
     {
-        $this->mail = new PHPMailer(true);
+        $this->mailer = new PHPMailer(true);
 
         // Server settings
-        if ($this->mail_protocol == "mail") {
-            $this->mail->isMail();
-        } else if ($this->mail_protocol == "smtp") {
-            $this->mail->isSMTP();
-        } else if ($this->mail_protocol == "sendmail") {
-            $this->mail->isSendmail();
+        if ($this->protocol == "mail") {
+            $this->mailer->isMail();
+        } else if ($this->protocol == "smtp") {
+            $this->mailer->isSMTP();
+        } else if ($this->protocol == "sendmail") {
+            $this->mailer->isSendmail();
         }
 
-        $this->mail->Username = SMTP_KEY;
-        $this->mail->Password = SMTP_SECRET;
-        $this->mail->Host = SMTP_HOST;
-        $this->mail->Port = SMTP_PORT;
-        $this->mail->SMTPAuth = true;
-        $this->mail->SMTPSecure = 'tls';
-        $this->mail->Timeout = $this->mail_timeout;
-        $this->mail->CharSet = $this->mail_charset;
+        $this->mailer->Username = SMTP_KEY;
+        $this->mailer->Password = SMTP_SECRET;
+        $this->mailer->Host = SMTP_HOST;
+        $this->mailer->Port = SMTP_PORT;
+        $this->mailer->SMTPAuth = true;
+        $this->mailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $this->mailer->Timeout = $this->timeout;
+        $this->mailer->CharSet = $this->charset;
     }
 
     /**
@@ -59,16 +63,16 @@ class MailService
 
             // Recipients
             $from = !empty($from) ? $from : EMAIL_INFO;
-            $this->mail->setFrom($from, COMPANY_NAME ?? APP_NAME);
-            $this->mail->addReplyTo($from, COMPANY_NAME ?? APP_NAME);
-            $this->mail->addAddress($to);
+            $this->mailer->setFrom($from, COMPANY_NAME ?? APP_NAME);
+            $this->mailer->addReplyTo($from, COMPANY_NAME ?? APP_NAME);
+            $this->mailer->addAddress($to);
 
             // Content
-            $this->mail->isHTML(true);
-            $this->mail->Subject = $subject;
-            $this->mail->Body = $message;
+            $this->mailer->isHTML(true);
+            $this->mailer->Subject = $subject;
+            $this->mailer->Body = $message;
 
-            return $this->mail->send();
+            return $this->mailer->send();
         } catch (Exception $e) {
             app()->reporter->reportException($e); // Report
         }

@@ -301,6 +301,30 @@ class Response implements ResponseInterface
     }
 
     /**
+     * @param array $data
+     * @param int $code response code
+     * @param bool $continue
+     */
+    public function json($data, $code = 200, $continue = false)
+    {
+        $this->setParameters($data);
+        $this->setStatusCode($code);
+        $this->send('json', $continue);
+    }
+
+    /**
+     * @param mixed $data
+     * @param int $code response code
+     * @param bool $continue
+     */
+    public function xml($data, $code = 200, $continue = false)
+    {
+        $this->setParameters($data);
+        $this->setStatusCode($code);
+        $this->send('xml', $continue);
+    }
+
+    /**
      * @return Boolean
      *
      * @api

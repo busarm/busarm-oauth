@@ -3,6 +3,10 @@
 namespace Application\Controllers\HTTP;
 
 use Application\Controllers\OAuthBaseController;
+use Application\Dto\CreateClientDto;
+use Application\Dto\CreateUserDto;
+use Application\Dto\UpdateClientDto;
+use Application\Dto\UpdateUserDto;
 use phpseclib\Crypt\RSA;
 use Application\Services\OAuthScopeService;
 use Application\Helpers\Utils;
@@ -44,7 +48,7 @@ class Resources extends OAuthBaseController
             $done = $this->oauth->storage->unsetRefreshToken($refresh_token);
         }
         if ($done) {
-            app()->sendHttpResponse(200, $this->success('Successfully cleared access'));
+            return $this->success('Successfully cleared access');
         } else {
             app()->sendHttpResponse(400, $this->error('Failed to clear access'));
         }
@@ -61,7 +65,7 @@ class Resources extends OAuthBaseController
             false
         );
         if (!empty($user)) {
-            app()->sendHttpResponse(200, $this->success($user));
+            return $this->success($user);
         } else {
             app()->sendHttpResponse(404, $this->error('Users does not exist', 'invalid_user'));
         }
@@ -74,8 +78,7 @@ class Resources extends OAuthBaseController
     {
         $user_id = $user_id ?? $this->oauth->request->request('user_id') ?? $this->oauth->request->query('user_id');
         if (!empty($user_id) && !empty($user = $this->oauth->storage->getCustomUser($user_id))) {
-            return  $user;
-            app()->sendHttpResponse(200, $this->success($user));
+            return $this->success($user);
         } else {
             app()->sendHttpResponse(404, $this->error('Users does not exist', 'invalid_user'));
         }
@@ -89,7 +92,7 @@ class Resources extends OAuthBaseController
         if (!empty($user_ids = ($this->oauth->request->request('user_ids') ?? $this->oauth->request->query('user_ids')))) {
             $users = $this->oauth->storage->getMultipleUsers(Utils::explode($user_ids, ','));
             if (!empty($users)) {
-                app()->sendHttpResponse(200, $this->success($users));
+                return $this->success($users);
             } else {
                 app()->sendHttpResponse(404, $this->error('User(s) does not exist', 'invalid_users'));
             }
@@ -101,15 +104,15 @@ class Resources extends OAuthBaseController
     /**
      * Create OAuth User
      */
-    public function createUser()
+    public function createUser(CreateUserDto $dto)
     {
-        $name = $this->oauth->request->request('name');
-        $email = $this->oauth->request->request('email');
-        $phone = $this->oauth->request->request('phone');
-        $dial_code = $this->oauth->request->request('dial_code');
-        $password = $this->oauth->request->request('password');
-        $scope = $this->oauth->request->request('scope');
-        $force = $this->oauth->request->request('force') ?: false;
+        $name = $dto->name;
+        $email = $dto->email;
+        $phone = $dto->phone;
+        $dial_code = $dto->dial_code;
+        $password = $dto->password;
+        $scope = $dto->scope;
+        $force = $dto->force;
 
         // Validate Parameters
         if (!$email || !$phone || !$dial_code || !$password || !$scope) {
@@ -136,13 +139,19 @@ class Resources extends OAuthBaseController
             if ($force) {
                 app()->sendHttpResponse(400, $this->error(sprintf("User with email %s already exists", $email), 'duplicate_user'));
             } else {
-                app()->sendHttpResponse(200, $this->success(['user_id' => $user['user_id'], 'existing' => true]));
+                return $this->success([
+                    'user_id' => $user['user_id'],
+                    'existing' => true
+                ]);
             }
         } else {
             // Insert User
             $result = $this->oauth->storage->setCustomUser($user_id, $password, $email, $name, $phone, $dial_code, $scope);
             if ($result) {
-                app()->sendHttpResponse(200, $this->success(['user_id' => $user_id, 'existing' => false]));
+                return $this->success([
+                    'user_id' => $user_id,
+                    'existing' => false
+                ]);
             } else {
                 app()->sendHttpResponse(500, $this->error('Failed to create user', 'internal_error'));
             }
@@ -152,26 +161,26 @@ class Resources extends OAuthBaseController
     /**
      * Update OAuth User
      */
-    public function updateUser()
+    public function updateUser(UpdateUserDto $dto)
     {
-        return $this->updateUserById($this->oauth->getAuthToken('user_id'));
+        return $this->updateUserById($dto, $this->oauth->getAuthToken('user_id'));
     }
 
     /**
      * Update OAuth User by Id
      */
-    public function updateUserById($user_id = null)
+    public function updateUserById(UpdateUserDto $dto, $user_id = null)
     {
         $user_id = $user_id ?? $this->oauth->request->request('user_id') ?? $this->oauth->request->query('user_id');
         if (!empty($user_id)) {
 
-            $name = $this->oauth->request->request('name') ?: null;
-            $email = $this->oauth->request->request('email') ?: null;
-            $password = $this->oauth->request->request('password') ?: null;
-            $phone = $this->oauth->request->request('phone') ?: null;
-            $dial_code = $this->oauth->request->request('dial_code') ?: null;
-            $scope = $this->oauth->request->request('scope') ?: null;
-            $remove_scope = $this->oauth->request->request('remove_scope') ?: null;
+            $name = $dto->name;
+            $email = $dto->email;
+            $phone = $dto->phone;
+            $dial_code = $dto->dial_code;
+            $password = $dto->password;
+            $scope = $dto->scope;
+            $remove_scope = $dto->remove_scope;
 
             // Check if scope is valid if it's available
             $scope = array_keys(OAuthScopeService::findScope($scope) ?: []);
@@ -198,7 +207,7 @@ class Resources extends OAuthBaseController
                 );
 
                 if ($result) {
-                    app()->sendHttpResponse(200, $this->success('Update Successful'));
+                    return $this->success('Update Successful');
                 } else {
                     app()->sendHttpResponse(400, $this->error('Failed to update user', 'invalid_user'));
                 }
@@ -213,14 +222,14 @@ class Resources extends OAuthBaseController
     /**
      * Create OAuth client
      */
-    public function createClient()
+    public function createClient(CreateClientDto $dto)
     {
-        $client_name = $this->oauth->request->request('client_name');
-        $org_id = $this->oauth->request->request('org_id');
-        $redirect_uri = $this->oauth->request->request('redirect_url');
-        $grant_types = $this->oauth->request->request('grant_types');
-        $user_id = $this->oauth->request->request('user_id') ?: null;
-        $scope = $this->oauth->request->request('scope');
+        $org_id = $dto->org_id;
+        $client_name = $dto->client_name;
+        $redirect_uri = $dto->redirect_uri;
+        $grant_types = $dto->grant_types;
+        $user_id = $dto->user_id;
+        $scope = $dto->scope;
 
         // Validate Parameters
         if (!$client_name || !$org_id || !$grant_types || !$scope) {
@@ -255,7 +264,7 @@ class Resources extends OAuthBaseController
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
             if (!empty($keys) && $this->oauth->storage->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
-                app()->sendHttpResponse(200, $this->success([
+                return $this->success([
                     'client_id' => $client_id,
                     'client_secret' => $client_secret,
                     'grant_types' => $grant_types,
@@ -264,15 +273,15 @@ class Resources extends OAuthBaseController
                     'public_key' => base64_encode($keys['publickey']),
                     'algorithm' => $algo,
                     'encode' => 'base64'
-                ]));
+                ]);
             } else {
-                app()->sendHttpResponse(200, $this->success([
+                return $this->success([
                     'client_id' => $client_id,
                     'client_secret' => $client_secret,
                     'grant_types' => $grant_types,
                     'redirect_uri' => $redirect_uri,
                     'scope' => $scope
-                ]));
+                ]);
             }
         } else {
             app()->sendHttpResponse(500, $this->error('Failed to create client', 'server_error'));
@@ -282,25 +291,25 @@ class Resources extends OAuthBaseController
     /**
      * Update OAuth Client
      */
-    public function updateClient()
+    public function updateClient(UpdateClientDto $dto)
     {
-        return $this->updateClientById($this->oauth->getAuthToken('client_id'));
+        return $this->updateClientById($dto, $this->oauth->getAuthToken('client_id'));
     }
 
     /**
      * Update OAuth Client by Id
      */
-    public function updateClientById($client_id = null)
+    public function updateClientById(UpdateClientDto $dto, $client_id = null)
     {
         $client_id = $client_id ?? $this->oauth->request->request('client_id') ?? $this->oauth->request->query('client_id');
         if (!empty($client_id)) {
 
-            $client_name = $this->oauth->request->request('client_name') ?: null;
-            $client_secret = $this->oauth->request->request('client_secret') ?: null;
-            $redirect_uri = $this->oauth->request->request('redirect_url') ?: null;
-            $grant_types = $this->oauth->request->request('grant_types') ?: null;
-            $scope = $this->oauth->request->request('scope');
-            $remove_scope = $this->oauth->request->request('remove_scope') ?: null;
+            $client_name = $dto->client_name;
+            $client_secret = $dto->client_secret;
+            $redirect_uri = $dto->redirect_uri;
+            $grant_types = $dto->grant_types;
+            $scope = $dto->scope;
+            $remove_scope = $dto->remove_scope;
 
             // Check if scope is valid if it's available
             $scope = array_keys(OAuthScopeService::findScope($scope) ?: []);
@@ -332,7 +341,7 @@ class Resources extends OAuthBaseController
                 );
 
                 if ($result) {
-                    app()->sendHttpResponse(200, $this->success('Update Successful'));
+                    return $this->success('Update Successful');
                 } else {
                     app()->sendHttpResponse(400, $this->error('Failed to update client', 'invalid_client'));
                 }
@@ -358,12 +367,12 @@ class Resources extends OAuthBaseController
             $keys = $rsa->createKey(2048);
 
             if (!empty($keys) && $this->oauth->storage->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
-                app()->sendHttpResponse(200, $this->success([
+                return $this->success([
                     'client_id' => $client_id,
                     'public_key' => base64_encode($keys['publickey']),
                     'algorithm' => $algo,
                     'encode' => 'base64'
-                ]));
+                ]);
             } else {
                 app()->sendHttpResponse(500, $this->error('Failed to update client keys', 'server_error'));
             }
@@ -380,11 +389,11 @@ class Resources extends OAuthBaseController
         $client_id = $this->oauth->getAuthClient('client_id');
         if (!empty($client_id)) {
             if (!empty($key = $this->oauth->storage->getPublicKey($client_id))) {
-                app()->sendHttpResponse(200, $this->success([
+                return $this->success([
                     'client_id' => $client_id,
                     'public_key' => base64_encode($key),
                     'encode' => 'base64'
-                ]));
+                ]);
             } else {
                 app()->sendHttpResponse(404, $this->error('No public key available for this client', 'not_found'));
             }
@@ -401,13 +410,13 @@ class Resources extends OAuthBaseController
         $client_id = $this->oauth->request->request('client_id') ?? $this->oauth->request->query('client_id');
         if (!empty($client_id)) {
             if (!empty($key = $this->oauth->storage->getPublicKey($client_id))) {
-                app()->sendHttpResponse(200, $this->success([
+                return $this->success([
                     'client_id' => $client_id,
                     'public_key' => base64_encode($key),
                     'encode' => 'base64'
-                ]));
+                ]);
             } else {
-                app()->sendHttpResponse(404, $this->error('No public key available for this client', 'not_found'));
+                app()->sendHttpResponse(404, $this->error('Invalid client or no public key available for client', 'not_found'));
             }
         } else {
             app()->sendHttpResponse(400, $this->error('Invalid Client', 'invalid_request'));
@@ -428,12 +437,12 @@ class Resources extends OAuthBaseController
         $keys = $rsa->createKey($size < 16 || $size > 2048 ? 1024 : $size);
 
         if (!empty($keys)) {
-            app()->sendHttpResponse(200, $this->success([
+            return $this->success([
                 'private_key' => base64_encode($keys['privatekey']),
                 'public_key' => base64_encode($keys['publickey']),
                 'algorithm' => $algo,
                 'encode' => 'base64'
-            ]));
+            ]);
         } else {
             app()->sendHttpResponse(500, $this->error('Failed to generate key pair', 'server_error'));
         }
