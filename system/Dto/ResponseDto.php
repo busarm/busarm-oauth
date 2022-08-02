@@ -21,9 +21,11 @@ class ResponseDto extends BaseDto
     /** @var string */
     public string|null $line;
     /** @var string */
-    public string|null $file_path;
+    public string|null $file;
     /** @var array */
     public array|null $backtrace;
+    /** @var int */
+    public int|null $duration;
 
     /**
      * Load dto with array

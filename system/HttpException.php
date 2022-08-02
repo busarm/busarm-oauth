@@ -6,13 +6,12 @@ use Exception;
 
 class HttpException extends Exception
 {
-    protected $title;
+    protected $title = null;
 
     public function __construct($code, $message)
     {
         $this->code = $code;
         $this->message = $message;
-        $this->title = Response::$statusTexts[$this->code] ?? null;
     }
 
     public function getTitle()

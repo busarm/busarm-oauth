@@ -12,6 +12,16 @@ interface ErrorReportingInterface
     public function setupReporting();
 
     /**
+     * Leave breadcrumbs for issue tracking
+     *
+     * @param mixed $crumb
+     * @param string|null $type
+     * @param array $metadata
+     * @return void
+     */
+    public function leaveBreadcrumbs($crumb, string|null $type = null, array $metadata = []);
+
+    /**
      * Report Error
      *
      * @param string $heading

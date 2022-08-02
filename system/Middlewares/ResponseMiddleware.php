@@ -19,7 +19,6 @@ class ResponseMiddleware implements MiddlewareInterface
         $response = $next ? $next() : null;
         if ($response !== false) {
             if ($response instanceof ResponseInterface) {
-                $response->send('json', true);
             } else if ($response instanceof BaseDto) {
                 app()->sendHttpResponse(200, $response->toArray());
             } else if (is_array($response) || is_object($response)) {

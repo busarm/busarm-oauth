@@ -5,8 +5,8 @@ use Database\BaseMigration;
 return
     [
         'paths' => [
-            'migrations' => __DIR__ . '/migrations',
-            'seeds' => __DIR__ . '/seeds'
+            'migrations' => __DIR__ . '/Migrations',
+            'seeds' => __DIR__ . '/Seeds'
         ],
         'environments' => [
             'default_migration_table' => 'migration',

@@ -2,13 +2,14 @@
 
 namespace System;
 
+use Closure;
 use DateInterval;
 use DateTime;
 use Exception;
+use Throwable;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use System\Dto\BaseDto;
 use System\Dto\ResponseDto;
-use System\HttpException;
 use System\Interfaces\ErrorReportingInterface;
 use System\Interfaces\LoaderInterface;
 use System\Interfaces\LoggerInterface;
@@ -16,9 +17,7 @@ use System\Interfaces\MiddlewareInterface;
 use System\Interfaces\RequestInterface;
 use System\Interfaces\ResponseInterface;
 use System\Interfaces\RouterInterface;
-use System\Loader;
 use System\Middlewares\ResponseMiddleware;
-use Throwable;
 
 /**
  * Created by PhpStorm.
@@ -50,10 +49,7 @@ class App
     public $singletons = [];
 
     /** @var array */
-    public $bindings = [
-        RequestInterface::class => Request::class,
-        ResponseInterface::class => Response::class,
-    ];
+    public $bindings = [];
 
     /** @var RequestInterface */
     public $request;
@@ -73,13 +69,24 @@ class App
     /** @var ErrorReportingInterface */
     public $reporter;
 
+    /** @var int Request start time in milliseconds */
+    public $startTimeMs;
+
+    // HOOKS 
+    private Closure|null $startHook = null;
+    private Closure|null $completeHook = null;
+
     /**
      * @param RouterInterface|null $router
-     * @param array $configs List of custom config files in configuration directory to load. e.g aws, papertrail 
+     * @param string $path App environment. Default: Env::LOCAL
+     * @param string $path Relative path to app folder. Default: app
      */
-    public function __construct($configs = array())
+    public function __construct(public string $env = Env::LOCAL, public $path = 'app')
     {
         self::$instance = &$this;
+
+        // Benchmark start time
+        $this->startTimeMs = floor(microtime(true) * 1000);
 
         // Create request & response objects
         $this->request = new Request();
@@ -95,7 +102,7 @@ class App
         $this->router = new Router();
 
         // Set logger
-        $this->logger = new Logger(ENVIRONMENT === ENV_DEV ? ConsoleOutput::VERBOSITY_DEBUG : ConsoleOutput::VERBOSITY_NORMAL);
+        $this->logger = new Logger((app()->env == Env::LOCAL || app()->env == Env::DEV) ? ConsoleOutput::VERBOSITY_DEBUG : ConsoleOutput::VERBOSITY_NORMAL);
 
         // Set up default configs
         $this->setUpConfigs(self::DEFAULT_CONFIGS);
@@ -103,8 +110,13 @@ class App
         // Set up error reporting
         $this->setUpErrorHandlers();
 
-        // Set up custom configs
-        $this->setUpConfigs($configs);
+        // Add default bindings
+        $this->addBinding(RouterInterface::class, Router::class);
+        $this->addBinding(RequestInterface::class, Request::class);
+        $this->addBinding(ResponseInterface::class, Response::class);
+        $this->addBinding(LoggerInterface::class, Logger::class);
+        $this->addBinding(LoaderInterface::class, Loader::class);
+        $this->addBinding(ErrorReportingInterface::class, ErrorReporter::class);
 
         // Add response middleware as the first in the chain
         $this->addMiddleware(new ResponseMiddleware());
@@ -125,6 +137,14 @@ class App
     # Setup and Run
     ############################
 
+    /**
+     * Load neccesary application files
+     *
+     * @return void
+     */
+    public static function bootstrap()
+    {
+    }
 
     /**
      * Set up configs
@@ -168,38 +188,32 @@ class App
     }
 
     /**
-     * Initialize app
+     * Run application
      *
+     * @param RequestInterface|null $request
+     * @param ResponseInterface|null $response
      * @return void
      */
-    public function run()
+    public function run(RequestInterface $request = null, ResponseInterface $response = null,)
     {
+        // Set request & response objects
+        $this->request = $request ?? $this->request;
+        $this->response = $response ?? $this->response;
+
         // Preflight Checking
         if (!is_cli()) {
             $this->preflight($this->router->getRequestMethod());
         }
 
-        // If offline or on maintenance mode
-        if (!empty(SYSTEM_START_UP_TIME) && !empty(SYSTEM_SHUT_DOWN_TIME)) {
-            $start = new DateTime(SYSTEM_START_UP_TIME);
-            $stop = (new DateTime(SYSTEM_SHUT_DOWN_TIME))->sub(DateInterval::createFromDateString('1 day'));
-            if (time() < $start->getTimestamp() && time() >= $stop->getTimestamp()) {
-                if (MAINTENANCE_MODE) {
-                    $this->showMessage(503, false, "System is under maintenance. Please come back on " . $start->format('Y-m-d H:i P'));
-                } else {
-                    $this->showMessage(503, false, "System is currently offline. Please come back on " . $start->format('Y-m-d H:i P'));
-                }
-            }
-        } else if (MAINTENANCE_MODE) {
-            $this->showMessage(503, false, "System is under maintenance");
-        }
+        // Run start hook
+        if ($this->startHook) ($this->startHook)($this);
 
         // Initiate rerouting
         if ($this->router) {
             if (!$this->processMiddleware(array_merge($this->middlewares, $this->router->process()))) {
                 $this->showMessage(404, false, "Not found - " . $this->router->getRequestPath());
             }
-        } else throw new Exception("Router not configured. See `addRouter`");
+        } else throw new Exception("System Error: Router not configured. See `addRouter`");
     }
 
     /**
@@ -365,7 +379,7 @@ class App
      * @param int $index
      * @return mixed
      */
-    public function processMiddleware(array $middlewares, $index = 0)
+    protected function processMiddleware(array $middlewares, $index = 0)
     {
         if (isset($middlewares[$index])) {
             return $middlewares[$index]->handle(fn () => $this->processMiddleware($middlewares, ++$index));
@@ -373,6 +387,31 @@ class App
         return false;
     }
 
+    /**
+     * Hook to run before processing request.
+     * Use this do perform any pre-validations such as maintainence mode checkings.
+     *
+     * @param Closure $startHook
+     * @return void
+     */
+    public function beforeStart(Closure $startHook)
+    {
+        $this->startHook = $startHook;
+    }
+
+    /**
+     * Hook to run after processing request.
+     * This registers a shutdown handler.
+     * @see `register_shutdown_function`
+     *
+     * @param Closure $completeHook
+     * @return void
+     */
+    public function afterComplete(Closure $completeHook)
+    {
+        $this->completeHook = $completeHook;
+        register_shutdown_function($this->completeHook, $this);
+    }
 
     ############################
     # Response & Reports
@@ -420,23 +459,24 @@ class App
 
             // Show env info if not successful
             if ($code !== 200 || $code !== 201) {
-                $response->env = ENVIRONMENT;
+                $response->env = $this->env;
                 $response->version = APP_VERSION;
-                $response->ip = IPADDRESS;
+                $response->ip = app()->request->ip();
+                $response->duration = (floor(microtime(true) * 1000) - $this->startTimeMs);
             }
 
             // Show error info if not production
-            if (ENVIRONMENT != ENV_PROD) {
+            if ($this->env != Env::PROD) {
                 $response->line = !empty($line) ? $line : null;
                 $response->file = !empty($file) ? $file : null;
                 $response->trace = !empty($trace) ? $trace : null;
             }
 
-            $this->response->setParameters($response->toArray());
-            $this->response->setStatusCode($code < 600 ? $code : 500, ($msg ? $title : ''));
-            $this->response->send();
+            $this->response
+                ->setParameters($response->toArray())
+                ->setStatusCode($code < 600 ? $code : 500, ($msg ? $title : ''))
+                ->send();
         }
-        die;
     }
 
 
@@ -457,28 +497,15 @@ class App
                 $response = new ResponseDto();
                 $response->success = $code < 300;
                 $response->message = $data;
+                $response->duration = (floor(microtime(true) * 1000) - $this->startTimeMs);
                 $data = $response->toArray();
             }
         }
 
-        $this->response->setParameters($data);
-        $this->response->setHttpHeaders($headers);
-        $this->response->setStatusCode($code < 600 ? $code : 500);
-        $this->response->send();
-        die;
-    }
-
-    /**
-     * Leave breadcrumbs for issue tracking
-     *
-     * @param \Throwable $exception
-     * @param string $type @see \Bugsnag\Breadcrumbs\Breadcrumb::getTypes
-     * @return void
-     */
-    public static function leaveBreadcrumbs($crumb, $type = null, array $metadata = [])
-    {
-        if (!empty(self::$instance->bugsnag)) {
-            self::$instance->bugsnag->leaveBreadcrumb($crumb, $type, $metadata);
-        }
+        $this->response
+            ->setParameters($data)
+            ->setHttpHeaders($headers)
+            ->setStatusCode($code < 600 ? $code : 500)
+            ->send();
     }
 }

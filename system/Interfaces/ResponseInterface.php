@@ -6,13 +6,15 @@ interface ResponseInterface
 {
     /**
      * @param array $httpHeaders
+     * @return self
      */
-    public function addHttpHeaders(array $httpHeaders);
+    public function addHttpHeaders(array $httpHeaders): self;
 
     /**
      * @param int $statusCode
+     * @return self
      */
-    public function setStatusCode($statusCode);
+    public function setStatusCode($statusCode): self;
 
     /**
      * @return string
@@ -26,13 +28,15 @@ interface ResponseInterface
 
     /**
      * @param array $parameters
+     * @return self
      */
-    public function setParameters(array $parameters);
+    public function setParameters(array $parameters): self;
 
     /**
      * @param array $parameters
+     * @return self
      */
-    public function addParameters(array $parameters);
+    public function addParameters(array $parameters): self;
 
     /**
      * @param string $name
@@ -44,19 +48,22 @@ interface ResponseInterface
     /**
      * @param string $name
      * @param mixed  $value
+     * @return self
      */
-    public function setParameter($name, $value);
+    public function setParameter($name, $value): self;
 
     /**
      * @param array $httpHeaders
+     * @return self
      */
-    public function setHttpHeaders(array $httpHeaders);
+    public function setHttpHeaders(array $httpHeaders): self;
 
     /**
      * @param string $name
      * @param mixed $value
+     * @return self
      */
-    public function setHttpHeader($name, $value);
+    public function setHttpHeader($name, $value): self;
 
     /**
      * @param string $format 'json' | 'xml'

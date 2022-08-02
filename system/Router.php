@@ -37,19 +37,23 @@ class Router implements RouterInterface
     ];
 
     /** @var string HTTP request method */
-    public string|null $requestMethod = null;
+    protected string|null $requestMethod = null;
 
     /** @var string HTTP request route */
-    public string|null $requestPath = null;
+    protected string|null $requestPath = null;
 
     /** @var RouteInterface Current HTTP route */
-    public RouteInterface|null $currentRoute = null;
+    protected RouteInterface|null $currentRoute = null;
 
     /** @var RouteInterface[] HTTP routes */
-    public array $routes = [];
+    protected array $routes = [];
 
-
-    public function __construct()
+    /**
+     * @param string $controller
+     * @param string $function
+     * @param array $params
+     */
+    public function __construct(private $controller = null, private $function = null, private $params = [])
     {
         // Set Request Method
         $this->requestMethod = strtoupper(env('REQUEST_METHOD')) ?? NULL;
@@ -97,25 +101,33 @@ class Router implements RouterInterface
      */
     public function process(): array
     {
-        foreach ($this->routes as $route) {
-            // Find route
-            if (
-                strtoupper($route->getMethod()) == strtoupper($this->requestMethod) &&
-                ($params = $this->isMatch($this->requestPath, $route->getPath()))
-            ) {
-                // Set current route
-                $this->currentRoute = is_array($params) ? $route->withParams($params) : $route;
-                // Callable
-                if ($callable = $this->currentRoute->getCallable()) {
-                    $routeMiddleware = $this->currentRoute->getMiddlewares() ?? [];
-                    $routeMiddleware[] = new CallableRouteMiddleware($callable, $this->currentRoute->getParams());
-                    return $routeMiddleware;
-                }
-                // Controller
-                else {
-                    $routeMiddleware = $route->getMiddlewares() ?? [];
-                    $routeMiddleware[] = new ControllerRouteMiddleware($this->currentRoute->getController(), $this->currentRoute->getFunction(), $this->currentRoute->getParams());
-                    return $routeMiddleware;
+        // If custom routes
+        if ($this->controller && $this->function) {
+            $routeMiddleware[] = new ControllerRouteMiddleware($this->controller, $this->function, $this->params);
+            return $routeMiddleware;
+        }
+        // If http routes
+        else {
+            foreach ($this->routes as $route) {
+                // Find route
+                if (
+                    strtoupper($route->getMethod()) == strtoupper($this->requestMethod) &&
+                    ($params = $this->isMatch($this->requestPath, $route->getPath()))
+                ) {
+                    // Set current route
+                    $this->currentRoute = is_array($params) ? $route->withParams($params) : $route;
+                    // Callable
+                    if ($callable = $this->currentRoute->getCallable()) {
+                        $routeMiddleware = $this->currentRoute->getMiddlewares() ?? [];
+                        $routeMiddleware[] = new CallableRouteMiddleware($callable, $this->currentRoute->getParams());
+                        return $routeMiddleware;
+                    }
+                    // Controller
+                    else {
+                        $routeMiddleware = $route->getMiddlewares() ?? [];
+                        $routeMiddleware[] = new ControllerRouteMiddleware($this->currentRoute->getController(), $this->currentRoute->getFunction(), $this->currentRoute->getParams());
+                        return $routeMiddleware;
+                    }
                 }
             }
         }

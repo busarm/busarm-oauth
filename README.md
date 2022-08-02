@@ -8,7 +8,7 @@ Busarm Authorization server. Manages user authentication and authorization to ac
 
 -   PHP Version - Version >= 8.0
 -   Framework - Custom MVC build on top of Bshaffer's Oauth 2.0 Server. https://bshaffer.github.io/oauth2-server-php-docs/
-    -   Oauth 2.0 - See https://auth0.com/intro-to-iam/what-is-oauth-2/ and https://oauth.net/2/
+    -   OAuth 2.0 - See https://auth0.com/intro-to-iam/what-is-oauth-2/ and https://oauth.net/2/
 -   MYSQL Version - Version >= 8.0
 -   Docker / Docker Compose - Version >= 3.7 https://docs.docker.com/compose/compose-file/compose-file-v3/#short-syntax-3
 
@@ -56,7 +56,7 @@ https://documenter.getpostman.com/view/20461972/UVyytYJ5
 
 ## Structure
 
--   `application` - Contains application files used to handle server requests. Follows Model View Controller (MVC) pattern
+-   `app` - Contains application files used to handle server requests. Follows Model View Controller (MVC) pattern
 -   `bootstrap` - Contains scripts to start up the application
 -   `database` - Holds database setups and migrations
 -   `mysql` - Custom configurations for mysql server on development docker environment

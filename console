@@ -1,12 +1,10 @@
 <?php
 // Path to the front controller (this file) directory
-define('FCPATH', dirname(__FILE__) . DIRECTORY_SEPARATOR);
+define('APP_BASE_PATH', dirname(__FILE__) . DIRECTORY_SEPARATOR);
 // Load packages
-require_once(boolval(getenv('SEPARATE_VENDOR')) ? '/tmp/vendor/autoload.php' : FCPATH . 'vendor/autoload.php');
-require_once('bootstrap/helpers.php');
-require_once('bootstrap/constants.php');
+require_once(boolval(getenv('SEPARATE_VENDOR')) ? '/tmp/vendor/autoload.php' : APP_BASE_PATH . 'vendor/autoload.php');
+require_once(APP_BASE_PATH . 'bootstrap/helpers.php');
 
-use Application\Controllers\CLI\Task;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -15,7 +13,8 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use System\App;
 use System\Router;
-use  Application\Services\OAuthScopeService;
+use App\Controllers\CLI\Task;
+use System\Route;
 
 /**
  *  Composer Command
@@ -73,9 +72,11 @@ $createOrg = (new Command('org:create'))
     ->addOption('name', '', InputOption::VALUE_REQUIRED, "Organization name")
     ->setCode(function (InputInterface $input, OutputInterface $output) {
         $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
-        (new App(new Router(Task::class, "create_org", [
-            $input->getOption('name') ?? exit('`name` option is required')
-        ])))->run();
+        (new App())
+            ->addRouter(new Router(Task::class, "create_org", [
+                $input->getOption('name') ?? exit('`name` option is required')
+            ]))
+            ->run();
         $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
     });
 
@@ -87,17 +88,19 @@ $createClient = (new Command('client:create'))
     ->addOption('org', '', InputOption::VALUE_REQUIRED, "Organization id")
     ->addOption('name', '', InputOption::VALUE_REQUIRED, "Client name")
     ->addOption('redirect', '', InputOption::VALUE_OPTIONAL, "Client redirect urls (space sparated). e.g http://localhost:80 http://localhost:81")
-    ->addOption('scopes', '', InputOption::VALUE_OPTIONAL, "Client scopes (space sparated). e.g " . implode(' ', array_keys(OAuthScopeService::$allScopes)))
+    ->addOption('scopes', '', InputOption::VALUE_OPTIONAL, "Client scopes (space sparated). e.g system admin")
     ->addOption('grants', '', InputOption::VALUE_OPTIONAL, "Client grant types (space sparated). e.g password client_credential refresh_token authorization_code")
     ->setCode(function (InputInterface $input, OutputInterface $output) {
         $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
-        (new App(new Router(Task::class, "create_client", [
-            $input->getOption('org') ?? exit('`org` option is required'),
-            $input->getOption('name') ?? exit('`name` option is required'),
-            $input->getOption('redirect'),
-            $input->getOption('scopes'),
-            $input->getOption('grants'),
-        ])))->run();
+        (new App())
+            ->addRouter(new Router(Task::class, "create_client", [
+                $input->getOption('org') ?? exit('`org` option is required'),
+                $input->getOption('name') ?? exit('`name` option is required'),
+                $input->getOption('redirect'),
+                $input->getOption('scopes'),
+                $input->getOption('grants'),
+            ]))
+            ->run();
         $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
     });
 
@@ -109,9 +112,11 @@ $updateClientKey = (new Command('client:update:key'))
     ->addOption('client', '', InputOption::VALUE_REQUIRED, "Client id")
     ->setCode(function (InputInterface $input, OutputInterface $output) {
         $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
-        (new App(new Router(Task::class, "update_client_key", [
-            $input->getOption('client') ?? exit('`client` option is required')
-        ])))->run();
+        (new App())
+            ->addRouter(new Router(Task::class, "update_client_key", [
+                $input->getOption('client') ?? exit('`client` option is required')
+            ]))
+            ->run();
         $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
     });
 
@@ -125,17 +130,19 @@ $createUser = (new Command('user:create'))
     ->addOption('password', '', InputOption::VALUE_OPTIONAL, "User password")
     ->addOption('dial', '', InputOption::VALUE_OPTIONAL, "User phone number dial code")
     ->addOption('phone', '', InputOption::VALUE_OPTIONAL, "User phone number")
-    ->addOption('scopes', '', InputOption::VALUE_OPTIONAL, "User scopes (space sparated). e.g " . implode(' ', array_keys(OAuthScopeService::$allScopes)))
+    ->addOption('scopes', '', InputOption::VALUE_OPTIONAL, "User scopes (space sparated). e.g user admin email")
     ->setCode(function (InputInterface $input, OutputInterface $output) {
         $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
-        (new App(new Router(Task::class, "create_user", [
-            $input->getOption('name') ?? exit('`name` option is required'),
-            $input->getOption('email') ?? exit('`email` option is required'),
-            $input->getOption('password'),
-            $input->getOption('dial'),
-            $input->getOption('phone'),
-            $input->getOption('scopes')
-        ])))->run();
+        (new App())
+            ->addRouter(new Router(Task::class, "create_user", [
+                $input->getOption('name') ?? exit('`name` option is required'),
+                $input->getOption('email') ?? exit('`email` option is required'),
+                $input->getOption('password'),
+                $input->getOption('dial'),
+                $input->getOption('phone'),
+                $input->getOption('scopes')
+            ]))
+            ->run();
         $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
     });
 

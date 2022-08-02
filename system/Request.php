@@ -13,20 +13,31 @@ use System\Interfaces\RequestInterface;
  */
 class Request implements RequestInterface
 {
-    public $attributes;
-    public $request;
-    public $query;
-    public $server;
-    public $files;
-    public $cookies;
-    public $headers;
-    public $content;
+    protected $attributes;
+    protected $request;
+    protected $query;
+    protected $server;
+    protected $files;
+    protected $cookies;
+    protected $headers;
+    protected $content;
+    protected $ip;
+    protected $scheme;
+    protected $host;
+    protected $baseUrl;
+    protected $currentUrl;
 
     /**
      * Constructor.
      */
     public function __construct()
     {
+        $this->ip = get_ip_address();
+        $this->scheme = (is_https() ? "https" : "http");
+        $this->host = $this->scheme  . "://" . env('HTTP_HOST');
+        $this->baseUrl = $this->host . str_replace(basename(env('SCRIPT_NAME')), "", env('SCRIPT_NAME'));
+        $this->currentUrl = $this->host . env('REQUEST_URI');
+
         $this->initialize($_GET, $_POST, array(), $_COOKIE, $_FILES, $_SERVER);
         $contentType = $this->server('CONTENT_TYPE', '');
         $requestMethod = $this->server('REQUEST_METHOD', 'GET');
@@ -71,6 +82,46 @@ class Request implements RequestInterface
         $this->server = $server;
         $this->content = $content;
         $this->headers = is_null($headers) ? $this->getHeadersFromServer($this->server) : $headers;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function ip()
+    {
+        return $this->ip;
+    }
+    
+    /**
+     * @return string
+     */
+    public function scheme()
+    {
+        return $this->scheme;
+    }
+
+    /**
+     * @return string
+     */
+    public function host()
+    {
+        return $this->host;
+    }
+
+    /**
+     * @return string
+     */
+    public function baseUrl()
+    {
+        return $this->baseUrl;
+    }
+
+    /**
+     * @return string
+     */
+    public function currentUrl()
+    {
+        return $this->currentUrl;
     }
 
     /**

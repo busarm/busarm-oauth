@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Database\BaseMigration;
-use  Application\Services\OAuthScopeService;
+use  App\Services\OAuthScopeService;
 
 final class InsertDefaults extends BaseMigration
 {

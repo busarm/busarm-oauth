@@ -7,8 +7,9 @@ use System\Interfaces\LoaderInterface;
 
 class Loader implements LoaderInterface
 {
-    const VIEW_PATH =  FCPATH . "application/views/";
-    const CONFIG_PATH =  FCPATH . "application/configs/";
+    // Components paths - relative to app path
+    const VIEW_PATH =  "Views";
+    const CONFIG_PATH = "Configs";
 
     /**
      * Load View File
@@ -20,7 +21,7 @@ class Loader implements LoaderInterface
      */
     public function view($path, $vars = array(), $return = false): ?string
     {
-        $path = self::VIEW_PATH . $path . '.php';
+        $path = APP_BASE_PATH . app()->path . DIRECTORY_SEPARATOR . self::VIEW_PATH . DIRECTORY_SEPARATOR . $path . '.php';
         if (file_exists($path)) {
             ob_start();
             if (!empty($vars)) extract($vars);
@@ -31,7 +32,7 @@ class Loader implements LoaderInterface
             else echo $content;
         } else {
             if ($return) return null;
-            else throw new Exception("View file '$path' not found");
+            else throw new Exception("Loader Error: View file '$path' not found");
         }
         return null;
     }
@@ -43,11 +44,11 @@ class Loader implements LoaderInterface
      */
     public function config($path)
     {
-        $path = self::CONFIG_PATH . $path . '.php';
+        $path = APP_BASE_PATH . app()->path . DIRECTORY_SEPARATOR . self::CONFIG_PATH . DIRECTORY_SEPARATOR . $path . '.php';
         if (file_exists($path)) {
             require_once $path;
         } else {
-            throw new Exception("Config file '$path' not found");
+            throw new Exception("Loader Error: Config file '$path' not found");
         }
     }
 }

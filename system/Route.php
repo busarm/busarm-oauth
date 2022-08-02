@@ -25,22 +25,22 @@ class Route implements RouteInterface
     private Closure|null $callable = null;
 
     /** @var string Request controller */
-    private string|null $controller = null;
+    protected string|null $controller = null;
 
     /** @var string Request controller function*/
-    private string|null $function = null;
+    protected string|null $function = null;
 
     /** @var array Request controller function params */
-    public array $params = [];
+    protected array $params = [];
 
     /** @var string HTTP request method */
-    private string|null $method = null;
+    protected string|null $method = null;
 
     /** @var string HTTP request path */
-    private string|null $path = null;
+    protected string|null $path = null;
 
     /** @var MiddlewareInterface[] */
-    private array $middlewares = [];
+    protected array $middlewares = [];
 
     /**
      * @param string $method

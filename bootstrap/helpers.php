@@ -14,25 +14,6 @@ if (!function_exists('is_cli')) {
     }
 }
 
-
-if (!function_exists('getallheaders')) {
-    /**
-     * Define 'getallheaders' if doesn't exist
-     * @return	array
-     */
-    function getallheaders()
-    {
-        $headers = [];
-        foreach ($_SERVER as $name => $value) {
-            if (substr($name, 0, 5) == 'HTTP_') {
-                $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
-            }
-        }
-        return $headers;
-    }
-}
-
-
 if (!function_exists('env')) {
     /**
      * Get Server Variable
@@ -47,10 +28,11 @@ if (!function_exists('env')) {
     }
 }
 
-
 if (!function_exists('is_https')) {
     /**
-     * Check if https enabled*/
+     * Check if https enabled
+     * @return bool
+     */
     function is_https()
     {
         if (!empty(env('HTTPS')) && strtolower(env('HTTPS')) !== 'off') {
@@ -64,11 +46,10 @@ if (!function_exists('is_https')) {
     }
 }
 
-
 if (!function_exists('get_ip_address')) {
     /**
      * Get Ip of users
-     *
+     * @return string
      */
     function get_ip_address()
     {
@@ -107,7 +88,6 @@ if (!function_exists('get_ip_address')) {
     }
 }
 
-
 if (!function_exists('validate_ip')) {
 
     /**
@@ -118,8 +98,8 @@ if (!function_exists('validate_ip')) {
      */
     function validate_ip($ip)
     {
-        if (strtolower($ip) === 'unknown')
-            return false;
+        if (strtolower($ip) === 'unknown') return false;
+
         // generate ipv4 network address
         $ip = ip2long($ip);
 
@@ -147,7 +127,6 @@ if (!function_exists('validate_ip')) {
 }
 
 
-
 if (!function_exists('get_server_protocol')) {
 
     /**
@@ -160,7 +139,6 @@ if (!function_exists('get_server_protocol')) {
             ? env('SERVER_PROTOCOL') : 'HTTP/1.1';
     }
 }
-
 
 if (!function_exists('app')) {
     /**
@@ -175,23 +153,67 @@ if (!function_exists('app')) {
 
 if (!function_exists('out')) {
     /**
-     * Send output of data
-     * @param string $data
-     * @param int $code
+     * Print output end exit
+     * @param mixed $data
      */
-    function out($data = null, $code = 0)
+    function out($data = null)
     {
-        header("Content-type: application/json");
-        print_r(json_encode($data, JSON_PRETTY_PRINT) ?: $data);
-        print_r(PHP_EOL);
-        exit($code);
+        if (!is_array($data) && !is_object($data)) {
+            $response = new System\Dto\ResponseDto();
+            $response->message = $data;
+            return app()->response->json($response->toArray(), 500);
+        }
+        return app()->response->json(json_decode(json_encode($data), true), 500);
     }
 }
 
+if (!function_exists('response')) {
+    /**
+     * Get app request object
+     * @return \System\Interfaces\ResponseInterface
+     */
+    function response()
+    {
+        return app()->response;
+    }
+}
+
+if (!function_exists('request')) {
+    /**
+     * Get app response object
+     * @return \System\Interfaces\RequestInterface
+     */
+    function request()
+    {
+        return app()->request;
+    }
+}
+
+if (!function_exists('load')) {
+    /**
+     * Get app loader object
+     * @return \System\Interfaces\LoaderInterface
+     */
+    function load()
+    {
+        return app()->loader;
+    }
+}
+
+if (!function_exists('report')) {
+    /**
+     * Get app report object
+     * @return \System\Interfaces\ErrorReportingInterface
+     */
+    function report()
+    {
+        return app()->reporter;
+    }
+}
 
 if (!function_exists('log_error')) {
     /**
-     * @param string $message
+     * @param mixed $message
      */
     function log_error($message)
     {
@@ -211,7 +233,7 @@ if (!function_exists('log_exception')) {
 
 if (!function_exists('log_info')) {
     /**
-     * @param string $message
+     * @param mixed $message
      */
     function log_info($message)
     {
@@ -221,7 +243,7 @@ if (!function_exists('log_info')) {
 
 if (!function_exists('log_debug')) {
     /**
-     * @param string $message
+     * @param strmixeding $message
      */
     function log_debug($message)
     {
@@ -231,14 +253,13 @@ if (!function_exists('log_debug')) {
 
 if (!function_exists('log_warning')) {
     /**
-     * @param string $message
+     * @param mixed $message
      */
     function log_warning($message)
     {
         return app()->logger->logWarning($message);
     }
 }
-
 
 if (!function_exists('run')) {
 
@@ -248,11 +269,11 @@ if (!function_exists('run')) {
      * @param string $command
      * @param array $params
      * @param Symfony\Component\Console\Output\OutputInterface $output
-     * @param boolean $wait Default = true
      * @param int $timeout Default = 600 seconds
+     * @param boolean $wait Default = true
      * @return Symfony\Component\Process\Process
      */
-    function run(string $command, array $params, Symfony\Component\Console\Output\OutputInterface $output, $wait = true, $timeout = 600)
+    function run(string $command, array $params, Symfony\Component\Console\Output\OutputInterface $output, $timeout = 600, $wait = true)
     {
         $output->getFormatter()->setStyle('error', new Symfony\Component\Console\Formatter\OutputFormatterStyle('red'));
         $process = new Symfony\Component\Process\Process([
@@ -281,7 +302,7 @@ if (!function_exists('run')) {
     }
 }
 
-if (!function_exists('runAsync')) {
+if (!function_exists('run_async')) {
 
     /**
      * Run external command asynchronously
@@ -292,8 +313,8 @@ if (!function_exists('runAsync')) {
      * @param int $timeout Default = 600 seconds
      * @return Symfony\Component\Process\Process
      */
-    function runAsync(string $command, array $params, Symfony\Component\Console\Output\OutputInterface $output, $timeout = 600)
+    function run_async(string $command, array $params, Symfony\Component\Console\Output\OutputInterface $output, $timeout = 600)
     {
-        return run($command, $params, $output, false, $timeout);
+        return run($command, $params, $output, $timeout, false);
     }
 }

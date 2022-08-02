@@ -18,7 +18,7 @@ class Response implements ResponseInterface
     /**
      * @var string
      */
-    public $version;
+    protected $version;
 
     /**
      * @var int
@@ -43,7 +43,7 @@ class Response implements ResponseInterface
     /**
      * @var array
      */
-    public static $statusTexts = array(
+    protected static $statusTexts = array(
         100 => 'Continue',
         101 => 'Switching Protocols',
         200 => 'OK',
@@ -143,8 +143,9 @@ class Response implements ResponseInterface
      * @param int $statusCode
      * @param string $text
      * @throws InvalidArgumentException
+     * @return self
      */
-    public function setStatusCode($statusCode, $text = null)
+    public function setStatusCode($statusCode, $text = null): self
     {
         $this->statusCode = (int) $statusCode;
         if ($this->isInvalid()) {
@@ -152,6 +153,7 @@ class Response implements ResponseInterface
         }
 
         $this->statusText = false === $text ? '' : (null === $text ? self::$statusTexts[$this->statusCode] : $text);
+        return $this;
     }
 
     /**
@@ -172,18 +174,22 @@ class Response implements ResponseInterface
 
     /**
      * @param array $parameters
+     * @return self
      */
-    public function setParameters(array $parameters)
+    public function setParameters(array $parameters): self
     {
         $this->parameters = $parameters;
+        return $this;
     }
 
     /**
      * @param array $parameters
+     * @return self
      */
-    public function addParameters(array $parameters)
+    public function addParameters(array $parameters): self
     {
         $this->parameters = array_merge($this->parameters, $parameters);
+        return $this;
     }
 
     /**
@@ -199,35 +205,43 @@ class Response implements ResponseInterface
     /**
      * @param string $name
      * @param mixed  $value
+     * @return self
      */
-    public function setParameter($name, $value)
+    public function setParameter($name, $value): self
     {
         $this->parameters[$name] = $value;
+        return $this;
     }
 
     /**
      * @param array $httpHeaders
+     * @return self
      */
-    public function setHttpHeaders(array $httpHeaders)
+    public function setHttpHeaders(array $httpHeaders): self
     {
         $this->httpHeaders = $httpHeaders;
+        return $this;
     }
 
     /**
      * @param string $name
      * @param mixed $value
+     * @return self
      */
-    public function setHttpHeader($name, $value)
+    public function setHttpHeader($name, $value): self
     {
         $this->httpHeaders[$name] = $value;
+        return $this;
     }
 
     /**
      * @param array $httpHeaders
+     * @return self
      */
-    public function addHttpHeaders(array $httpHeaders)
+    public function addHttpHeaders(array $httpHeaders): self
     {
         $this->httpHeaders = array_merge($this->httpHeaders, $httpHeaders);
+        return $this;
     }
 
     /**

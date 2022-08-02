@@ -5,6 +5,31 @@ namespace System\Interfaces;
 interface RequestInterface
 {
     /**
+     * @return string
+     */
+    public function ip();
+    
+    /**
+     * @return string
+     */
+    public function scheme();
+
+    /**
+     * @return string
+     */
+    public function host();
+
+    /**
+     * @return string
+     */
+    public function baseUrl();
+
+    /**
+     * @return string
+     */
+    public function currentUrl();
+
+    /**
      * @param string $name
      * @param mixed  $default
      * @return mixed

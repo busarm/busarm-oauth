@@ -7,14 +7,32 @@ use System\Interfaces\ErrorReportingInterface;
 
 class ErrorReporter implements ErrorReportingInterface
 {
+    protected array $breadCrumbs = [];
+
     /**
      * Set up error reporting
      *
      * @return void
      */
-    public function setupReporting() {
-    }
+    public function setupReporting() {}
     
+    /**
+     * Leave breadcrumbs for issue tracking
+     *
+     * @param mixed $crumb
+     * @param string|null $type
+     * @param array $metadata
+     * @return void
+     */
+    public function leaveBreadcrumbs($crumb, string|null $type = null, array $metadata = [])
+    {
+        $this->breadCrumbs[] = [
+            'crumb' => $crumb,
+            'type' => $crumb,
+            'metadata' => $crumb,
+        ];
+    }
+
     /**
      * Report Error
      *
@@ -24,6 +42,7 @@ class ErrorReporter implements ErrorReportingInterface
      */
     public function reportError($heading, $message)
     {
+        log_error($this->breadCrumbs);
         log_error($message);
     }
 
@@ -35,6 +54,7 @@ class ErrorReporter implements ErrorReportingInterface
      */
     public function reportException($exception)
     {
+        log_error($this->breadCrumbs);
         log_exception($exception);
     }
 }
