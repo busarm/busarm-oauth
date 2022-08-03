@@ -303,19 +303,12 @@ class Response implements ResponseInterface
                 $this->setHttpHeader('Content-Type', 'text/xml');
                 break;
         }
-        // clean buffer if exist
-        if(!empty(ob_get_status())) { 
-            ob_end_clean();
-            ob_clean();
-        }
-
         // status
         header(sprintf('HTTP/%s %s %s', $this->version, $this->statusCode, $this->statusText));
         foreach ($this->getHttpHeaders() as $name => $header) {
             header(sprintf('%s: %s', $name, $header));
         }
         echo $this->getResponseBody($format);
-        ob_flush();
         if (!$continue) die;
     }
 
