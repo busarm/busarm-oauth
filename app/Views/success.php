@@ -162,7 +162,7 @@ use App\Helpers\URL;
         <div class="success-page">
             <div class="form">
                 <!-- Logo -->
-                <?= app()->loader->view('components/logo', true) ?>
+                <?php app()->loader->view('components/logo') ?>
                 <br />
                 <div>
                     <img class="img icon" src="<?= URL::assetUrl('public/images/icons/Verified.png') ?>" alt="Success">
@@ -174,7 +174,7 @@ use App\Helpers\URL;
             </div>
         </div>
         <!-- Footer -->
-        <?= app()->loader->view('components/footer', true) ?>
+        <?php app()->loader->view('components/footer') ?>
 
     </oauth-success>
 </body>
