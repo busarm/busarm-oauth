@@ -3,8 +3,6 @@
 namespace System;
 
 use Closure;
-use DateInterval;
-use DateTime;
 use Exception;
 use Throwable;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -17,6 +15,7 @@ use System\Interfaces\MiddlewareInterface;
 use System\Interfaces\RequestInterface;
 use System\Interfaces\ResponseInterface;
 use System\Interfaces\RouterInterface;
+use System\Interfaces\SingletonInterface;
 use System\Middlewares\ResponseMiddleware;
 
 /**
@@ -72,14 +71,20 @@ class App
     /** @var int Request start time in milliseconds */
     public $startTimeMs;
 
-    // HOOKS 
+    /** @var string Path to config files - relative to app folder. Default: 'Views' */
+    public $viewPath = "Views";
+
+    /** @var string Path to config files - relative to app folder. Default: 'Configs' */
+    public $configPath = "Configs";
+
+    // SYSTEM HOOKS 
     private Closure|null $startHook = null;
     private Closure|null $completeHook = null;
 
     /**
      * @param RouterInterface|null $router
      * @param string $path App environment. Default: Env::LOCAL
-     * @param string $path Relative path to app folder. Default: app
+     * @param string $path Relative path to app folder. Default: app. (Without leading or trailing slash)
      */
     public function __construct(public string $env = Env::LOCAL, public $path = 'app')
     {
@@ -139,11 +144,15 @@ class App
 
     /**
      * Load neccesary application files
-     *
+     * 
      * @return void
      */
     public static function bootstrap()
     {
+        defined('APP_BASE_PATH') or exit("Please define 'APP_BASE_PATH'");
+
+        // Load packages
+        require_once(APP_BASE_PATH . 'bootstrap/helpers.php');
     }
 
     /**
@@ -224,12 +233,12 @@ class App
     private function preflight($method)
     {
         // Check for CORS access request
-        if (CHECK_CORS == TRUE) {
+        if (defined('CHECK_CORS') && CHECK_CORS == TRUE) {
             $headers = [];
-            $allowed_cors_headers = ALLOWED_CORS_HEADERS;
-            $exposed_cors_headers = EXPOSED_CORS_HEADERS;
-            $allowed_cors_methods = ALLOWED_CORS_METHODS;
-            $max_cors_age = MAX_CORS_AGE;
+            $allowed_cors_headers = defined('ALLOWED_CORS_HEADERS') ? ALLOWED_CORS_HEADERS : [];
+            $exposed_cors_headers = defined('EXPOSED_CORS_HEADERS') ? EXPOSED_CORS_HEADERS : [];
+            $allowed_cors_methods = defined('ALLOWED_CORS_METHODS') ? ALLOWED_CORS_METHODS : [];
+            $max_cors_age = defined('MAX_CORS_AGE') ? MAX_CORS_AGE : 3600;
 
             // Convert the config items into strings
             $allowed_headers = implode(', ', is_array($allowed_cors_headers) ? $allowed_cors_headers : []);
@@ -237,7 +246,7 @@ class App
             $allowed_methods = implode(', ', is_array($allowed_cors_methods) ? $allowed_cors_methods : []);
 
             // If we want to allow any domain to access the API
-            if (ALLOWED_ANY_CORS_DOMAIN == TRUE) {
+            if (defined('ALLOWED_ANY_CORS_DOMAIN') && ALLOWED_ANY_CORS_DOMAIN == TRUE) {
                 $headers['Access-Control-Allow-Origin'] = '*';
                 $headers['Access-Control-Allow-Methods'] = $allowed_methods;
                 $headers['Access-Control-Allow-Headers'] = $allowed_headers;
@@ -247,7 +256,7 @@ class App
                 // We're going to allow only certain domains access
                 // Store the HTTP Origin header
                 $origin = env('HTTP_ORIGIN') ?? env('HTTP_REFERER') ?? '';
-                $allowed_origins = ALLOWED_CORS_ORIGINS;
+                $allowed_origins = defined('ALLOWED_CORS_ORIGINS') ? ALLOWED_CORS_ORIGINS : [];
                 // If the origin domain is in the allowed_cors_origins list, then add the Access Control headers
                 if (is_array($allowed_origins) && in_array(trim($origin, "/"), $allowed_origins)) {
                     $headers['Access-Control-Allow-Origin'] = $origin;
@@ -271,6 +280,48 @@ class App
     }
 
     /**
+     * Instantiate class with dependencies
+     * 
+     * @param string $className
+     * @param bool $cache Save as singleton to be reused. Default: false
+     * @return object
+     */
+    public function make($className, $cache = false)
+    {
+        if ($cache && ($singleton = $this->getSingleton($className))) return $singleton;
+        else $instance = DI::instantiate($className);
+        // Add instance as singleton is supported
+        if ($cache && ($instance instanceof SingletonInterface)) {
+            $this->addSingleton($className, $instance);
+        }
+        return $instance;
+    }
+
+    /**
+     * Set path to config files - relative to app folder. 
+     * (Without leading or trailing slash)
+     *
+     * @param string $configPath
+     * @return void
+     */
+    public function setConfigPath(string $configPath)
+    {
+        $this->configPath = $configPath;
+    }
+
+    /**
+     * Set path to view files - relative to app folder.
+     * (Without leading or trailing slash)
+     * 
+     * @param string $viewPath
+     * @return void
+     */
+    public function setViewPath(string $viewPath)
+    {
+        $this->viewPath = $viewPath;
+    }
+
+    /**
      * Add singleton
      * 
      * @param string $className
@@ -279,7 +330,7 @@ class App
      */
     public function addSingleton($className, $object = null)
     {
-        $this->singletons[$className] = !empty($object) ? DI::instantiate($className, false) : $object;
+        $this->singletons[$className] = &$object;
         return $this;
     }
 
@@ -348,7 +399,7 @@ class App
     }
 
     /**
-     * Add router
+     * Add router. Replaces existing
      *
      * @param RouterInterface $router
      * @return self
@@ -360,7 +411,7 @@ class App
     }
 
     /**
-     * Add error reporter
+     * Add error reporter. Replaces existing
      * 
      * @param string $config
      * @return self
@@ -373,7 +424,7 @@ class App
 
     /**
      * 
-     * Add middleware
+     * Process middleware
      *
      * @param MiddlewareInterface[] $middlewares
      * @param int $index

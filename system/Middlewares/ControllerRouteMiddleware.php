@@ -22,7 +22,7 @@ class ControllerRouteMiddleware implements MiddlewareInterface
     {
         if (class_exists($this->controller)) {
             // Load controller
-            $object = DI::instantiate($this->controller);
+            $object = app()->make($this->controller);
             if (
                 // Load method
                 method_exists($object, $this->function)

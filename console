@@ -3,7 +3,6 @@
 define('APP_BASE_PATH', dirname(__FILE__) . DIRECTORY_SEPARATOR);
 // Load packages
 require_once(boolval(getenv('SEPARATE_VENDOR')) ? '/tmp/vendor/autoload.php' : APP_BASE_PATH . 'vendor/autoload.php');
-require_once(APP_BASE_PATH . 'bootstrap/helpers.php');
 
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
@@ -14,7 +13,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 use System\App;
 use System\Router;
 use App\Controllers\CLI\Task;
-use System\Route;
+
+// Bootstrap system
+App::bootstrap();
 
 /**
  *  Composer Command

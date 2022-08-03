@@ -160,7 +160,7 @@ use App\Helpers\URL;
         <div class="failed-page">
             <div class="form">
                 <!-- Logo -->
-                <?= app()->loader->view('components/logo') ?>
+                <?= app()->loader->view('components/logo', true) ?>
                 <br />
                 <div>
                     <img class="img icon" src="<?= URL::assetUrl('public/images/icons/Warning.png') ?>" alt="Failed">
@@ -182,7 +182,7 @@ use App\Helpers\URL;
             </div>
         </div>
         <!-- Footer -->
-        <?= app()->loader->view('components/footer') ?>
+        <?= app()->loader->view('components/footer', true) ?>
 
     </oauth-failed>
 </body>

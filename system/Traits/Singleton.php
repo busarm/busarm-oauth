@@ -2,8 +2,6 @@
 
 namespace System\Traits;
 
-use System\DI;
-
 /**
  * Created by VSCODE.
  * User: Samuel
@@ -17,6 +15,6 @@ trait Singleton
      */
     public static function getInstance(): static
     {
-        return DI::instantiate(static::class, true);
+        return app()->make(static::class, true);
     }
 }

@@ -156,7 +156,7 @@ use App\Helpers\URL;
         <div class="auth-page">
             <div class="form">
                 <!-- Logo -->
-                <?= app()->loader->view('components/logo') ?>
+                <?= app()->loader->view('components/logo', true) ?>
                 <br>
                 <form id="login-form" class="form" method="post" action="<?= $action ?? null ?>">
                     <h3> <span style="color:#DF632D"><?= ucfirst($client_name ?? $org_name) ?></span> is requesting access to your account</h3>
@@ -197,7 +197,7 @@ use App\Helpers\URL;
             </div>
         </div>
         <!-- Footer -->
-        <?= app()->loader->view('components/footer') ?>
+        <?= app()->loader->view('components/footer', true) ?>
 
     </oauth-authorize>
 </body>

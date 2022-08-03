@@ -7,10 +7,6 @@ use System\Interfaces\LoaderInterface;
 
 class Loader implements LoaderInterface
 {
-    // Components paths - relative to app path
-    const VIEW_PATH =  "Views";
-    const CONFIG_PATH = "Configs";
-
     /**
      * Load View File
      * @param $path
@@ -21,7 +17,7 @@ class Loader implements LoaderInterface
      */
     public function view($path, $vars = array(), $return = false): ?string
     {
-        $path = APP_BASE_PATH . app()->path . DIRECTORY_SEPARATOR . self::VIEW_PATH . DIRECTORY_SEPARATOR . $path . '.php';
+        $path = APP_BASE_PATH . app()->path . DIRECTORY_SEPARATOR . app()->viewPath . DIRECTORY_SEPARATOR . $path . '.php';
         if (file_exists($path)) {
             ob_start();
             if (!empty($vars)) extract($vars);
@@ -44,7 +40,7 @@ class Loader implements LoaderInterface
      */
     public function config($path)
     {
-        $path = APP_BASE_PATH . app()->path . DIRECTORY_SEPARATOR . self::CONFIG_PATH . DIRECTORY_SEPARATOR . $path . '.php';
+        $path = APP_BASE_PATH . app()->path . DIRECTORY_SEPARATOR . app()->configPath . DIRECTORY_SEPARATOR . $path . '.php';
         if (file_exists($path)) {
             require_once $path;
         } else {

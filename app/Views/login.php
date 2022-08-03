@@ -169,7 +169,7 @@ use App\Helpers\URL;
         <div class="login-page">
             <div class="form">
                 <!-- Logo -->
-                <?= app()->loader->view('components/logo') ?>
+                <?= app()->loader->view('components/logo', true) ?>
                 <br>
                 <form id="login-form" class="form" method="post" action="<?= $action ?? null ?>">
                     <h2> Login </h2>
@@ -187,7 +187,7 @@ use App\Helpers\URL;
             </div>
         </div>
         <!-- Footer -->
-        <?= app()->loader->view('components/footer') ?>
+        <?= app()->loader->view('components/footer', true) ?>
 
     </oauth-login>
 </body>

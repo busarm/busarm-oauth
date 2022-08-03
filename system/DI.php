@@ -5,7 +5,6 @@ namespace System;
 use Closure;
 use Exception;
 use System\Dto\RequestDto;
-use System\Interfaces\SingletonInterface;
 
 /**
  * Dependency Injector
@@ -17,18 +16,12 @@ class DI
      * Instantiate class with dependencies
      *
      * @param string $class
-     * @param bool $caching Allow instantiating using app singletons
      * @return object
      */
-    public static function instantiate($class, $caching = true)
+    public static function instantiate($class)
     {
-        if ($caching && ($singleton = app()->getSingleton($class))) return $singleton;
-        else if (method_exists($class, '__construct')) $instance = new $class(...self::resolveMethodDependencies($class, '__construct'));
+        if (method_exists($class, '__construct')) $instance = new $class(...self::resolveMethodDependencies($class, '__construct'));
         else $instance = new $class;
-        // Add instance as singleton is supported
-        if ($caching && ($instance instanceof SingletonInterface)) {
-            app()->addSingleton($class, $instance);
-        }
         return $instance;
     }
 
@@ -63,7 +56,7 @@ class DI
      * @param ReflectionParameter[] $parameters
      * @return array
      */
-    public static function resolveDependencies(array $parameters)
+    protected static function resolveDependencies(array $parameters)
     {
         $params = [];
         foreach ($parameters as $param) {

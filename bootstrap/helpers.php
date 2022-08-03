@@ -243,7 +243,7 @@ if (!function_exists('log_info')) {
 
 if (!function_exists('log_debug')) {
     /**
-     * @param strmixeding $message
+     * @param mixed $message
      */
     function log_debug($message)
     {

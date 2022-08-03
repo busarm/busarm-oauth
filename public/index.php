@@ -1,13 +1,13 @@
 <?php
 define('APP_BASE_PATH', dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR);
+require_once(boolval(getenv('SEPARATE_VENDOR')) ? '/tmp/vendor/autoload.php' : APP_BASE_PATH . 'vendor/autoload.php');
 
 use System\App;
 use App\Exceptions\Reporter;
 use System\Env;
 
-// Load packages
-require_once(boolval(getenv('SEPARATE_VENDOR')) ? '/tmp/vendor/autoload.php' : APP_BASE_PATH . 'vendor/autoload.php');
-require_once(APP_BASE_PATH . 'bootstrap/helpers.php');
+// Bootstrap system
+App::bootstrap();
 
 // Application Environment
 if (env('ENV') == Env::PROD || strtolower(env('ENV')) == "prod" || strtolower(env('STAGE')) == "prod") {
