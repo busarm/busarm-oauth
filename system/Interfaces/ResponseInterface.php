@@ -84,4 +84,11 @@ interface ResponseInterface
      * @param bool $continue
      */
     public function xml($data, $code = 200, $continue = false);
+
+    /**
+     * @param string|null $data
+     * @param int $code response code
+     * @param bool $continue
+     */
+    public function html($data, $code = 200, $continue = false);
 }

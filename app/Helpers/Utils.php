@@ -73,12 +73,16 @@ class Utils
         return trim($res);
     }
 
-    /**Generate CSRF TOKEN
+    /**
+     * Generate CSRF TOKEN
+     * 
+     * @return string $key
+     * @return bool $force Force generate new key even if it exists
      * @return string
      */
-    public static function generateCsrfToken($key = null)
+    public static function generateCsrfToken($key = null, $force = false)
     {
-        if (empty($key) && empty($key = self::getCookie("csrf_key"))) {
+        if ($force || (empty($key) && empty($key = self::getCookie("csrf_key")))) {
             $key = md5(uniqid(app()->request->ip()));
             self::setCookie("csrf_key", $key);
         }

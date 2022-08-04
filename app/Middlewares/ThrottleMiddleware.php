@@ -2,19 +2,18 @@
 
 namespace App\Middlewares;
 
-use App\Exceptions\AuthenticationException;
 use App\Exceptions\ThrottleException;
 use App\Helpers\Utils;
-use App\Services\OAuthService;
 use System\Interfaces\MiddlewareInterface;
 
+// TODO Use Cache instead of cookie
 /**
  * Created by VSCODE.
  * User: Samuel
  * Date: 30/7/2022
  * Time: 1:20 AM
  * 
- * // TODO Use Cache instead of cookie
+ * Basic throttling using browser cookies
  */
 class ThrottleMiddleware implements MiddlewareInterface
 {
@@ -25,7 +24,7 @@ class ThrottleMiddleware implements MiddlewareInterface
 
     public function handle(callable $next = null): mixed
     {
-        $key = md5('throttle:' . ($this->name ?? app()->router->getRequestPath()));
+        $key = md5('throttle:' . $this->name . app()->router->getRequestPath() . app()->router->getRequestMethod());
         $count = (Utils::getCookie($key, app()->request->ip()) ?? 0) + 1;
         if ($this->limit > 0 && $count >= $this->limit) {
             throw new ThrottleException("Too many request. Please try again later");

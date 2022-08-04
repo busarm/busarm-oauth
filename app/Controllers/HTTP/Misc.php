@@ -27,8 +27,8 @@ class Misc
             if ($link) {
                 return URL::redirect($link);
             }
-            return app()->showMessage(400, false, 'Invalid Request', 'Failed to process link');
+            return app()->showMessage(400, 'Failed to process link');
         }
-        return app()->showMessage(400, false, 'Invalid Request', 'Secure link not available');
+        return app()->showMessage(400, 'Secure link not available');
     }
 }

@@ -6,19 +6,6 @@ use Exception;
 
 class HttpException extends Exception
 {
-    protected $title = null;
-
-    public function __construct($code, $message)
-    {
-        $this->code = $code;
-        $this->message = $message;
-    }
-
-    public function getTitle()
-    {
-        return $this->title;
-    }
-
     /**
      * Exception handler
      *
@@ -34,6 +21,6 @@ class HttpException extends Exception
                 'function' => $instance['function'] ?? null,
             ];
         }, $this->getTrace());
-        app()->showMessage($this->getCode() >= 400 ? $this->getCode() : 500, false, $this->getTitle(), $this->getMessage(), $this->getLine(), $this->getFile(), $trace);
+        app()->showMessage($this->getCode() >= 400 ? $this->getCode() : 500, $this->getMessage(), $this->getLine(), $this->getFile(), $trace);
     }
 }

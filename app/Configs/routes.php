@@ -20,7 +20,7 @@ use App\Middlewares\ThrottleMiddleware;
 // Miscellaneous
 app()->router->addRoutes([
     Route::get('/ping')->call(function () {
-        return "System Online";
+        return app()->showMessage(200, "System Online");
     })->middlewares([
         new ThrottleMiddleware(10, 60, 'ping-system')
     ]),
@@ -33,10 +33,15 @@ app()->router->addRoutes([
 // Authorize
 app()->router->addRoutes([
     Route::get('/authorize/request')->to(Authorize::class, 'request')->middlewares([
+        new ThrottleMiddleware(10, 60, 'authorize-request')
+    ]),
+    Route::post('/authorize/request')->to(Authorize::class, 'request')->middlewares([
         new ThrottleMiddleware(5, 60, 'authorize-request')
     ]),
     Route::get('/authorize/login')->to(Authorize::class, 'login'),
-    Route::post('/authorize/login')->to(Authorize::class, 'login'),
+    Route::post('/authorize/login')->to(Authorize::class, 'processLogin')->middlewares([
+        new ThrottleMiddleware(10, 60, 'authorize-request')
+    ]),
     Route::get('/authorize/logout')->to(Authorize::class, 'logout'),
 ]);
 

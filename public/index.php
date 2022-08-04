@@ -20,8 +20,8 @@ if (env('ENV') == Env::PROD || strtolower(env('ENV')) == "prod" || strtolower(en
 
 $app = new App($env);
 // Add config files
-$app->addConfig('scopes');
-$app->addConfig('routes');
+$app->loadConfig('scopes');
+$app->loadConfig('routes');
 $app->beforeStart(function (App $app) {
     // If offline or on maintenance mode
     if (!empty(SYSTEM_START_UP_TIME) && !empty(SYSTEM_SHUT_DOWN_TIME)) {
@@ -29,13 +29,13 @@ $app->beforeStart(function (App $app) {
         $stop = (new DateTime(SYSTEM_SHUT_DOWN_TIME))->sub(DateInterval::createFromDateString('1 day'));
         if (time() < $start->getTimestamp() && time() >= $stop->getTimestamp()) {
             if (MAINTENANCE_MODE) {
-                $app->showMessage(503, false, "System is under maintenance. Please come back on " . $start->format('Y-m-d H:i P'));
+                $app->showMessage(503, "System is under maintenance. Please come back on " . $start->format('Y-m-d H:i P'));
             } else {
-                $app->showMessage(503, false, "System is currently offline. Please come back on " . $start->format('Y-m-d H:i P'));
+                $app->showMessage(503, "System is currently offline. Please come back on " . $start->format('Y-m-d H:i P'));
             }
         }
     } else if (MAINTENANCE_MODE) {
-        $app->showMessage(503, false, "System is under maintenance");
+        $app->showMessage(503, "System is under maintenance");
     }
 });
 // Add error reporter

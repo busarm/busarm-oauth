@@ -5,12 +5,14 @@ namespace System;
 use Closure;
 use Exception;
 use Throwable;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\ConsoleOutput;
+
 use System\Dto\BaseDto;
 use System\Dto\ResponseDto;
 use System\Interfaces\ErrorReportingInterface;
 use System\Interfaces\LoaderInterface;
-use System\Interfaces\LoggerInterface;
 use System\Interfaces\MiddlewareInterface;
 use System\Interfaces\RequestInterface;
 use System\Interfaces\ResponseInterface;
@@ -49,6 +51,9 @@ class App
 
     /** @var array */
     public $bindings = [];
+
+    /** @var array */
+    public $configs = [];
 
     /** @var RequestInterface */
     public $request;
@@ -107,7 +112,7 @@ class App
         $this->router = new Router();
 
         // Set logger
-        $this->logger = new Logger((app()->env == Env::LOCAL || app()->env == Env::DEV) ? ConsoleOutput::VERBOSITY_DEBUG : ConsoleOutput::VERBOSITY_NORMAL);
+        $this->logger = new ConsoleLogger(new ConsoleOutput((app()->env == Env::LOCAL || app()->env == Env::DEV) ? ConsoleOutput::VERBOSITY_DEBUG : ConsoleOutput::VERBOSITY_NORMAL, true));
 
         // Set up default configs
         $this->setUpConfigs(self::DEFAULT_CONFIGS);
@@ -119,7 +124,6 @@ class App
         $this->addBinding(RouterInterface::class, Router::class);
         $this->addBinding(RequestInterface::class, Request::class);
         $this->addBinding(ResponseInterface::class, Response::class);
-        $this->addBinding(LoggerInterface::class, Logger::class);
         $this->addBinding(LoaderInterface::class, Loader::class);
         $this->addBinding(ErrorReportingInterface::class, ErrorReporter::class);
 
@@ -163,7 +167,7 @@ class App
     {
         if (!empty($configs)) {
             foreach ($configs as $config) {
-                $this->addConfig((string) $config);
+                $this->loadConfig((string) $config);
             }
         }
     }
@@ -173,9 +177,9 @@ class App
      */
     private function setUpErrorHandlers()
     {
-        set_error_handler(function ($errno, $errstr, $errfile = null, $errline = null, $errcontext = []) {
-            $this->reporter->reportError("Internal Server Error", $errline);
-            $this->showMessage(500, false, $errno, $errstr, $errline, $errfile, $errcontext);
+        set_error_handler(function ($errno, $errstr, $errfile = null, $errline = null) {
+            $this->reporter->reportError("Internal Server Error", $errstr, $errfile, $errline);
+            $this->showMessage(500, $errstr, $errline, $errfile);
         });
         set_exception_handler(function (Throwable $e) {
             if ($e instanceof HttpException) {
@@ -191,7 +195,7 @@ class App
                         'function' => $instance['function'] ?? null,
                     ];
                 }, $e->getTrace());
-                $this->showMessage($e->getCode() >= 400 ? $e->getCode() : 500, false, "Unexpected Exception", $e->getMessage(), $e->getLine(), $e->getFile(), $trace);
+                $this->showMessage($e->getCode() >= 400 ? $e->getCode() : 500, $e->getMessage(), $e->getLine(), $e->getFile(), $trace);
             }
         });
     }
@@ -220,7 +224,7 @@ class App
         // Initiate rerouting
         if ($this->router) {
             if (!$this->processMiddleware(array_merge($this->middlewares, $this->router->process()))) {
-                $this->showMessage(404, false, "Not found - " . $this->router->getRequestPath());
+                $this->showMessage(404, "Not found - " . $this->router->getRequestMethod() . ' ' . $this->router->getRequestPath());
             }
         } else throw new Exception("System Error: Router not configured. See `addRouter`");
     }
@@ -274,7 +278,7 @@ class App
         } else {
             if (strtolower($method) === 'options') {
                 // kill the response and send it to the client
-                $this->showMessage(200, true, "Preflight Ok");
+                $this->showMessage(200, "Preflight Ok");
             }
         }
     }
@@ -375,15 +379,36 @@ class App
     }
 
     /**
-     * Add config file
+     * Load config file
      * 
      * @param string $config
      * @return self
      */
-    public function addConfig(string $config)
+    public function loadConfig(string $config)
     {
-        $this->loader->config($config);
+        $configs = $this->loader->config($config);
+        // Load configs into app
+        if ($configs && is_array($configs)) {
+            foreach ($configs as $key => $value) {
+                $this->config($key, $value);
+            }
+        }
         return $this;
+    }
+
+    /**
+     * Get config or Set if not available
+     * 
+     * @param string $config
+     * @return mixed
+     */
+    public function config(string $name, $value = null)
+    {
+        $config = $this->configs[$name] ?? null;
+        if (is_null($config)) {
+            $this->configs[$name] = $config = $value;
+        }
+        return $config;
     }
 
     /**
@@ -433,7 +458,7 @@ class App
     protected function processMiddleware(array $middlewares, $index = 0)
     {
         if (isset($middlewares[$index])) {
-            return $middlewares[$index]->handle(fn () => $this->processMiddleware($middlewares, ++$index));
+            return @$middlewares[$index]->handle(fn () => $this->processMiddleware($middlewares, ++$index));
         }
         return false;
     }
@@ -464,28 +489,27 @@ class App
         register_shutdown_function($this->completeHook, $this);
     }
 
+
     ############################
-    # Response & Reports
+    # Response
     ############################
 
 
     /**
      * Show Message
      * @param string $code Code
-     * @param bool $status Status
-     * @param string $title Title
      * @param string $msg Message
      * @param string $line 
      * @param string $file 
      * @param string $trace 
      */
-    public function showMessage($code, $status, $title, $msg = null, $line = null, $file = null,  $trace = [])
+    public function showMessage($code, $message = null, $line = null, $file = null,  $trace = [])
     {
         if (is_cli()) {
-            if (!$status || $code !== 200 || $code !== 201) {
-                $this->logger->logError(
+            if ($code !== 200 || $code !== 201) {
+                $this->logger->error(
                     PHP_EOL . "success\t-\tfalse" .
-                        PHP_EOL . "message\t-\t" . ($msg ?? $title) .
+                        PHP_EOL . "message\t-\t$message" .
                         PHP_EOL . "version\t-\t" . APP_VERSION .
                         PHP_EOL . "line\t-\t$line" .
                         PHP_EOL . "path\t-\t$file" .
@@ -493,9 +517,9 @@ class App
                     $trace
                 );
             } else {
-                $this->logger->logInfo(
+                $this->logger->info(
                     PHP_EOL . "success\t-\ttrue" .
-                        PHP_EOL . "message\t-\t" . ($msg ?? $title) .
+                        PHP_EOL . "message\t-\t$message" .
                         PHP_EOL . "version\t-\t" . APP_VERSION .
                         PHP_EOL . "line\t-\t$line" .
                         PHP_EOL . "path\t-\t$file" .
@@ -505,19 +529,15 @@ class App
             }
         } else {
             $response = new ResponseDto();
-            $response->success = $status;
-            $response->message = $msg ?? $title;
+            $response->success = $code == 200 || $code == 201;
+            $response->message = $message;
+            $response->env = $this->env;
+            $response->version = APP_VERSION;
+            $response->ip = app()->request->ip();
 
-            // Show env info if not successful
-            if ($code !== 200 || $code !== 201) {
-                $response->env = $this->env;
-                $response->version = APP_VERSION;
-                $response->ip = app()->request->ip();
+            // Show more info if not production
+            if (!$response->success && $this->env !== Env::PROD) {
                 $response->duration = (floor(microtime(true) * 1000) - $this->startTimeMs);
-            }
-
-            // Show error info if not production
-            if ($this->env != Env::PROD) {
                 $response->line = !empty($line) ? $line : null;
                 $response->file = !empty($file) ? $file : null;
                 $response->trace = !empty($trace) ? $trace : null;
@@ -525,7 +545,7 @@ class App
 
             $this->response
                 ->setParameters($response->toArray())
-                ->setStatusCode($code < 600 ? $code : 500, ($msg ? $title : ''))
+                ->setStatusCode($code < 600 ? $code : 500)
                 ->send();
         }
     }

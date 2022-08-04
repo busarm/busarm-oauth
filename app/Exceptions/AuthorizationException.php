@@ -8,6 +8,6 @@ class AuthorizationException extends HttpException
 {
     public function __construct($message = "Unauthorized")
     {
-        parent::__construct(403, $message);
+        parent::__construct($message, 403);
     }
 }

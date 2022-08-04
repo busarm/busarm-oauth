@@ -8,6 +8,6 @@ class AuthenticationException extends HttpException
 {
     public function __construct($message = "Unauthenticated")
     {
-        parent::__construct(401, $message);
+        parent::__construct($message, 401);
     }
 }

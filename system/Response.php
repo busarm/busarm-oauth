@@ -77,6 +77,7 @@ class Response implements ResponseInterface
         416 => 'Requested Range Not Satisfiable',
         417 => 'Expectation Failed',
         418 => 'I\'m a teapot',
+        429 => 'Too Many Requests',
         500 => 'Internal Server Error',
         501 => 'Not Implemented',
         502 => 'Bad Gateway',
@@ -295,6 +296,13 @@ class Response implements ResponseInterface
             return;
         }
 
+        // clean buffer
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+
+        // start buffer
+        ob_start();
         switch ($format) {
             case 'json':
                 $this->setHttpHeader('Content-Type', 'application/json');
@@ -309,6 +317,7 @@ class Response implements ResponseInterface
             header(sprintf('%s: %s', $name, $header));
         }
         echo $this->getResponseBody($format);
+        ob_end_flush();
         if (!$continue) die;
     }
 
@@ -334,6 +343,35 @@ class Response implements ResponseInterface
         $this->setParameters($data);
         $this->setStatusCode($code);
         $this->send('xml', $continue);
+    }
+
+    /**
+     * @param string|null $data
+     * @param int $code response code
+     * @param bool $continue
+     */
+    public function html($data, $code = 200, $continue = false)
+    {
+        // headers have already been sent by the developer
+        if (headers_sent()) {
+            return;
+        }
+
+        // clean buffer
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+
+        // start buffer
+        ob_start();
+        $this->setHttpHeader('Content-Type', 'text/html');
+        // headers
+        foreach ($this->getHttpHeaders() as $name => $header) {
+            header(sprintf('%s: %s', $name, $header));
+        }
+        echo $data;
+        ob_end_flush();
+        if (!$continue) die;
     }
 
     /**

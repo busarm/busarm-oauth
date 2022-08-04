@@ -14,22 +14,22 @@ class ErrorReporter implements ErrorReportingInterface
      *
      * @return void
      */
-    public function setupReporting() {}
-    
+    public function setupReporting()
+    {
+    }
+
     /**
      * Leave breadcrumbs for issue tracking
      *
-     * @param mixed $crumb
-     * @param string|null $type
+     * @param mixed $title
      * @param array $metadata
      * @return void
      */
-    public function leaveBreadcrumbs($crumb, string|null $type = null, array $metadata = [])
+    public function leaveCrumbs($title, array $metadata = [])
     {
         $this->breadCrumbs[] = [
-            'crumb' => $crumb,
-            'type' => $crumb,
-            'metadata' => $crumb,
+            'Title' => $title,
+            'Metadata' => $metadata,
         ];
     }
 
@@ -38,11 +38,18 @@ class ErrorReporter implements ErrorReportingInterface
      *
      * @param string $heading
      * @param string $message
+     * @param string $file
+     * @param int $line
      * @return void
      */
-    public function reportError($heading, $message)
+    public function reportError($heading, $message, $file = null, $line = null)
     {
-        log_error($this->breadCrumbs);
+        $contexts = [];
+        if ($file) $contexts[] = $file . ':' . ($line ?? 0);
+        log_debug([
+            'Crumbs' => $this->breadCrumbs,
+            'Contexts' => $contexts,
+        ]);
         log_error($message);
     }
 
@@ -54,7 +61,13 @@ class ErrorReporter implements ErrorReportingInterface
      */
     public function reportException($exception)
     {
-        log_error($this->breadCrumbs);
+        $contexts = array_map(function ($instance) {
+            return ($instance['file'] ?? $instance['class'] ?? '') . ':' . ($instance['line'] ?? '0');
+        }, $exception->getTrace());
+        log_debug([
+            'Crumbs' => $this->breadCrumbs,
+            'Contexts' => $contexts,
+        ]);
         log_exception($exception);
     }
 }

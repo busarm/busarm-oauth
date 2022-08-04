@@ -151,6 +151,17 @@ if (!function_exists('app')) {
     }
 }
 
+if (!function_exists('config')) {
+    /**
+     * Get or Set config
+     * @return \System\App
+     */
+    function config($name, $value = null)
+    {
+        return app()->config($name, $value);
+    }
+}
+
 if (!function_exists('out')) {
     /**
      * Print output end exit
@@ -159,9 +170,7 @@ if (!function_exists('out')) {
     function out($data = null)
     {
         if (!is_array($data) && !is_object($data)) {
-            $response = new System\Dto\ResponseDto();
-            $response->message = $data;
-            return app()->response->json($response->toArray(), 500);
+            return app()->response->html($data, 500);
         }
         return app()->response->json(json_decode(json_encode($data), true), 500);
     }
@@ -202,12 +211,45 @@ if (!function_exists('load')) {
 
 if (!function_exists('report')) {
     /**
-     * Get app report object
+     * Get app reporter object
      * @return \System\Interfaces\ErrorReportingInterface
      */
     function report()
     {
         return app()->reporter;
+    }
+}
+
+if (!function_exists('router')) {
+    /**
+     * Get app router object
+     * @return \System\Interfaces\ErrorReportingInterface
+     */
+    function router()
+    {
+        return app()->router;
+    }
+}
+
+if (!function_exists('log_emergency')) {
+    /**
+     * @param mixed $message
+     */
+    function log_emergency($message)
+    {
+        return app()->logger->emergency($message);
+    }
+}
+
+if (!function_exists('log_error')) {
+    /**
+     * @param string $level @see \Psr\Log\LogLevel
+     * @param mixed $message
+     * @param array $context
+     */
+    function log_message($level, $message, array $context = [])
+    {
+        return app()->logger->log($level, is_array($message) || is_object($message) ? json_encode($message, JSON_PRETTY_PRINT) : (string) $message, $context);
     }
 }
 
@@ -217,7 +259,7 @@ if (!function_exists('log_error')) {
      */
     function log_error($message)
     {
-        return app()->logger->logError($message);
+        return log_message(\Psr\Log\LogLevel::ERROR, $message);
     }
 }
 
@@ -227,7 +269,7 @@ if (!function_exists('log_exception')) {
      */
     function log_exception($exception)
     {
-        return app()->logger->logError($exception->getMessage(), $exception->getTrace());
+        return log_message(\Psr\Log\LogLevel::ERROR, $exception->getMessage(), $exception->getTrace());
     }
 }
 
@@ -237,7 +279,7 @@ if (!function_exists('log_info')) {
      */
     function log_info($message)
     {
-        return app()->logger->logInfo($message);
+        return log_message(\Psr\Log\LogLevel::INFO, $message);
     }
 }
 
@@ -247,7 +289,7 @@ if (!function_exists('log_debug')) {
      */
     function log_debug($message)
     {
-        return app()->logger->logDebug($message);
+        return log_message(\Psr\Log\LogLevel::DEBUG, $message);
     }
 }
 
@@ -257,7 +299,7 @@ if (!function_exists('log_warning')) {
      */
     function log_warning($message)
     {
-        return app()->logger->logWarning($message);
+        return log_message(\Psr\Log\LogLevel::WARNING, $message);
     }
 }
 

@@ -14,21 +14,22 @@ interface ErrorReportingInterface
     /**
      * Leave breadcrumbs for issue tracking
      *
-     * @param mixed $crumb
-     * @param string|null $type
+     * @param mixed $title
      * @param array $metadata
      * @return void
      */
-    public function leaveBreadcrumbs($crumb, string|null $type = null, array $metadata = []);
+    public function leaveCrumbs($title, array $metadata = []);
 
     /**
      * Report Error
      *
      * @param string $heading
      * @param string $message
+     * @param string $file
+     * @param int $line
      * @return void
      */
-    public function reportError($heading, $message);
+    public function reportError($heading, $message, $file = null, $line = null);
 
     /**
      * Report Exception

@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use Bugsnag\Breadcrumbs\Breadcrumb;
 use System\ErrorReporter;
 
 class Reporter extends ErrorReporter
@@ -18,7 +19,7 @@ class Reporter extends ErrorReporter
     {
         if ($key = BUGSNAG_KEY) {
             $this->bugsnag = \Bugsnag\Client::make($key);
-            $this->bugsnag->setReleaseStage(ENVIRONMENT);
+            $this->bugsnag->setReleaseStage(app()->env);
             $this->bugsnag->setAppType(is_cli() ? "Console" : "HTTP");
             \Bugsnag\Handler::register($this->bugsnag);
         }
@@ -27,17 +28,16 @@ class Reporter extends ErrorReporter
     /**
      * Leave breadcrumbs for issue tracking
      *
-     * @param mixed $crumb
-     * @param string|null $type
+     * @param mixed $title
      * @param array $metadata
      * @return void
      */
-    public function leaveBreadcrumbs($crumb, string|null $type = null, array $metadata = [])
+    public function leaveCrumbs($title, array $metadata = [])
     {
         if (!empty($this->bugsnag)) {
-            $this->bugsnag->leaveBreadcrumb($crumb, $type, $metadata);
+            $this->bugsnag->leaveBreadcrumb($title, Breadcrumb::ERROR_TYPE, $metadata);
         }
-        parent::leaveBreadcrumbs($crumb, $type, $metadata);
+        parent::leaveCrumbs($title, $metadata);
     }
 
     /**
@@ -45,14 +45,16 @@ class Reporter extends ErrorReporter
      *
      * @param string $heading
      * @param string $message
+     * @param string $file
+     * @param int $line
      * @return void
      */
-    public  function reportError($heading, $message)
+    public function reportError($heading, $message, $file = null, $line = null)
     {
         if (!empty($this->bugsnag)) {
             $this->bugsnag->notifyError($heading, $message);
         }
-        parent::reportError($heading, $message);
+        parent::reportError($heading, $message, $file, $line);
     }
 
     /**

@@ -5,6 +5,7 @@ namespace System\Middlewares;
 use System\Dto\BaseDto;
 use System\Interfaces\MiddlewareInterface;
 use System\Interfaces\ResponseInterface;
+use System\View;
 
 /**
  * Created by VSCODE.
@@ -19,12 +20,15 @@ class ResponseMiddleware implements MiddlewareInterface
         $response = $next ? $next() : null;
         if ($response !== false) {
             if ($response instanceof ResponseInterface) {
+                $response->send();
+            } else if ($response instanceof View) {
+                $response->send();
             } else if ($response instanceof BaseDto) {
                 app()->sendHttpResponse(200, $response->toArray());
             } else if (is_array($response) || is_object($response)) {
                 app()->sendHttpResponse(200, $response);
             } else {
-                return app()->showMessage(200, true, $response);
+                return app()->response->html((string) $response);
             }
         }
         return false;
