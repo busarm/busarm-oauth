@@ -4,6 +4,9 @@ define('APP_BASE_PATH', dirname(__FILE__) . DIRECTORY_SEPARATOR);
 // Load packages
 require_once(boolval(getenv('SEPARATE_VENDOR')) ? '/tmp/vendor/autoload.php' : APP_BASE_PATH . 'vendor/autoload.php');
 
+use App\Controllers\CLI\Client;
+use App\Controllers\CLI\Org;
+use App\Controllers\CLI\User;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -12,7 +15,6 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use System\App;
 use System\Router;
-use App\Controllers\CLI\Task;
 
 // Bootstrap system
 App::bootstrap();
@@ -74,7 +76,7 @@ $createOrg = (new Command('org:create'))
     ->setCode(function (InputInterface $input, OutputInterface $output) {
         $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
         (new App())
-            ->addRouter(new Router(Task::class, "create_org", [
+            ->addRouter(new Router(Org::class, "create_org", [
                 $input->getOption('name') ?? exit('`name` option is required')
             ]))
             ->run();
@@ -94,7 +96,7 @@ $createClient = (new Command('client:create'))
     ->setCode(function (InputInterface $input, OutputInterface $output) {
         $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
         (new App())
-            ->addRouter(new Router(Task::class, "create_client", [
+            ->addRouter(new Router(Client::class, "create_client", [
                 $input->getOption('org') ?? exit('`org` option is required'),
                 $input->getOption('name') ?? exit('`name` option is required'),
                 $input->getOption('redirect'),
@@ -114,7 +116,7 @@ $updateClientKey = (new Command('client:update:key'))
     ->setCode(function (InputInterface $input, OutputInterface $output) {
         $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
         (new App())
-            ->addRouter(new Router(Task::class, "update_client_key", [
+            ->addRouter(new Router(Client::class, "update_client_key", [
                 $input->getOption('client') ?? exit('`client` option is required')
             ]))
             ->run();
@@ -135,7 +137,7 @@ $createUser = (new Command('user:create'))
     ->setCode(function (InputInterface $input, OutputInterface $output) {
         $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
         (new App())
-            ->addRouter(new Router(Task::class, "create_user", [
+            ->addRouter(new Router(User::class, "create_user", [
                 $input->getOption('name') ?? exit('`name` option is required'),
                 $input->getOption('email') ?? exit('`email` option is required'),
                 $input->getOption('password'),

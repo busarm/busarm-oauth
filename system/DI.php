@@ -4,7 +4,7 @@ namespace System;
 
 use Closure;
 use Exception;
-use System\Dto\RequestDto;
+use System\Dto\BaseDto;
 
 /**
  * Dependency Injector
@@ -74,7 +74,7 @@ class DI
                 // Resolve dependencies for type
                 $instance = self::instantiate($className);
                 // If type is an Request Dto - Parse request
-                if ($instance instanceof RequestDto) {
+                if ($instance instanceof BaseDto) {
                     $instance->load(app()->request->getRequestList(), true);
                 }
                 $params[] = $instance;

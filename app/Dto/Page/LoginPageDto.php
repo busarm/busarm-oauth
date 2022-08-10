@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Dto\Pages;
+namespace App\Dto\Page;
 
-use System\Dto\RequestDto;
+use System\Dto\BaseDto;
 
-class LoginPageDto extends RequestDto
+class LoginPageDto extends BaseDto
 {
     public string|null $msg;
     public string $action = '';

@@ -2,7 +2,7 @@
 
 namespace App\Views;
 
-use App\Dto\Pages\AuthorizePageDto;
+use App\Dto\Page\AuthorizePageDto;
 use App\Helpers\URL;
 use System\Dto\BaseDto;
 use System\View;

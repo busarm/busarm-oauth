@@ -2,12 +2,12 @@
 
 namespace App\Controllers;
 
-use App\Dto\OAuthErrorDto;
 use App\Exceptions\AuthorizationException;
 use App\Services\OAuthService;
 use App\Services\AuthService;
 use System\Dto\BaseDto;
 use System\Dto\ResponseDto;
+use App\Dto\Response\OAuthErrorDto;
 
 /**
  * Created by PhpStorm.

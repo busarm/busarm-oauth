@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Dto;
+namespace App\Dto\Request;
 
-use System\Dto\RequestDto;
+use System\Dto\BaseDto;
 
-class AuthorizeLoginDto extends RequestDto
+class AuthorizeLoginDto extends BaseDto
 {
     public string $username;
     public string $password;

@@ -3,10 +3,8 @@
 namespace System;
 
 use System\Dto\BaseDto;
+use System\Dto\CollectionBaseDto;
 
-/**
- * 
- */
 abstract class View
 {
     /**
@@ -54,9 +52,10 @@ abstract class View
     {
         $params = [];
 
-        if (is_string($this->data)) $params  = ['data' => $this->data];
-        if (is_array($this->data)) $params = $this->data;
-        if ($this->data instanceof BaseDto) $params = $this->data->toArray();
+        if ($this->data instanceof CollectionBaseDto) $params = $this->data->toArray();
+        else if ($this->data instanceof BaseDto) $params = $this->data->toArray();
+        else if (is_array($this->data) || is_object($this->data)) $params = (array) $this->data;
+        else if (is_string($this->data)) $params  = ['data' => $this->data];
 
         $content = app()->loader->view($path, $params, $return);
 
@@ -122,13 +121,9 @@ abstract class View
 
         // start buffer
         $this->start();
-        $this->addHeader('Content-Type', 'text/html');
-        // headers
-        foreach ($this->headers as $name => $header) {
-            header(sprintf('%s: %s', $name, $header));
-        }
         $this->render();
-        echo $this->end();
-        if (!$continue) die;
+        $content = $this->end();
+
+        return app()->response->setHttpHeaders($this->headers)->html($content, 200, $continue);
     }
 }

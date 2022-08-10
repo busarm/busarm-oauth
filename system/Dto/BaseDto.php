@@ -8,8 +8,29 @@ use ReflectionType;
 use ReflectionUnionType;
 use System\HttpException;
 
-abstract class BaseDto
+class BaseDto
 {
+    /**
+     * Load data from array
+     *
+     * @param object|null $data
+     * @param bool $force
+     * @return void
+     */
+    public function load(array $data = null, $force = false)
+    {
+        if ($data) {
+            $reflectClass = new ReflectionObject($this);
+            foreach ($reflectClass->getProperties() as $property) {
+                if (isset($data[$property->getName()])) {
+                    $this->{$property->getName()} = self::parseType($property->getType(), $data[$property->getName()]);
+                } else if ($force && !$property->hasDefaultValue() && !$property->getType()->allowsNull()) {
+                    throw new HttpException(400, sprintf("Dto error: `%s` field cannot be null", $property->getName()));
+                } else $this->{$property->getName()} = null;
+            }
+        }
+    }
+
     /**
      * Get array response data
      * @param bool $trim Remove NULL properties
@@ -21,7 +42,23 @@ abstract class BaseDto
         $reflectClass = new ReflectionObject($this);
         foreach ($reflectClass->getProperties() as $property) {
             if ((!$trim || isset($this->{$property->getName()})) && $property->isInitialized($this)) {
-                $result[$property->getName()] = $this->{$property->getName()};
+                $value = $this->{$property->getName()};
+                if ($value instanceof CollectionBaseDto) {
+                    $result[$property->getName()] = $value->toArray();
+                } else if ($value instanceof self) {
+                    $result[$property->getName()] = $value->toArray();
+                } else if (is_array($value)) {
+                    foreach ($value as &$data) {
+                        if ($data instanceof CollectionBaseDto) {
+                            $data = $data->toArray();
+                        } else if ($data instanceof self) {
+                            $data = $data->toArray();
+                        } else {
+                            $data = self::parseType(self::resolveType($data), $data);
+                        }
+                    }
+                    $result[$property->getName()] = $value;
+                } else $result[$property->getName()] = self::parseType(self::resolveType($value), $value);
             }
         }
         return $result;
@@ -30,7 +67,7 @@ abstract class BaseDto
     /**
      * Parse object type
      *
-     * @param ReflectionType $type
+     * @param ReflectionUnionType|ReflectionNamedType|ReflectionType|string $type
      * @param mixed $data
      * @return mixed
      */
@@ -73,7 +110,7 @@ abstract class BaseDto
      */
     public static function resolveType($data, $types = [])
     {
-        if (!in_array('null', $types)) {
+        if (empty($types) || !in_array('null', $types)) {
             if (is_int($data) || is_numeric($data)) {
                 if (in_array('bool', $types) || in_array('boolean', $types)) return 'bool';
                 return 'int';
@@ -86,31 +123,15 @@ abstract class BaseDto
     }
 
     /**
-     * Load data from array
-     *
-     * @param object|null $data
-     * @param bool $force
-     * @return void
-     */
-    public function load(array $data = null, $force = false)
-    {
-        if ($data) {
-            $reflectClass = new ReflectionObject($this);
-            foreach ($reflectClass->getProperties() as $property) {
-                if (isset($data[$property->getName()])) {
-                    $this->{$property->getName()} = self::parseType($property->getType(), $data[$property->getName()]);
-                } else if ($force && !$property->hasDefaultValue() && !$property->getType()->allowsNull()) {
-                    throw new HttpException(400, sprintf("Dto error: `%s` field cannot be null", $property->getName()));
-                } else $this->{$property->getName()} = null;
-            }
-        }
-    }
-
-    /**
      * Load dto with array
      *
      * @param array|object|null $data
      * @return static
      */
-    public abstract static function with(array|object|null $data): static;
+    public static function with(array|object|null $data): static
+    {
+        $response = new static();
+        if ($data) $response->load((array)$data);
+        return $response;
+    }
 }

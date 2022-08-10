@@ -2,22 +2,22 @@
 
 namespace App\Controllers\HTTP;
 
-use App\Controllers\OAuthBaseController;
-use App\Dto\AuthorizeLoginDto;
-use App\Dto\Pages\AuthorizePageDto;
-use App\Dto\Pages\FailedPageDto;
-use App\Dto\Pages\LoginPageDto;
-use App\Dto\Pages\SuccessPageDto;
-use App\Services\MailService;
 use Exception;
 use GuzzleHttp\RequestOptions;
+use App\Controllers\OAuthBaseController;
 use App\Services\OAuthScopeService;
+use App\Services\MailService;
 use App\Helpers\URL;
 use App\Helpers\Utils;
 use App\Views\AuthorizePage;
 use App\Views\FailedPage;
 use App\Views\LoginPage;
 use App\Views\SuccessPage;
+use App\Dto\Request\AuthorizeLoginDto;
+use App\Dto\Page\AuthorizePageDto;
+use App\Dto\Page\FailedPageDto;
+use App\Dto\Page\LoginPageDto;
+use App\Dto\Page\SuccessPageDto;
 
 /**
  * Created by PhpStorm.
@@ -120,7 +120,7 @@ class Authorize extends OAuthBaseController
                     return URL::redirect($dto->redirect_url);
                 } else {
                     $remaining_count = $max_count - $count;
-                    $page->msg = "Invalid Username or Password. $remaining_count tries left";
+                    $page->msg = "Invalid Username or Password. $remaining_count attempt(s) left";
                 }
             } else {
                 $min = intval($timeout / 60);
@@ -216,7 +216,7 @@ class Authorize extends OAuthBaseController
      * @param string $response_type
      * @param boolean $approve
      * @param boolean $decline
-     * @return AuthorizePage|FailedPage
+     * @return AuthorizePage|FailedPage|System\Interfaces\ResponseInterface
      */
     private function processAuthRequest($user_id, $client_id, $redirect_uri, $state, $scope, $response_type, $approve, $decline)
     {
@@ -238,8 +238,10 @@ class Authorize extends OAuthBaseController
                     $this->oauth->response = new \OAuth2\Response();
                     // Process authorization request
                     $this->oauth->server->handleAuthorizeRequest($this->oauth->request, $this->oauth->response, true, $user_id);
-                    $this->oauth->response->send();
-                    die();
+                    return response()
+                        ->setStatusCode($this->oauth->response->getStatusCode(), $this->oauth->response->getStatusCode())
+                        ->setParameters($this->oauth->response->getParameters())
+                        ->setHttpHeaders($this->oauth->response->getHttpHeaders());
                 } else {
                     Utils::deleteCookie(self::AUTH_REQ_TOKEN_PARAM);
                     return $this->showError($this->oauth->response->getParameter("error"), $this->oauth->response->getParameter("error_description"), $redirect_uri);

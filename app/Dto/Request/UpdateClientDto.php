@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Dto;
+namespace App\Dto\Request;
 
-use System\Dto\RequestDto;
+use System\Dto\BaseDto;
 
-class UpdateClientDto extends RequestDto
+class UpdateClientDto extends BaseDto
 {
     public string|null $client_name;
     public string|null $client_secret;

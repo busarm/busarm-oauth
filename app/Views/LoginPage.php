@@ -2,7 +2,7 @@
 
 namespace App\Views;
 
-use App\Dto\Pages\LoginPageDto;
+use App\Dto\Page\LoginPageDto;
 use App\Helpers\URL;
 use System\Dto\BaseDto;
 use System\View;

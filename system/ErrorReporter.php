@@ -16,6 +16,7 @@ class ErrorReporter implements ErrorReportingInterface
      */
     public function setupReporting()
     {
+        throw new Exception('Reporter Error: `setupReporting` not implemented');
     }
 
     /**

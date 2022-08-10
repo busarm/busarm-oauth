@@ -12,9 +12,10 @@ interface ResponseInterface
 
     /**
      * @param int $statusCode
+     * @param string $text
      * @return self
      */
-    public function setStatusCode($statusCode): self;
+    public function setStatusCode($statusCode, $text = null): self;
 
     /**
      * @return string

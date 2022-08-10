@@ -2,7 +2,7 @@
 
 namespace App\Views;
 
-use App\Dto\Pages\SuccessPageDto;
+use App\Dto\Page\SuccessPageDto;
 use App\Helpers\URL;
 use System\Dto\BaseDto;
 use System\View;

@@ -3,6 +3,7 @@
 namespace System\Middlewares;
 
 use System\Dto\BaseDto;
+use System\Dto\CollectionBaseDto;
 use System\Interfaces\MiddlewareInterface;
 use System\Interfaces\ResponseInterface;
 use System\View;
@@ -23,6 +24,8 @@ class ResponseMiddleware implements MiddlewareInterface
                 $response->send();
             } else if ($response instanceof View) {
                 $response->send();
+            } else if ($response instanceof CollectionBaseDto) {
+                app()->sendHttpResponse(200, $response->toArray());
             } else if ($response instanceof BaseDto) {
                 app()->sendHttpResponse(200, $response->toArray());
             } else if (is_array($response) || is_object($response)) {

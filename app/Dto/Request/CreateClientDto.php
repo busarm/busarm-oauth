@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Dto;
+namespace App\Dto\Request;
 
-use System\Dto\RequestDto;
+use System\Dto\BaseDto;
 
-class CreateClientDto extends RequestDto
+class CreateClientDto extends BaseDto
 {
     public int|string $org_id;
     public string $client_name;

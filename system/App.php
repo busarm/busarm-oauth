@@ -10,6 +10,7 @@ use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
 use System\Dto\BaseDto;
+use System\Dto\CollectionBaseDto;
 use System\Dto\ResponseDto;
 use System\Interfaces\ErrorReportingInterface;
 use System\Interfaces\LoaderInterface;
@@ -39,9 +40,6 @@ class App
         'mail',
         'services'
     ];
-
-    /** @var self */
-    private static $instance;
 
     /** @var MiddlewareInterface[] */
     private $middlewares = [];
@@ -93,7 +91,7 @@ class App
      */
     public function __construct(public string $env = Env::LOCAL, public $path = 'app')
     {
-        self::$instance = &$this;
+        $this->setInstance();
 
         // Benchmark start time
         $this->startTimeMs = floor(microtime(true) * 1000);
@@ -136,11 +134,20 @@ class App
      *
      * @return App
      */
-    public static function &getInstance()
+    public static function getInstance(): self|null
     {
-        return self::$instance;
+        return $GLOBALS[APP_BASE_PATH . ':' . static::class] ?? null;
     }
 
+    /**
+     * Set App Instance
+     *
+     * @return App
+     */
+    public function setInstance()
+    {
+        $GLOBALS[APP_BASE_PATH . ':' . static::class] = &$this;
+    }
 
     ############################
     # Setup and Run
@@ -207,7 +214,7 @@ class App
      * @param ResponseInterface|null $response
      * @return void
      */
-    public function run(RequestInterface $request = null, ResponseInterface $response = null,)
+    public function run(RequestInterface &$request = null, ResponseInterface &$response = null,)
     {
         // Set request & response objects
         $this->request = $request ?? $this->request;
@@ -360,7 +367,7 @@ class App
     public function addBinding($interfaceName, $className)
     {
         if (!in_array($interfaceName, class_implements($className))) {
-            throw new Exception("Binding error: $className does not implement $interfaceName");
+            throw new Exception("Binding error: `$className` does not implement `$interfaceName`");
         }
         $this->bindings[$interfaceName] = $className;
         return $this;
@@ -405,7 +412,7 @@ class App
     public function config(string $name, $value = null)
     {
         $config = $this->configs[$name] ?? null;
-        if (is_null($config)) {
+        if (is_null($config) || !is_null($value)) {
             $this->configs[$name] = $config = $value;
         }
         return $config;
@@ -498,12 +505,12 @@ class App
     /**
      * Show Message
      * @param string $code Code
-     * @param string $msg Message
-     * @param string $line 
-     * @param string $file 
-     * @param string $trace 
+     * @param string $message Message
+     * @param string $errorLine 
+     * @param string $errorFile 
+     * @param array $errorTrace 
      */
-    public function showMessage($code, $message = null, $line = null, $file = null,  $trace = [])
+    public function showMessage($code, $message = null, $errorLine = null, $errorFile = null,  $errorTrace = [])
     {
         if (is_cli()) {
             if ($code !== 200 || $code !== 201) {
@@ -511,20 +518,20 @@ class App
                     PHP_EOL . "success\t-\tfalse" .
                         PHP_EOL . "message\t-\t$message" .
                         PHP_EOL . "version\t-\t" . APP_VERSION .
-                        PHP_EOL . "line\t-\t$line" .
-                        PHP_EOL . "path\t-\t$file" .
+                        PHP_EOL . "line\t-\t$errorLine" .
+                        PHP_EOL . "path\t-\t$errorFile" .
                         PHP_EOL,
-                    $trace
+                    $errorTrace
                 );
             } else {
                 $this->logger->info(
-                    PHP_EOL . "success\t-\ttrue" .
+                    PHP_EOL . "success\t-\tfalse" .
                         PHP_EOL . "message\t-\t$message" .
                         PHP_EOL . "version\t-\t" . APP_VERSION .
-                        PHP_EOL . "line\t-\t$line" .
-                        PHP_EOL . "path\t-\t$file" .
+                        PHP_EOL . "line\t-\t$errorLine" .
+                        PHP_EOL . "path\t-\t$errorFile" .
                         PHP_EOL,
-                    $trace
+                    $errorTrace
                 );
             }
         } else {
@@ -538,29 +545,31 @@ class App
             // Show more info if not production
             if (!$response->success && $this->env !== Env::PROD) {
                 $response->duration = (floor(microtime(true) * 1000) - $this->startTimeMs);
-                $response->line = !empty($line) ? $line : null;
-                $response->file = !empty($file) ? $file : null;
-                $response->trace = !empty($trace) ? $trace : null;
+                $response->line = !empty($errorLine) ? $errorLine : null;
+                $response->file = !empty($errorFile) ? $errorFile : null;
+                $response->backtrace = !empty($errorTrace) ? $errorTrace : null;
             }
 
             $this->response
                 ->setParameters($response->toArray())
-                ->setStatusCode($code < 600 ? $code : 500)
+                ->setStatusCode(($code >= 100 && $code < 600) ? $code : 500)
                 ->send();
         }
     }
 
 
     /**
-     * Show Http Response
+     * Send HTTP JSON Response
      * @param string $code Code
-     * @param mixed $data Data
+     * @param BaseDto|array|object|string $data Data
      * @param array $headers Headers
      */
     public function sendHttpResponse($code, $data = null, $headers = [])
     {
         if (!is_array($data)) {
-            if ($data instanceof BaseDto) {
+            if ($data instanceof CollectionBaseDto) {
+                $data = $data->toArray();
+            } else if ($data instanceof BaseDto) {
                 $data = $data->toArray();
             } else if (is_object($data)) {
                 $data = (array) $data;
@@ -576,7 +585,7 @@ class App
         $this->response
             ->setParameters($data)
             ->setHttpHeaders($headers)
-            ->setStatusCode($code < 600 ? $code : 500)
+            ->setStatusCode(($code >= 100 && $code < 600) ? $code : 500)
             ->send();
     }
 }

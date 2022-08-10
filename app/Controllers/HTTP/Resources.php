@@ -2,14 +2,14 @@
 
 namespace App\Controllers\HTTP;
 
-use App\Controllers\OAuthBaseController;
-use App\Dto\CreateClientDto;
-use App\Dto\CreateUserDto;
-use App\Dto\UpdateClientDto;
-use App\Dto\UpdateUserDto;
 use phpseclib\Crypt\RSA;
+use App\Controllers\OAuthBaseController;
 use App\Services\OAuthScopeService;
 use App\Helpers\Utils;
+use App\Dto\Request\CreateClientDto;
+use App\Dto\Request\CreateUserDto;
+use App\Dto\Request\UpdateClientDto;
+use App\Dto\Request\UpdateUserDto;
 
 /**
  * Created by PhpStorm.

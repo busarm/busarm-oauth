@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Dto;
+namespace App\Dto\Request;
 
-use System\Dto\RequestDto;
+use System\Dto\BaseDto;
 
-class CreateUserDto extends RequestDto
+class CreateUserDto extends BaseDto
 {
     public string $name;
     public string $email;

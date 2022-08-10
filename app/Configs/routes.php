@@ -22,7 +22,7 @@ app()->router->addRoutes([
     Route::get('/ping')->call(function () {
         return app()->showMessage(200, "System Online");
     })->middlewares([
-        new ThrottleMiddleware(10, 60, 'ping-system')
+        new ThrottleMiddleware(60, 60, 'ping-system')
     ]),
     Route::get('/misc/link')->to(Misc::class, 'link')->middlewares([
         new ThrottleMiddleware(5, 60, 'link-get')

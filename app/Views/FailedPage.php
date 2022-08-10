@@ -2,7 +2,7 @@
 
 namespace App\Views;
 
-use App\Dto\Pages\FailedPageDto;
+use App\Dto\Page\FailedPageDto;
 use App\Helpers\URL;
 use System\Dto\BaseDto;
 use System\View;

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Dto\Pages;
+namespace App\Dto\Page;
 
-use System\Dto\RequestDto;
+use System\Dto\BaseDto;
 
-class AuthorizePageDto extends RequestDto
+class AuthorizePageDto extends BaseDto
 {
     public string|null $client_name;
     public string|null $org_name;
