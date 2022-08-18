@@ -3,7 +3,8 @@
 namespace System\Middlewares;
 
 use System\DI;
-use System\HttpException;
+use System\Errors\SystemError;
+use System\Exceptions\HttpException;
 use System\Interfaces\MiddlewareInterface;
 
 /**
@@ -12,7 +13,7 @@ use System\Interfaces\MiddlewareInterface;
  * Date: 28/7/2022
  * Time: 5:22 PM
  */
-class ControllerRouteMiddleware implements MiddlewareInterface
+final class ControllerRouteMiddleware implements MiddlewareInterface
 {
     public function __construct(private $controller, private $function, private $params = [])
     {
@@ -33,8 +34,8 @@ class ControllerRouteMiddleware implements MiddlewareInterface
                     array_merge(DI::resolveMethodDependencies($this->controller, $this->function), $this->params)
                 );
             }
-            throw new HttpException(500, "Function not found or can't be executed: " . $this->controller . '::' . $this->function);
+            throw new SystemError("Function not found or can't be executed: " . $this->controller . '::' . $this->function);
         }
-        throw new HttpException(500, "Class does not exist: " . $this->controller);
+        throw new SystemError("Class does not exist: " . $this->controller);
     }
 }

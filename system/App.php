@@ -12,6 +12,10 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 use System\Dto\BaseDto;
 use System\Dto\CollectionBaseDto;
 use System\Dto\ResponseDto;
+use System\Errors\BindingError;
+use System\Errors\SystemError;
+use System\Exceptions\HttpException;
+use System\Exceptions\NotFoundException;
 use System\Interfaces\ErrorReportingInterface;
 use System\Interfaces\LoaderInterface;
 use System\Interfaces\MiddlewareInterface;
@@ -91,10 +95,10 @@ class App
      */
     public function __construct(public string $env = Env::LOCAL, public $path = 'app')
     {
-        $this->setInstance();
+        $this->loadInstance();
 
         // Benchmark start time
-        $this->startTimeMs = floor(microtime(true) * 1000);
+        $this->startTimeMs = defined(APP_START_TIME) ? APP_START_TIME : floor(microtime(true) * 1000);
 
         // Create request & response objects
         $this->request = new Request();
@@ -140,13 +144,23 @@ class App
     }
 
     /**
-     * Set App Instance
+     * Load App Instance
      *
      * @return App
      */
-    public function setInstance()
+    public function loadInstance()
     {
         $GLOBALS[APP_BASE_PATH . ':' . static::class] = &$this;
+    }
+
+    /**
+     * Clear App Instance
+     *
+     * @return App
+     */
+    public function clearInstance()
+    {
+        unset($GLOBALS[APP_BASE_PATH . ':' . static::class]);
     }
 
     ############################
@@ -186,11 +200,12 @@ class App
     {
         set_error_handler(function ($errno, $errstr, $errfile = null, $errline = null) {
             $this->reporter->reportError("Internal Server Error", $errstr, $errfile, $errline);
-            $this->showMessage(500, $errstr, $errline, $errfile);
+            $this->showMessage(500, sprintf("Error: %s", $errstr), $errno, $errline, $errfile);
         });
         set_exception_handler(function (Throwable $e) {
-            if ($e instanceof HttpException) {
-                if ($e->getCode() >= 500) $this->reporter->reportException($e);
+            if ($e instanceof SystemError) {
+                $e->handler();
+            } else if ($e instanceof HttpException) {
                 $e->handler();
             } else {
                 $this->reporter->reportException($e);
@@ -202,7 +217,7 @@ class App
                         'function' => $instance['function'] ?? null,
                     ];
                 }, $e->getTrace());
-                $this->showMessage($e->getCode() >= 400 ? $e->getCode() : 500, $e->getMessage(), $e->getLine(), $e->getFile(), $trace);
+                $this->showMessage(500, sprintf("%s: %s", get_class($e), $e->getMessage()), $e->getCode(), $e->getLine(), $e->getFile(), $trace);
             }
         });
     }
@@ -228,12 +243,18 @@ class App
         // Run start hook
         if ($this->startHook) ($this->startHook)($this);
 
+        // Set shutdown hook
+        register_shutdown_function(function (App $app) {
+            $app->clearInstance();
+            if ($app->completeHook) ($app->completeHook)($app);
+        }, $this);
+
         // Initiate rerouting
         if ($this->router) {
             if (!$this->processMiddleware(array_merge($this->middlewares, $this->router->process()))) {
-                $this->showMessage(404, "Not found - " . $this->router->getRequestMethod() . ' ' . $this->router->getRequestPath());
+                throw new NotFoundException("Not found - " . $this->router->getRequestMethod() . ' ' . $this->router->getRequestPath());
             }
-        } else throw new Exception("System Error: Router not configured. See `addRouter`");
+        } else throw new SystemError("Router not configured. See `addRouter`");
     }
 
     /**
@@ -301,7 +322,7 @@ class App
     {
         if ($cache && ($singleton = $this->getSingleton($className))) return $singleton;
         else $instance = DI::instantiate($className);
-        // Add instance as singleton is supported
+        // Add instance as singleton if supported
         if ($cache && ($instance instanceof SingletonInterface)) {
             $this->addSingleton($className, $instance);
         }
@@ -358,7 +379,7 @@ class App
     }
 
     /**
-     * Add interface binding
+     * Add interface binding. Binds interface to a specific class which implements it
      *
      * @param string $interfaceName
      * @param string $className
@@ -367,7 +388,7 @@ class App
     public function addBinding($interfaceName, $className)
     {
         if (!in_array($interfaceName, class_implements($className))) {
-            throw new Exception("Binding error: `$className` does not implement `$interfaceName`");
+            throw new BindingError("`$className` does not implement `$interfaceName`");
         }
         $this->bindings[$interfaceName] = $className;
         return $this;
@@ -388,7 +409,7 @@ class App
     /**
      * Load config file
      * 
-     * @param string $config
+     * @param string $config Config file name/path relative to Config Path (@see `setConfigPath`)
      * @return self
      */
     public function loadConfig(string $config)
@@ -416,6 +437,18 @@ class App
             $this->configs[$name] = $config = $value;
         }
         return $config;
+    }
+
+    /**
+     * Add Logger. Replaces existing
+     *
+     * @param LoggerInterface $logger
+     * @return self
+     */
+    public function addLogger(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+        return $this;
     }
 
     /**
@@ -493,7 +526,6 @@ class App
     public function afterComplete(Closure $completeHook)
     {
         $this->completeHook = $completeHook;
-        register_shutdown_function($this->completeHook, $this);
     }
 
 
@@ -504,19 +536,21 @@ class App
 
     /**
      * Show Message
-     * @param string $code Code
+     * @param string $status Status Code
      * @param string $message Message
+     * @param string $errorCode 
      * @param string $errorLine 
      * @param string $errorFile 
      * @param array $errorTrace 
      */
-    public function showMessage($code, $message = null, $errorLine = null, $errorFile = null,  $errorTrace = [])
+    public function showMessage($status, $message = null, $errorCode = null, $errorLine = null, $errorFile = null,  $errorTrace = [])
     {
         if (is_cli()) {
-            if ($code !== 200 || $code !== 201) {
+            if ($status !== 200 || $status !== 201) {
                 $this->logger->error(
                     PHP_EOL . "success\t-\tfalse" .
                         PHP_EOL . "message\t-\t$message" .
+                        PHP_EOL . "code\t-\t$errorCode" .
                         PHP_EOL . "version\t-\t" . APP_VERSION .
                         PHP_EOL . "line\t-\t$errorLine" .
                         PHP_EOL . "path\t-\t$errorFile" .
@@ -525,18 +559,15 @@ class App
                 );
             } else {
                 $this->logger->info(
-                    PHP_EOL . "success\t-\tfalse" .
+                    PHP_EOL . "success\t-\ttrue" .
                         PHP_EOL . "message\t-\t$message" .
                         PHP_EOL . "version\t-\t" . APP_VERSION .
-                        PHP_EOL . "line\t-\t$errorLine" .
-                        PHP_EOL . "path\t-\t$errorFile" .
-                        PHP_EOL,
-                    $errorTrace
+                        PHP_EOL
                 );
             }
         } else {
             $response = new ResponseDto();
-            $response->success = $code == 200 || $code == 201;
+            $response->success = $status == 200 || $status == 201;
             $response->message = $message;
             $response->env = $this->env;
             $response->version = APP_VERSION;
@@ -544,15 +575,16 @@ class App
 
             // Show more info if not production
             if (!$response->success && $this->env !== Env::PROD) {
-                $response->duration = (floor(microtime(true) * 1000) - $this->startTimeMs);
+                $response->code = !empty($errorCode) ? $errorCode : null;
                 $response->line = !empty($errorLine) ? $errorLine : null;
                 $response->file = !empty($errorFile) ? $errorFile : null;
                 $response->backtrace = !empty($errorTrace) ? $errorTrace : null;
+                $response->duration = (floor(microtime(true) * 1000) - $this->startTimeMs);
             }
 
             $this->response
                 ->setParameters($response->toArray())
-                ->setStatusCode(($code >= 100 && $code < 600) ? $code : 500)
+                ->setStatusCode(($status >= 100 && $status < 600) ? $status : 500)
                 ->send();
         }
     }
@@ -560,11 +592,11 @@ class App
 
     /**
      * Send HTTP JSON Response
-     * @param string $code Code
+     * @param string $status Status Code
      * @param BaseDto|array|object|string $data Data
      * @param array $headers Headers
      */
-    public function sendHttpResponse($code, $data = null, $headers = [])
+    public function sendHttpResponse($status, $data = null, $headers = [])
     {
         if (!is_array($data)) {
             if ($data instanceof CollectionBaseDto) {
@@ -575,7 +607,7 @@ class App
                 $data = (array) $data;
             } else {
                 $response = new ResponseDto();
-                $response->success = $code < 300;
+                $response->success = $status < 300;
                 $response->message = $data;
                 $response->duration = (floor(microtime(true) * 1000) - $this->startTimeMs);
                 $data = $response->toArray();
@@ -585,7 +617,7 @@ class App
         $this->response
             ->setParameters($data)
             ->setHttpHeaders($headers)
-            ->setStatusCode(($code >= 100 && $code < 600) ? $code : 500)
+            ->setStatusCode(($status >= 100 && $status < 600) ? $status : 500)
             ->send();
     }
 }

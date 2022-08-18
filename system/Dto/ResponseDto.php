@@ -19,6 +19,8 @@ class ResponseDto extends BaseDto
     /** @var string */
     public string|null $version;
     /** @var string */
+    public string|null $code;
+    /** @var string */
     public string|null $line;
     /** @var string */
     public string|null $file;

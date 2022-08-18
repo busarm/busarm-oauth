@@ -1,18 +1,20 @@
 <?php
 
-namespace System;
+namespace System\Errors;
 
-use Exception;
+use Error;
 
-class HttpException extends Exception
+class SystemError extends Error
 {
+
     /**
-     * Exception handler
+     * Error handler
      *
      * @return void
      */
     public function handler()
     {
+        app()->reporter->reportException($this);
         $trace = array_map(function ($instance) {
             return [
                 'file' => $instance['file'] ?? null,
@@ -21,6 +23,6 @@ class HttpException extends Exception
                 'function' => $instance['function'] ?? null,
             ];
         }, $this->getTrace());
-        app()->showMessage($this->getCode() >= 400 ? $this->getCode() : 500, $this->getMessage(), $this->getLine(), $this->getFile(), $trace);
+        app()->showMessage(500, $this->getMessage(), $this->getCode(), $this->getLine(), $this->getFile(), $trace);
     }
 }

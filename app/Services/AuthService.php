@@ -15,7 +15,7 @@ class AuthService implements SingletonInterface
     /**
      * Start Login session
      *
-     * @param string $user User Id
+     * @param string $user User Id or Token
      * @param string $duration Session duration in seconds. default = 1hr
      * @return void
      */

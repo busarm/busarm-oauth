@@ -2,7 +2,7 @@
 
 namespace App\Exceptions;
 
-use System\HttpException;
+use System\Exceptions\HttpException;
 
 class AuthenticationException extends HttpException
 {

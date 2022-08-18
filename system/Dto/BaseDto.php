@@ -6,7 +6,7 @@ use ReflectionNamedType;
 use ReflectionObject;
 use ReflectionType;
 use ReflectionUnionType;
-use System\HttpException;
+use System\Errors\DtoError;
 
 class BaseDto
 {
@@ -25,7 +25,7 @@ class BaseDto
                 if (isset($data[$property->getName()])) {
                     $this->{$property->getName()} = self::parseType($property->getType(), $data[$property->getName()]);
                 } else if ($force && !$property->hasDefaultValue() && !$property->getType()->allowsNull()) {
-                    throw new HttpException(400, sprintf("Dto error: `%s` field cannot be null", $property->getName()));
+                    throw new DtoError(sprintf("`%s` field cannot be null", $property->getName()));
                 } else $this->{$property->getName()} = null;
             }
         }

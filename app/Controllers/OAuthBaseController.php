@@ -28,7 +28,7 @@ class OAuthBaseController
      * Server constructor.
      * @param boolean $isCLI Is CLI Application
      */
-    protected function __construct($isCLI = false)
+    protected function __construct(public $isCLI = false)
     {
         // Check cli
         if ($isCLI && !is_cli()) {

@@ -3,6 +3,7 @@
 namespace System;
 
 use Exception;
+use System\Errors\SystemError;
 use System\Interfaces\ErrorReportingInterface;
 
 class ErrorReporter implements ErrorReportingInterface
@@ -16,7 +17,7 @@ class ErrorReporter implements ErrorReportingInterface
      */
     public function setupReporting()
     {
-        throw new Exception('Reporter Error: `setupReporting` not implemented');
+        throw new SystemError('`setupReporting` not implemented');
     }
 
     /**

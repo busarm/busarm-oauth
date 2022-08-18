@@ -1,4 +1,8 @@
 <?php
+// Define start time
+define('APP_START_TIME', floor(microtime(true) * 1000));
+
+// Load packages
 define('APP_BASE_PATH', dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR);
 require_once(boolval(getenv('SEPARATE_VENDOR')) ? '/tmp/vendor/autoload.php' : APP_BASE_PATH . 'vendor/autoload.php');
 
@@ -9,7 +13,7 @@ use System\Env;
 // Bootstrap system
 App::bootstrap();
 
-// Application Environment
+// Get Application Environment
 if (env('ENV') == Env::PROD || strtolower(env('ENV')) == "prod" || strtolower(env('STAGE')) == "prod") {
     $env = Env::PROD;
 } else if (env('ENV') == Env::TEST || strtolower(env('ENV')) == "dev" || strtolower(env('STAGE')) == "dev") {
@@ -18,10 +22,12 @@ if (env('ENV') == Env::PROD || strtolower(env('ENV')) == "prod" || strtolower(en
     $env = Env::DEV;
 }
 
+// Iniitalize App
 $app = new App($env);
 // Add config files
 $app->loadConfig('scopes');
 $app->loadConfig('routes');
+// Add hooks
 $app->beforeStart(function (App $app) {
     // If offline or on maintenance mode
     if (!empty(SYSTEM_START_UP_TIME) && !empty(SYSTEM_SHUT_DOWN_TIME)) {

@@ -14,7 +14,7 @@ use System\View;
  * Date: 28/7/2022
  * Time: 5:22 PM
  */
-class ResponseMiddleware implements MiddlewareInterface
+final class ResponseMiddleware implements MiddlewareInterface
 {
     public function handle(callable $next = null): mixed
     {

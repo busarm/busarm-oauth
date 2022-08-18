@@ -5,6 +5,7 @@ namespace System;
 use Closure;
 use Exception;
 use System\Dto\BaseDto;
+use System\Errors\DependencyError;
 
 /**
  * Dependency Injector
@@ -64,7 +65,7 @@ class DI
                 // If type is an interface - Get app interface binding
                 if (interface_exists($type->getName())) {
                     if (!($className = app()->getBinding($type->getName()))) {
-                        throw new Exception("DI Error: No interface binding exists for " . $type->getName());
+                        throw new DependencyError("No interface binding exists for " . $type->getName());
                     }
                 }
                 // If type can't be instantiated (e.g scalar types) - skip loop
@@ -77,7 +78,7 @@ class DI
                 if ($instance instanceof BaseDto) {
                     $instance->load(app()->request->getRequestList(), true);
                 }
-                $params[] = $instance;
+                $params[$param->getName()] = $instance;
             }
         }
         return $params;

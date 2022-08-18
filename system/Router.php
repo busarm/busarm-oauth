@@ -2,6 +2,7 @@
 
 namespace System;
 
+use System\Exceptions\BadRequestException;
 use System\Interfaces\RouteInterface;
 use System\Interfaces\RouterInterface;
 use System\Interfaces\MiddlewareInterface;
@@ -22,18 +23,24 @@ class Router implements RouterInterface
     const MATCH_NUM = "num";
     const MATCH_ANY = "any";
 
-    const PATH_EXCLUDE_LIST = ["$", "<", ">", " ", "[", "]", "{", "}", "^", "\\", "|", "%"];
+    const PATH_EXCLUDE_LIST = ["$", "<", ">", "[", "]", "{", "}", "^", "\\", "|", "%"];
     const MATCH_ESCAPE_LIST = [
         "/" => "\/",
-        "." => "\.",
+        "." => "\."
     ];
     const MATCHER_REGX = [
         "/\(" . self::MATCH_ALPHA . "\)/" => "([a-zA-Z]+)",
         "/\(" . self::MATCH_ALPHA_NUM . "\)/" => "([a-zA-Z-_]+)",
         "/\(" . self::MATCH_ALPHA_NUM_DASH . "\)/" => "([a-zA-Z0-9-_]+)",
         "/\(" . self::MATCH_NUM . "\)/" => "([0-9]+)",
-        "/\(" . self::MATCH_ANY . "\)/" => "(.+)",
-        "/\{\w*\}/" => "(.+)"
+        "/\(" . self::MATCH_ANY . "\)/" => "(.+)"
+    ];
+
+    /**
+     * Use to match route path to an exact variable name. e.g $uid = /user/{uid}
+     */
+    const MATCH_PARAM_NAME_REGX = [
+        "/\{\w*\}/" => "([a-zA-Z0-9-_]+)"
     ];
 
     /** @var string HTTP request method */
@@ -161,22 +168,48 @@ class Router implements RouterInterface
      * @param string $route Route to compare to
      * @return boolean|array
      */
-    private function isMatch($path, $route)
+    protected function isMatch($path, $route)
     {
+        // Remove trailing slash
+        $path = trim(rtrim($path, '/'));
         // Decode url
         $path = urldecode($path);
         // Remove unwanted characters from path
-        $path = str_replace(self::PATH_EXCLUDE_LIST, "", $path);
+        $path = str_replace(self::PATH_EXCLUDE_LIST, "", $path, $excludeCount);
+        if ($excludeCount > 0) throw new BadRequestException(sprintf("The following charaters are not allowed in the url: %s", implode(',', array_values(self::PATH_EXCLUDE_LIST))));
         // Escape charaters to be a safe Regexp
         $route = str_replace(array_keys(self::MATCH_ESCAPE_LIST), array_values(self::MATCH_ESCAPE_LIST), $route);
         // Replace matching keywords with regexp 
         $route = preg_replace(array_keys(self::MATCHER_REGX), array_values(self::MATCHER_REGX), $route);
+        // Replace matching parameters keywords with regexp 
+        $route = $this->createMatchParamsRoute($route, $paramMatches);
         // Search request path against route
         $result = preg_match("/$route$/i", $path, $matches);
         if (!empty($path) && $result >= 1) {
-            $params = array_splice($matches, 1);
+            if (!empty($paramMatches)) {
+                $params = array_combine($paramMatches, array_splice($matches, 1));
+            } else $params = array_splice($matches, 1);
             return !empty($params) ? $params : true;
         }
         return false;
+    }
+
+    /**
+     * Create route to be used for params matching
+     *
+     * @param string $route
+     * @param array $matches
+     * @return string New route for regexp matching
+     */
+    protected function createMatchParamsRoute($route, &$paramMatches = [])
+    {
+        $count = 0;
+        $regxList = array_values(self::MATCH_PARAM_NAME_REGX);
+        return preg_replace_callback(array_keys(self::MATCH_PARAM_NAME_REGX), function ($match) use ($count, &$paramMatches, $regxList) {
+            $paramMatches[] = str_replace(['{', '}'], ['', ''], ($match[0] ?? $match));
+            $replace = $regxList[$count] ?? '';
+            ++$count;
+            return $replace;
+        }, $route, -1, $count);
     }
 }

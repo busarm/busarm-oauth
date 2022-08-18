@@ -167,4 +167,12 @@ class OAuthService implements SingletonInterface
     {
         return $this->authToken ? ($param ? $this->authToken[$param] ?? null : $this->authToken) : null;
     }
+
+    /**
+     * Get the value of accessType
+     */
+    public function getAccessType()
+    {
+        return $this->accessType;
+    }
 }

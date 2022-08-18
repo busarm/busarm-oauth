@@ -4,7 +4,8 @@ namespace System\Middlewares;
 
 use Closure;
 use System\DI;
-use System\HttpException;
+use System\Errors\SystemError;
+use System\Exceptions\HttpException;
 use System\Interfaces\MiddlewareInterface;
 
 /**
@@ -13,7 +14,7 @@ use System\Interfaces\MiddlewareInterface;
  * Date: 28/7/2022
  * Time: 5:22 PM
  */
-class CallableRouteMiddleware implements MiddlewareInterface
+final class CallableRouteMiddleware implements MiddlewareInterface
 {
     public function __construct(private Closure $callable, private $params = [])
     {
@@ -24,6 +25,6 @@ class CallableRouteMiddleware implements MiddlewareInterface
         if (is_callable($this->callable)) {
             return ($this->callable)(...array_merge(DI::resolveCallableDependencies($this->callable), $this->params));
         }
-        throw new HttpException(500, "Callable route can't be executed");
+        throw new SystemError("Callable route can't be executed");
     }
 }

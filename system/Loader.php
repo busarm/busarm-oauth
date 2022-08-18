@@ -3,6 +3,7 @@
 namespace System;
 
 use Exception;
+use System\Errors\LoaderError;
 use System\Interfaces\LoaderInterface;
 
 class Loader implements LoaderInterface
@@ -42,7 +43,7 @@ class Loader implements LoaderInterface
             else echo $content;
         } else {
             if ($return) return null;
-            else throw new Exception("Loader Error: View file '$path' not found");
+            else throw new LoaderError("View file '$path' not found");
         }
         return null;
     }
@@ -59,7 +60,7 @@ class Loader implements LoaderInterface
         if (file_exists($path)) {
             return require_once $path;
         } else {
-            throw new Exception("Loader Error: Config file '$path' not found");
+            throw new LoaderError("Config file '$path' not found");
         }
     }
 }

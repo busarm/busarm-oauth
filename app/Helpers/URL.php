@@ -2,7 +2,7 @@
 
 namespace App\Helpers;
 
-use System\Encrypter;
+use System\Crypto;
 
 /**
  * Created by VSCODE.
@@ -160,7 +160,7 @@ class URL
     public static function generateSecureLink($link)
     {
         if ($link) {
-            $data = Encrypter::encrypt(ENCRYPTION_KEY, $link);
+            $data = Crypto::encrypt(ENCRYPTION_KEY, $link);
             if ($data) {
                 return URL::baseUrl('misc/link', ['data' => $data]);
             }

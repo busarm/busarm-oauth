@@ -2,7 +2,7 @@
 
 namespace App\Controllers\HTTP;
 
-use System\Encrypter;
+use System\Crypto;
 use App\Helpers\URL;
 
 /**
@@ -23,7 +23,7 @@ class Misc
     {
         $data = app()->request->query("data");
         if (!empty($data)) {
-            $link = Encrypter::decrypt(ENCRYPTION_KEY, $data);
+            $link = Crypto::decrypt(ENCRYPTION_KEY, $data);
             if ($link) {
                 return URL::redirect($link);
             }

@@ -4,7 +4,7 @@ namespace App\Helpers;
 
 use DateTime;
 use DateTimeZone;
-use System\Encrypter;
+use System\Crypto;
 
 /**
  * Created by VSCODE.
@@ -126,7 +126,7 @@ class Utils
     {
         $value = $_COOKIE[COOKIE_PREFIX . '_' . $name] ?? null;
         if (!empty($value)) {
-            return Encrypter::decrypt(ENCRYPTION_KEY . ($ipAddress ? md5($ipAddress) : ''), $value) ?: NULL;
+            return Crypto::decrypt(ENCRYPTION_KEY . ($ipAddress ? md5($ipAddress) : ''), $value) ?: NULL;
         }
         return null;
     }
@@ -157,7 +157,7 @@ class Utils
      */
     public static function setCookie($name, $value, $duration = 3600, $ipAddress = NULL)
     {
-        $value = !empty($value) ? Encrypter::encrypt(ENCRYPTION_KEY . ($ipAddress ? md5($ipAddress) : ''), $value) : "";
+        $value = !empty($value) ? Crypto::encrypt(ENCRYPTION_KEY . ($ipAddress ? md5($ipAddress) : ''), $value) : "";
         return setcookie(COOKIE_PREFIX . '_' . $name, $value, time() + $duration, "/");
     }
 
