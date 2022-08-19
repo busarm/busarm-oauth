@@ -116,16 +116,25 @@ custom:
         Dev: ${ssm:/aws/reference/secretsmanager/dev/busarm}
         Prod: ${ssm:/aws/reference/secretsmanager/prod/busarm}
     roleName: BusarmOauthLambdaRole
-    corsHeaders:
-        - Content-Type
-        - Authorization
-        - Access-Token
-        - X-Requested-With
-        - X-Api-Key
-        - X-Access-Token
-        - X-Amz-Date
-        - X-Amz-User-Agent
+    # Urls
+    apiUrl:
+        Dev: "https://api.staging.busarm.com"
+        Prod: "https://api.busarm.com"
+    appUrl:
+        Dev: "https://staging.busarm.com"
+        Prod: "https://busarm.com"
+    assetUrl:
+        Dev: "https://cdn.staging.busarm.com"
+        Prod: "https://cdn.busarm.com"
+    partnerUrl:
+        Dev: "https://partner.staging.busarm.com"
+        Prod: "https://partner.busarm.com"
     corsCache: "max-age=3600"
+    corsOrigins: 
+        - ${self:custom.apiUrl.${self:provider.stage}}
+        - ${self:custom.appUrl.${self:provider.stage}}
+        - ${self:custom.assetUrl.${self:provider.stage}}
+        - ${self:custom.partnerUrl.${self:provider.stage}}
     startTime:
         Dev: "00:00" # Default 08:00 UTC
         Prod: ""
@@ -141,20 +150,6 @@ custom:
         automatic: true
         includeLayers: true
         number: 3 # Max versions allowed
-    # Urls
-    apiUrl:
-        Dev: "https://api.staging.busarm.com"
-        Prod: "https://api.busarm.com"
-    appUrl:
-        Dev: "https://staging.busarm.com"
-        Prod: "https://busarm.com"
-    assetUrl:
-        Dev: "https://cdn.staging.busarm.com"
-        Prod: "https://cdn.busarm.com"
-    partnerUrl:
-        Dev: "https://partner.staging.busarm.com"
-        Prod: "https://partner.busarm.com"
-
 functions:
     # Console
     Console:
@@ -181,8 +176,7 @@ functions:
                   path: "/authorize/{any+}"
                   method: ANY
                   cors:
-                      origin: "*"
-                      headers: ${self:custom.corsHeaders}
+                      origin: ${self:custom.corsOrigins}
                       allowCredentials: false
                       cacheControl: ${self:custom.corsCache}
         deploymentSettings:
@@ -200,9 +194,8 @@ functions:
                   path: "/resources/{any+}"
                   method: ANY
                   cors:
-                      origin: "*"
-                      headers: ${self:custom.corsHeaders}
-                      allowCredentials: false
+                      origin: ${self:custom.corsOrigins}
+                      allowCredentials: true
                       cacheControl: ${self:custom.corsCache}
             - schedule:
                   rate: rate(5 minutes)
@@ -223,9 +216,8 @@ functions:
                   path: "/token/{any+}"
                   method: ANY
                   cors:
-                      origin: "*"
-                      headers: ${self:custom.corsHeaders}
-                      allowCredentials: false
+                      origin: ${self:custom.corsOrigins}
+                      allowCredentials: true
                       cacheControl: ${self:custom.corsCache}
             - schedule:
                   rate: rate(5 minutes)
@@ -234,6 +226,7 @@ functions:
         deploymentSettings:
             type: AllAtOnce
             alias: Live
+    
     Misc:
         image:
             name: busarm-oauth
@@ -245,8 +238,7 @@ functions:
                   path: "/misc/{any+}"
                   method: ANY
                   cors:
-                      origin: "*"
-                      headers: ${self:custom.corsHeaders}
+                      origin: ${self:custom.corsOrigins}
                       allowCredentials: false
                       cacheControl: ${self:custom.corsCache}
         deploymentSettings:
