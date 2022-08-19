@@ -8,6 +8,8 @@ require_once(boolval(getenv('SEPARATE_VENDOR')) ? '/tmp/vendor/autoload.php' : A
 
 use System\App;
 use App\Exceptions\Reporter;
+use App\Helpers\Request;
+use App\Helpers\Response;
 use System\Env;
 
 // Bootstrap system
@@ -47,4 +49,4 @@ $app->beforeStart(function (App $app) {
 // Add error reporter
 $app->addErrorReporter(new Reporter);
 // Run app
-$app->run();
+$app->run(new Request, new Response);

@@ -25,7 +25,7 @@ class Misc
         if (!empty($data)) {
             $link = Crypto::decrypt(ENCRYPTION_KEY, $data);
             if ($link) {
-                return URL::redirect($link);
+                return response()->redirect($link);
             }
             return app()->showMessage(400, 'Failed to process link');
         }

@@ -10,7 +10,7 @@
  */
 
 if (empty($link)) {
-    exit;
+    return;
 }
 ?>
 <table width='350' style='max-width: 500px;' >

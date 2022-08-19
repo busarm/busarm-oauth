@@ -12,7 +12,7 @@
 use App\Helpers\URL;
 
 if (empty($content)) {
-    exit;
+    return;
 }
 ?>
 <html>

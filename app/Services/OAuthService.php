@@ -20,10 +20,10 @@ class OAuthService implements SingletonInterface
     const ACCESS_TYPE_CLIENT = 'client';
     const ACCESS_TYPE_TOKEN = 'token';
 
-    /** @var \OAuth2\Request */
+    /** @var \App\Helpers\Request */
     public $request;
 
-    /** @var \OAuth2\Response */
+    /** @var \App\Helpers\Response */
     public $response;
 
     /** @var \OAuth2\Server */
@@ -44,8 +44,8 @@ class OAuthService implements SingletonInterface
     public function __construct()
     {
         // Create request & response objects
-        $this->request = \OAuth2\Request::createFromGlobals();
-        $this->response = new \OAuth2\Response();
+        $this->request = clone request();
+        $this->response = clone response();
 
         // Create PDO - MYSQL DB Storage
         $this->storage = new OAuthStorageService(array('dsn' => sprintf("mysql:dbname=%s;host=%s", DB_NAME, DB_HOST), 'username' => DB_USER, 'password' => DB_PASS));

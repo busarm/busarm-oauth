@@ -95,7 +95,7 @@ define('ALLOWED_CORS_HEADERS', [
 | If using CORS checks, set the headers permitted to be sent to client here
 |
 */
-define('EXPOSED_CORS_HEADERS', []);
+define('EXPOSED_CORS_HEADERS', ['*']);
 
 
 /*

@@ -225,11 +225,11 @@ class App
     /**
      * Run application
      *
-     * @param RequestInterface|null $request
-     * @param ResponseInterface|null $response
-     * @return void
+     * @param RequestInterface|null $request Override request interface
+     * @param ResponseInterface|null $response Override response interface
+     * @return ResponseInterface
      */
-    public function run(RequestInterface &$request = null, ResponseInterface &$response = null,)
+    public function run(RequestInterface $request = null, ResponseInterface $response = null): ResponseInterface
     {
         // Set request & response objects
         $this->request = $request ?? $this->request;
@@ -255,6 +255,8 @@ class App
                 throw new NotFoundException("Not found - " . $this->router->getRequestMethod() . ' ' . $this->router->getRequestPath());
             }
         } else throw new SystemError("Router not configured. See `addRouter`");
+
+        return $this->response;
     }
 
     /**
@@ -267,9 +269,9 @@ class App
         // Check for CORS access request
         if (defined('CHECK_CORS') && CHECK_CORS == TRUE) {
             $headers = [];
-            $allowed_cors_headers = defined('ALLOWED_CORS_HEADERS') ? ALLOWED_CORS_HEADERS : [];
-            $exposed_cors_headers = defined('EXPOSED_CORS_HEADERS') ? EXPOSED_CORS_HEADERS : [];
-            $allowed_cors_methods = defined('ALLOWED_CORS_METHODS') ? ALLOWED_CORS_METHODS : [];
+            $allowed_cors_headers = defined('ALLOWED_CORS_HEADERS') ? ALLOWED_CORS_HEADERS : ['*'];
+            $exposed_cors_headers = defined('EXPOSED_CORS_HEADERS') ? EXPOSED_CORS_HEADERS : ['*'];
+            $allowed_cors_methods = defined('ALLOWED_CORS_METHODS') ? ALLOWED_CORS_METHODS : ['GET', 'POST', 'PUT', 'PATCH', 'OPTIONS', 'DELETE'];
             $max_cors_age = defined('MAX_CORS_AGE') ? MAX_CORS_AGE : 3600;
 
             // Convert the config items into strings
@@ -301,7 +303,10 @@ class App
 
             // If the request HTTP method is 'OPTIONS', kill the response and send it to the client
             if (strtolower($method) === 'options') {
+                $headers['Cache-Control'] = "max-age=$max_cors_age";
                 $this->sendHttpResponse(200, null, $headers);
+            } else {
+                $this->response->addHttpHeaders($headers);
             }
         } else {
             if (strtolower($method) === 'options') {
@@ -615,8 +620,8 @@ class App
         }
 
         $this->response
+            ->addHttpHeaders($headers)
             ->setParameters($data)
-            ->setHttpHeaders($headers)
             ->setStatusCode(($status >= 100 && $status < 600) ? $status : 500)
             ->send();
     }

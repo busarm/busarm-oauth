@@ -79,7 +79,7 @@ class Authorize extends OAuthBaseController
 
         // Redirect to login
         else {
-            URL::redirect('authorize/login?redirect_url=' . urlencode(app()->request->currentUrl()));
+            return response()->redirect('authorize/login?redirect_url=' . urlencode(app()->request->currentUrl()));
         }
     }
 
@@ -117,7 +117,7 @@ class Authorize extends OAuthBaseController
                 Utils::setCookie('request_count', $count, $timeout);
                 if ($user = ($this->oauth->storage->checkUserCredentials($dto->username, $dto->password))) {
                     $this->auth->startLoginSession($user['user_id'], 86400);
-                    return URL::redirect($dto->redirect_url);
+                    return response()->redirect($dto->redirect_url);
                 } else {
                     $remaining_count = $max_count - $count;
                     $page->msg = "Invalid Username or Password. $remaining_count attempt(s) left";
@@ -145,7 +145,7 @@ class Authorize extends OAuthBaseController
         if (!empty($redirect_url)) {
             $this->auth->clearLoginSession();
             Utils::deleteCookie(self::AUTH_REQ_TOKEN_PARAM);
-            URL::redirect('authorize/login?redirect_url=' . urlencode($redirect_url));
+            return response()->redirect('authorize/login?redirect_url=' . urlencode($redirect_url));
         } else {
             return $this->showError("login_failed", "A Redirect Url is required");
         }
@@ -175,7 +175,7 @@ class Authorize extends OAuthBaseController
                     if ($this->oauth->server->validateAuthorizeRequest($this->oauth->request, $this->oauth->response)) {
 
                         // Re-initialize response
-                        $this->oauth->response = new \OAuth2\Response();
+                        $this->oauth->response = new \App\Helpers\Response;
                         // Process authorization request
                         $this->oauth->server->handleAuthorizeRequest($this->oauth->request, $this->oauth->response, true, $user['user_id']);
 
@@ -235,13 +235,13 @@ class Authorize extends OAuthBaseController
                 if ($this->oauth->server->validateAuthorizeRequest($this->oauth->request, $this->oauth->response)) {
 
                     // Re-initialize response
-                    $this->oauth->response = new \OAuth2\Response();
+                    $this->oauth->response = new \App\Helpers\Response;
                     // Process authorization request
                     $this->oauth->server->handleAuthorizeRequest($this->oauth->request, $this->oauth->response, true, $user_id);
                     return response()
                         ->setStatusCode($this->oauth->response->getStatusCode(), $this->oauth->response->getStatusCode())
                         ->setParameters($this->oauth->response->getParameters())
-                        ->setHttpHeaders($this->oauth->response->getHttpHeaders());
+                        ->addHttpHeaders($this->oauth->response->getHttpHeaders());
                 } else {
                     Utils::deleteCookie(self::AUTH_REQ_TOKEN_PARAM);
                     return $this->showError($this->oauth->response->getParameter("error"), $this->oauth->response->getParameter("error_description"), $redirect_uri);
@@ -296,7 +296,7 @@ class Authorize extends OAuthBaseController
      * @param string $error
      * @param string $error_description
      * @param string $redirect_uri
-     * @return FailedPage
+     * @return FailedPage|\System\Interfaces\ResponseInterface
      */
     private function showError($error, $error_description = '', $redirect_uri = '')
     {
@@ -304,7 +304,7 @@ class Authorize extends OAuthBaseController
         app()->reporter->reportError(ucfirst(str_replace('_', ' ', $error)), $error_description);
 
         if (!empty($redirect_uri)) {
-            URL::redirect(URL::parseUrl($redirect_uri, [
+            return response()->redirect(URL::parseUrl($redirect_uri, [
                 "error" => $error,
                 "error_description" => $error_description
             ]));

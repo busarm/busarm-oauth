@@ -67,10 +67,10 @@ provider:
             - subnet-07ca1983b3b5c7b68
 
 plugins:
-  - ./vendor/bref/bref
-  - serverless-plugin-log-retention
-  - serverless-plugin-canary-deployments
-  - serverless-prune-plugin
+    - ./vendor/bref/bref
+    - serverless-plugin-log-retention
+    - serverless-plugin-canary-deployments
+    - serverless-prune-plugin
 package:
     exclude:
         - composer.lock
@@ -86,12 +86,12 @@ package:
         - node_modules/**
 
 params:
-  Prod:
-    APP_VERSION: 'build-prod-1'
-    APP_DEPLOY_DATE: ''
-  Dev:
-    APP_VERSION: 'build-dev-1'
-    APP_DEPLOY_DATE: ''
+    Prod:
+        APP_VERSION: "build-prod-1"
+        APP_DEPLOY_DATE: ""
+    Dev:
+        APP_VERSION: "build-dev-1"
+        APP_DEPLOY_DATE: ""
 
 custom:
     bref:
@@ -129,12 +129,6 @@ custom:
     partnerUrl:
         Dev: "https://partner.staging.busarm.com"
         Prod: "https://partner.busarm.com"
-    corsCache: "max-age=3600"
-    corsOrigins: 
-        - ${self:custom.apiUrl.${self:provider.stage}}
-        - ${self:custom.appUrl.${self:provider.stage}}
-        - ${self:custom.assetUrl.${self:provider.stage}}
-        - ${self:custom.partnerUrl.${self:provider.stage}}
     startTime:
         Dev: "00:00" # Default 08:00 UTC
         Prod: ""
@@ -175,10 +169,6 @@ functions:
             - http:
                   path: "/authorize/{any+}"
                   method: ANY
-                  cors:
-                      origin: ${self:custom.corsOrigins}
-                      allowCredentials: false
-                      cacheControl: ${self:custom.corsCache}
         deploymentSettings:
             type: AllAtOnce
             alias: Live
@@ -193,10 +183,6 @@ functions:
             - http:
                   path: "/resources/{any+}"
                   method: ANY
-                  cors:
-                      origin: ${self:custom.corsOrigins}
-                      allowCredentials: true
-                      cacheControl: ${self:custom.corsCache}
             - schedule:
                   rate: rate(5 minutes)
                   input:
@@ -215,10 +201,6 @@ functions:
             - http:
                   path: "/token/{any+}"
                   method: ANY
-                  cors:
-                      origin: ${self:custom.corsOrigins}
-                      allowCredentials: true
-                      cacheControl: ${self:custom.corsCache}
             - schedule:
                   rate: rate(5 minutes)
                   input:
@@ -226,7 +208,7 @@ functions:
         deploymentSettings:
             type: AllAtOnce
             alias: Live
-    
+
     Misc:
         image:
             name: busarm-oauth
@@ -237,10 +219,6 @@ functions:
             - http:
                   path: "/misc/{any+}"
                   method: ANY
-                  cors:
-                      origin: ${self:custom.corsOrigins}
-                      allowCredentials: false
-                      cacheControl: ${self:custom.corsCache}
         deploymentSettings:
             type: AllAtOnce
             alias: Live

@@ -124,6 +124,6 @@ abstract class View
         $this->render();
         $content = $this->end();
 
-        return app()->response->setHttpHeaders($this->headers)->html($content, 200, $continue);
+        return app()->response->addHttpHeaders($this->headers)->html($content, 200, $continue);
     }
 }

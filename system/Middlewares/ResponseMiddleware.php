@@ -21,15 +21,15 @@ final class ResponseMiddleware implements MiddlewareInterface
         $response = $next ? $next() : null;
         if ($response !== false) {
             if ($response instanceof ResponseInterface) {
-                $response->send();
+                return $response->send();
             } else if ($response instanceof View) {
-                $response->send();
+                return $response->send();
             } else if ($response instanceof CollectionBaseDto) {
-                app()->sendHttpResponse(200, $response->toArray());
+                return app()->sendHttpResponse(200, $response->toArray());
             } else if ($response instanceof BaseDto) {
-                app()->sendHttpResponse(200, $response->toArray());
+                return app()->sendHttpResponse(200, $response->toArray());
             } else if (is_array($response) || is_object($response)) {
-                app()->sendHttpResponse(200, $response);
+                return app()->sendHttpResponse(200, $response);
             } else {
                 return app()->response->html((string) $response);
             }

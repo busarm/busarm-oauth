@@ -28,7 +28,7 @@ class Token extends OAuthBaseController
         if ($result) {
             app()->sendHttpResponse(200, $result);
         }
-        app()->sendHttpResponse(401, $this->oauth->response->getParameters());
+        app()->sendHttpResponse(401, $this->oauth->response->getParameters(), $this->oauth->response->getHttpHeaders());
     }
 
     /**
@@ -39,7 +39,7 @@ class Token extends OAuthBaseController
         if ($this->oauth->validateAccessToken()) {
             app()->sendHttpResponse(200, $this->success('Api access granted'));
         }
-        app()->sendHttpResponse(401, $this->oauth->response->getParameters());
+        app()->sendHttpResponse(401, $this->oauth->response->getParameters(), $this->oauth->response->getHttpHeaders());
     }
 
     /**
@@ -50,7 +50,7 @@ class Token extends OAuthBaseController
         if ($this->oauth->validateAccessToken()) {
             app()->sendHttpResponse(200, $this->success($this->oauth->getAuthToken()));
         }
-        app()->sendHttpResponse(401, $this->oauth->response->getParameters());
+        app()->sendHttpResponse(401, $this->oauth->response->getParameters(), $this->oauth->response->getHttpHeaders());
     }
 
     /**
@@ -70,7 +70,7 @@ class Token extends OAuthBaseController
                 app()->sendHttpResponse(404, $this->error('Users does not exist', 'invalid_user'));
             }
         }
-        app()->sendHttpResponse(401, $this->oauth->response->getParameters());
+        app()->sendHttpResponse(401, $this->oauth->response->getParameters(), $this->oauth->response->getHttpHeaders());
     }
 
     /**

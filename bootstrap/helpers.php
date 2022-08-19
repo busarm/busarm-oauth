@@ -325,7 +325,7 @@ if (!function_exists('run')) {
         $process->setTimeout($timeout);
         if ($wait) {
             $process->run(function ($type, $data) use ($output) {
-                if ($type == Symfony\Component\Process\Process::ERR) {
+                if ($type == \Symfony\Component\Process\Process::ERR) {
                     $output->writeln('<error>' . $data . '</error>');
                 } else {
                     $output->writeln('<comment>' . $data . '</comment>');
@@ -333,7 +333,7 @@ if (!function_exists('run')) {
             });
         } else {
             $process->start(function ($type, $data) use ($output) {
-                if ($type == Symfony\Component\Process\Process::ERR) {
+                if ($type == \Symfony\Component\Process\Process::ERR) {
                     $output->writeln('<error>' . $data . '</error>');
                 } else {
                     $output->writeln('<comment>' . $data . '</comment>');

@@ -67,11 +67,21 @@ interface ResponseInterface
     public function setHttpHeader($name, $value): self;
 
     /**
+     * Header Redirect
+     *
+     * @param string $uri URL
+     * @param string $method Redirect method 'auto', 'location' or 'refresh'
+     * @param int $code	HTTP Response status code
+     * @return self
+     */
+    public function redirect($uri, $method = 'auto', $code = NULL): self;
+
+    /**
      * @param string $format 'json' | 'xml'
      * @param bool $continue
      */
     public function send($format = 'json', $continue = false);
-    
+
     /**
      * @param array $data
      * @param int $code response code
@@ -92,4 +102,48 @@ interface ResponseInterface
      * @param bool $continue
      */
     public function html($data, $code = 200, $continue = false);
+    
+    /**
+     * @return Boolean
+     *
+     * @api
+     *
+     * @see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
+     */
+    public function isInvalid();
+
+    /**
+     * @return Boolean
+     *
+     * @api
+     */
+    public function isInformational();
+
+    /**
+     * @return Boolean
+     *
+     * @api
+     */
+    public function isSuccessful();
+
+    /**
+     * @return Boolean
+     *
+     * @api
+     */
+    public function isRedirection();
+
+    /**
+     * @return Boolean
+     *
+     * @api
+     */
+    public function isClientError();
+
+    /**
+     * @return Boolean
+     *
+     * @api
+     */
+    public function isServerError();
 }
