@@ -3,7 +3,6 @@
 namespace System;
 
 use Closure;
-use Exception;
 use Throwable;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Logger\ConsoleLogger;
@@ -45,6 +44,9 @@ class App
         'services'
     ];
 
+    /** @var static */
+    public static $__instance;
+
     /** @var MiddlewareInterface[] */
     private $middlewares = [];
 
@@ -57,10 +59,10 @@ class App
     /** @var array */
     public $configs = [];
 
-    /** @var RequestInterface */
+    /** @var RequestInterface|mixed */
     public $request;
 
-    /** @var ResponseInterface */
+    /** @var ResponseInterface|mixed */
     public $response;
 
     /** @var RouterInterface */
@@ -95,7 +97,7 @@ class App
      */
     public function __construct(public string $env = Env::LOCAL, public $path = 'app')
     {
-        $this->loadInstance();
+        self::$__instance = &$this;
 
         // Benchmark start time
         $this->startTimeMs = defined(APP_START_TIME) ? APP_START_TIME : floor(microtime(true) * 1000);
@@ -122,45 +124,8 @@ class App
         // Set up error reporting
         $this->setUpErrorHandlers();
 
-        // Add default bindings
-        $this->addBinding(RouterInterface::class, Router::class);
-        $this->addBinding(RequestInterface::class, Request::class);
-        $this->addBinding(ResponseInterface::class, Response::class);
-        $this->addBinding(LoaderInterface::class, Loader::class);
-        $this->addBinding(ErrorReportingInterface::class, ErrorReporter::class);
-
         // Add response middleware as the first in the chain
         $this->addMiddleware(new ResponseMiddleware());
-    }
-
-    /**
-     * Get App Instance
-     *
-     * @return App
-     */
-    public static function getInstance(): self|null
-    {
-        return $GLOBALS[APP_BASE_PATH . ':' . static::class] ?? null;
-    }
-
-    /**
-     * Load App Instance
-     *
-     * @return App
-     */
-    public function loadInstance()
-    {
-        $GLOBALS[APP_BASE_PATH . ':' . static::class] = &$this;
-    }
-
-    /**
-     * Clear App Instance
-     *
-     * @return App
-     */
-    public function clearInstance()
-    {
-        unset($GLOBALS[APP_BASE_PATH . ':' . static::class]);
     }
 
     ############################
@@ -225,15 +190,13 @@ class App
     /**
      * Run application
      *
-     * @param RequestInterface|null $request Override request interface
-     * @param ResponseInterface|null $response Override response interface
      * @return ResponseInterface
      */
-    public function run(RequestInterface $request = null, ResponseInterface $response = null): ResponseInterface
+    public function run(): ResponseInterface
     {
-        // Set request & response objects
-        $this->request = $request ?? $this->request;
-        $this->response = $response ?? $this->response;
+        // Set request & response bindings if exists
+        $this->request = ($req = $this->getBinding(RequestInterface::class)) ? $this->make($req, false) : $this->request;
+        $this->response = ($res = $this->getBinding(ResponseInterface::class)) ? $this->make($res, false) : $this->response;
 
         // Preflight Checking
         if (!is_cli()) {
@@ -245,7 +208,8 @@ class App
 
         // Set shutdown hook
         register_shutdown_function(function (App $app) {
-            $app->clearInstance();
+            // TODO Clear statics (for reusable env)
+            self::$__instance = NULL;
             if ($app->completeHook) ($app->completeHook)($app);
         }, $this);
 

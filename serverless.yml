@@ -169,6 +169,7 @@ functions:
             - http:
                   path: "/authorize/{any+}"
                   method: ANY
+                  cors: false
         deploymentSettings:
             type: AllAtOnce
             alias: Live
@@ -183,6 +184,7 @@ functions:
             - http:
                   path: "/resources/{any+}"
                   method: ANY
+                  cors: false
             - schedule:
                   rate: rate(5 minutes)
                   input:
@@ -201,6 +203,7 @@ functions:
             - http:
                   path: "/token/{any+}"
                   method: ANY
+                  cors: false
             - schedule:
                   rate: rate(5 minutes)
                   input:
@@ -219,6 +222,7 @@ functions:
             - http:
                   path: "/misc/{any+}"
                   method: ANY
+                  cors: false
         deploymentSettings:
             type: AllAtOnce
             alias: Live

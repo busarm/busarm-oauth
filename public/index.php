@@ -11,6 +11,8 @@ use App\Exceptions\Reporter;
 use App\Helpers\Request;
 use App\Helpers\Response;
 use System\Env;
+use System\Interfaces\RequestInterface;
+use System\Interfaces\ResponseInterface;
 
 // Bootstrap system
 App::bootstrap();
@@ -46,7 +48,10 @@ $app->beforeStart(function (App $app) {
         $app->showMessage(503, "System is under maintenance");
     }
 });
+// Add custom bindings
+$app->addBinding(RequestInterface::class, Request::class);
+$app->addBinding(ResponseInterface::class, Response::class);
 // Add error reporter
 $app->addErrorReporter(new Reporter);
 // Run app
-$app->run(new Request, new Response);
+$app->run();

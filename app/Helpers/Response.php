@@ -11,6 +11,8 @@ use System\Response as SystemResponse;
  * User: Samuel
  * Date: 19/8/2022
  * Time: 11:05 AM
+ * 
+ * Custom response class to combine OAuth2\Response & System\Response 
  */
 class Response extends SystemResponse implements ResponseInterface
 {

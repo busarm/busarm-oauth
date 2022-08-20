@@ -147,14 +147,14 @@ if (!function_exists('app')) {
      */
     function app()
     {
-        return \System\App::getInstance();
+        return \System\App::$__instance;
     }
 }
 
 if (!function_exists('config')) {
     /**
      * Get or Set config
-     * @return \System\App
+     * @return mixed
      */
     function config($name, $value = null)
     {
@@ -179,7 +179,7 @@ if (!function_exists('out')) {
 if (!function_exists('response')) {
     /**
      * Get app request object
-     * @return \System\Interfaces\ResponseInterface
+     * @return \System\Interfaces\ResponseInterface|mixed
      */
     function response()
     {
@@ -190,9 +190,9 @@ if (!function_exists('response')) {
 if (!function_exists('request')) {
     /**
      * Get app response object
-     * @return \System\Interfaces\RequestInterface
+     * @return \System\Interfaces\RequestInterface|mixed
      */
-    function request()
+    function &request()
     {
         return app()->request;
     }
@@ -203,7 +203,7 @@ if (!function_exists('load')) {
      * Get app loader object
      * @return \System\Interfaces\LoaderInterface
      */
-    function load()
+    function &load()
     {
         return app()->loader;
     }
@@ -214,7 +214,7 @@ if (!function_exists('report')) {
      * Get app reporter object
      * @return \System\Interfaces\ErrorReportingInterface
      */
-    function report()
+    function &report()
     {
         return app()->reporter;
     }
@@ -225,7 +225,7 @@ if (!function_exists('router')) {
      * Get app router object
      * @return \System\Interfaces\ErrorReportingInterface
      */
-    function router()
+    function &router()
     {
         return app()->router;
     }
