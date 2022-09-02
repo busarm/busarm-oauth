@@ -7,7 +7,7 @@
 |
 */
 
-use System\Env;
+use Busarm\PhpMini\Enums\Env;
 
 define('APP_VERSION', env("APP_VERSION"));
 define('APP_NAME', env("APP_NAME"));
@@ -28,7 +28,6 @@ define('API_URL', env("API_URL"));
 define('ASSET_URL', env("ASSET_URL"));
 define('PARTNER_URL', env("PARTNER_URL"));
 
-
 /*
 |--------------------------------------------------------------------------
 | Cookie Prefix
@@ -40,37 +39,28 @@ define('COOKIE_PREFIX', env("COOKIE_PREFIX", "oauth"));
 
 /*
 |--------------------------------------------------------------------------
-| CORS Check
+| Set Up App instance config
 |--------------------------------------------------------------------------
-|
-| Set to TRUE to enable Cross-Origin Resource Sharing (CORS). Useful if you
-| are hosting your API on a different domain from the application that
-| will access it through a browser
 |
 */
-define('CHECK_CORS', env("CHECK_CORS", TRUE));
-
-/*
-|--------------------------------------------------------------------------
-| CORS Max Age
-|--------------------------------------------------------------------------
-|
-| How long in seconds to cache CORS preflight response in browser.
-| -1 for disabling caching.
-|
-*/
-define('MAX_CORS_AGE', env("MAX_CORS_AGE", 3600));
-
-
-/*
-|--------------------------------------------------------------------------
-| CORS Allowable Headers
-|--------------------------------------------------------------------------
-|
-| If using CORS checks, set the allowable headers here
-|
-*/
-define('ALLOWED_CORS_HEADERS', [
+app()->config->setName(APP_NAME);
+app()->config->setVersion(APP_VERSION);
+app()->config->setHttpCheckCors(env("CHECK_CORS", TRUE));
+app()->config->setHttpAllowAnyCorsDomain(app()->env != Env::PROD);
+app()->config->setHttpAllowedCorsOrigins([
+    APP_URL,
+    API_URL,
+    PARTNER_URL
+]);
+app()->config->setHttpAllowedCorsMethods([
+    'GET',
+    'POST',
+    'OPTIONS',
+    'PUT',
+    'PATCH',
+    'DELETE'
+]);
+app()->config->setHttpAllowedCorsHeaders([
     'Authorization',
     'Origin',
     'Referer',
@@ -85,60 +75,5 @@ define('ALLOWED_CORS_HEADERS', [
     'X-Integrity',
     'X-Api-Key',
 ]);
-
-
-/*
-|--------------------------------------------------------------------------
-| CORS Exposed Headers
-|--------------------------------------------------------------------------
-|
-| If using CORS checks, set the headers permitted to be sent to client here
-|
-*/
-define('EXPOSED_CORS_HEADERS', ['*']);
-
-
-/*
-|--------------------------------------------------------------------------
-| CORS Allowable Methods
-|--------------------------------------------------------------------------
-|
-| If using CORS checks, you can set the methods you want to be allowed
-|
-*/
-define('ALLOWED_CORS_METHODS', [
-    'GET',
-    'POST',
-    'OPTIONS',
-    'PUT',
-    'PATCH',
-    'DELETE'
-]);
-
-/*
-|--------------------------------------------------------------------------
-| CORS Allow Any Domain
-|--------------------------------------------------------------------------
-|
-| Set to TRUE to enable Cross-Origin Resource Sharing (CORS) from any
-| source domain
-|
-*/
-define('ALLOWED_ANY_CORS_DOMAIN', app()->env != Env::PROD);
-
-/*
-|--------------------------------------------------------------------------
-| CORS Allowable Domains
-|--------------------------------------------------------------------------
-|
-| Used if $config['check_cors'] is set to TRUE and $config['allow_any_cors_domain']
-| is set to FALSE. Set all the allowable domains within the array
-|
-| e.g. $config['allowed_origins'] = ['http://www.example.com', 'https://spa.example.com']
-|
-*/
-define('ALLOWED_CORS_ORIGINS', [
-    APP_URL,
-    API_URL,
-    PARTNER_URL
-]);
+app()->config->setHttpExposedCorsHeaders(['*']);
+app()->config->setHttpCorsMaxAge(env("MAX_CORS_AGE", 3600));

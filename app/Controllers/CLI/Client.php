@@ -7,6 +7,7 @@ use App\Helpers\Utils;
 use App\Controllers\OAuthBaseController;
 use App\Services\OAuthScopeService;
 use Exception;
+use Busarm\PhpMini\App;
 
 /**
  * Created by PhpStorm.
@@ -17,7 +18,7 @@ use Exception;
 
 class Client extends OAuthBaseController
 {
-    public function __construct()
+    public function __construct(private App $app)
     {
         parent::__construct(true);
     }
@@ -49,21 +50,21 @@ class Client extends OAuthBaseController
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
             if (!empty($keys) && $this->oauth->storage->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
-                log_debug("Successfully Created Client");
-                log_debug("Client ID = $client_id");
-                log_debug("Client Secret = $client_secret");
-                log_debug("Client Grant_types = $grant_types");
-                log_debug("Client Scopes = $scopes");
-                log_debug("Client Redirect Url = $redirect_uri");
-                log_debug("Client Public Key = " . $keys['publickey']);
-                log_debug("Client Public Key ALGO = $algo");
+                $this->app->logger->debug("Successfully Created Client");
+                $this->app->logger->debug("Client ID = $client_id");
+                $this->app->logger->debug("Client Secret = $client_secret");
+                $this->app->logger->debug("Client Grant_types = $grant_types");
+                $this->app->logger->debug("Client Scopes = $scopes");
+                $this->app->logger->debug("Client Redirect Url = $redirect_uri");
+                $this->app->logger->debug("Client Public Key = " . $keys['publickey']);
+                $this->app->logger->debug("Client Public Key ALGO = $algo");
             } else {
-                log_debug("Successfully Created Client");
-                log_debug("Client ID = $client_id");
-                log_debug("Client Secret = $client_secret");
-                log_debug("Client Grant_types = $grant_types");
-                log_debug("Client Scopes = $scopes");
-                log_debug("Client Redirect Url = $redirect_uri");
+                $this->app->logger->debug("Successfully Created Client");
+                $this->app->logger->debug("Client ID = $client_id");
+                $this->app->logger->debug("Client Secret = $client_secret");
+                $this->app->logger->debug("Client Grant_types = $grant_types");
+                $this->app->logger->debug("Client Scopes = $scopes");
+                $this->app->logger->debug("Client Redirect Url = $redirect_uri");
             }
         } else {
             throw new Exception("Failed to create client");
@@ -84,9 +85,9 @@ class Client extends OAuthBaseController
             $rsa->setHash($algo);
             $keys = $rsa->createKey(2048);
             if (!empty($keys) && $this->oauth->storage->setClientPublickKey($client_id, $keys['privatekey'], $keys['publickey'], "RS256")) {
-                log_debug("Successfully Updated Client Keys");
-                log_debug("Client Public Key = " . $keys['publickey']);
-                log_debug("Client Public Key ALGO = $algo");
+                $this->app->logger->debug("Successfully Updated Client Keys");
+                $this->app->logger->debug("Client Public Key = " . $keys['publickey']);
+                $this->app->logger->debug("Client Public Key ALGO = $algo");
             } else {
                 throw new Exception("Failed to update client keys");
             }

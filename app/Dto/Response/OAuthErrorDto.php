@@ -1,7 +1,7 @@
 <?php
 namespace App\Dto\Response;
 
-use System\Dto\ResponseDto;
+use Busarm\PhpMini\Dto\ResponseDto;
 
 class OAuthErrorDto extends ResponseDto
 {

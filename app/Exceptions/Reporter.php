@@ -3,7 +3,7 @@
 namespace App\Exceptions;
 
 use Bugsnag\Breadcrumbs\Breadcrumb;
-use System\ErrorReporter;
+use Busarm\PhpMini\ErrorReporter;
 
 class Reporter extends ErrorReporter
 {

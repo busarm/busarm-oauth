@@ -4,7 +4,8 @@ namespace App\Middlewares;
 
 use App\Exceptions\ThrottleException;
 use App\Helpers\Utils;
-use System\Interfaces\MiddlewareInterface;
+use Busarm\PhpMini\App;
+use Busarm\PhpMini\Interfaces\MiddlewareInterface;
 
 // TODO Use Cache instead of cookie
 /**
@@ -22,14 +23,14 @@ class ThrottleMiddleware implements MiddlewareInterface
     {
     }
 
-    public function handle(callable $next = null): mixed
+    public function handle(App $app, callable $next = null): mixed
     {
-        $key = md5('throttle:' . $this->name . app()->router->getRequestPath() . app()->router->getRequestMethod());
-        $count = (Utils::getCookie($key, app()->request->ip()) ?? 0) + 1;
+        $key = md5('throttle:' . $this->name . $app->router->getRequestPath() . $app->router->getRequestMethod());
+        $count = (Utils::getCookie($key, $app->request->ip()) ?? 0) + 1;
         if ($this->limit > 0 && $count >= $this->limit) {
             throw new ThrottleException("Too many request. Please try again later");
         } else {
-            Utils::setCookie($key, $count, $this->seconds, app()->request->ip());
+            Utils::setCookie($key, $count, $this->seconds, $app->request->ip());
         }
         return $next ? $next() : true;
     }

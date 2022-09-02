@@ -1,23 +1,24 @@
 <?php
-// Path to the front controller (this file) directory
-define('APP_BASE_PATH', dirname(__FILE__) . DIRECTORY_SEPARATOR);
+// Define start time
+define('APP_START_TIME', floor(microtime(true) * 1000));
 // Load packages
+define('APP_BASE_PATH', dirname(__FILE__) . DIRECTORY_SEPARATOR);
 require_once(boolval(getenv('SEPARATE_VENDOR')) ? '/tmp/vendor/autoload.php' : APP_BASE_PATH . 'vendor/autoload.php');
 
 use App\Controllers\CLI\Client;
 use App\Controllers\CLI\Org;
 use App\Controllers\CLI\User;
+use App\Exceptions\Reporter;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use System\App;
-use System\Router;
-
-// Bootstrap system
-App::bootstrap();
+use Busarm\PhpMini\App;
+use Busarm\PhpMini\Config;
+use Busarm\PhpMini\Enums\Env;
+use Busarm\PhpMini\Router;
 
 /**
  *  Composer Command
@@ -75,11 +76,10 @@ $createOrg = (new Command('org:create'))
     ->addOption('name', '', InputOption::VALUE_REQUIRED, "Organization name")
     ->setCode(function (InputInterface $input, OutputInterface $output) {
         $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
-        (new App())
-            ->addRouter(new Router(Org::class, "create_org", [
-                $input->getOption('name') ?? exit('`name` option is required')
-            ]))
-            ->run();
+        $app = createApp();
+        $app->setRouter(Router::withController(Org::class, "create_org", [
+            $input->getOption('name') ?? exit('`name` option is required')
+        ]))->run();
         $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
     });
 
@@ -95,15 +95,14 @@ $createClient = (new Command('client:create'))
     ->addOption('grants', '', InputOption::VALUE_OPTIONAL, "Client grant types (space sparated). e.g password client_credential refresh_token authorization_code")
     ->setCode(function (InputInterface $input, OutputInterface $output) {
         $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
-        (new App())
-            ->addRouter(new Router(Client::class, "create_client", [
-                $input->getOption('org') ?? exit('`org` option is required'),
-                $input->getOption('name') ?? exit('`name` option is required'),
-                $input->getOption('redirect'),
-                $input->getOption('scopes'),
-                $input->getOption('grants'),
-            ]))
-            ->run();
+        $app = createApp();
+        $app->setRouter(Router::withController(Client::class, "create_client", [
+            $input->getOption('org') ?? exit('`org` option is required'),
+            $input->getOption('name') ?? exit('`name` option is required'),
+            $input->getOption('redirect'),
+            $input->getOption('scopes'),
+            $input->getOption('grants'),
+        ]))->run();
         $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
     });
 
@@ -115,11 +114,10 @@ $updateClientKey = (new Command('client:update:key'))
     ->addOption('client', '', InputOption::VALUE_REQUIRED, "Client id")
     ->setCode(function (InputInterface $input, OutputInterface $output) {
         $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
-        (new App())
-            ->addRouter(new Router(Client::class, "update_client_key", [
-                $input->getOption('client') ?? exit('`client` option is required')
-            ]))
-            ->run();
+        $app = createApp();
+        $app->setRouter(Router::withController(Client::class, "update_client_key", [
+            $input->getOption('client') ?? exit('`client` option is required')
+        ]))->run();
         $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
     });
 
@@ -136,24 +134,23 @@ $createUser = (new Command('user:create'))
     ->addOption('scopes', '', InputOption::VALUE_OPTIONAL, "User scopes (space sparated). e.g user admin email")
     ->setCode(function (InputInterface $input, OutputInterface $output) {
         $output->writeln("<info>Started: " . date('Y-m-d h:i:s') . "</info>");
-        (new App())
-            ->addRouter(new Router(User::class, "create_user", [
-                $input->getOption('name') ?? exit('`name` option is required'),
-                $input->getOption('email') ?? exit('`email` option is required'),
-                $input->getOption('password'),
-                $input->getOption('dial'),
-                $input->getOption('phone'),
-                $input->getOption('scopes')
-            ]))
-            ->run();
+        $app = createApp();
+        $app->setRouter(Router::withController(User::class, "create_user", [
+            $input->getOption('name') ?? exit('`name` option is required'),
+            $input->getOption('email') ?? exit('`email` option is required'),
+            $input->getOption('password'),
+            $input->getOption('dial'),
+            $input->getOption('phone'),
+            $input->getOption('scopes')
+        ]))->run();
         $output->writeln("<info>Done: " . date('Y-m-d h:i:s') . "</info>");
     });
 
 /**
  * Initialize console app
  */
-$app = (new Application(getenv('APP_NAME') ?? 'PHP' . " Console App"));
-$app->addCommands([
+$console = (new Application(getenv('APP_NAME') ?? 'PHP' . " Console App"));
+$console->addCommands([
     $composerCommand,
     $migrationCommand,
     $rollbackCommand,
@@ -162,4 +159,38 @@ $app->addCommands([
     $updateClientKey,
     $createUser,
 ]);
-$app->run();
+$console->run();
+
+/**
+ * Create app instance
+ *
+ * @return App
+ */
+function createApp(): App
+{
+    // Get Application Environment
+    if (env('ENV') == Env::PROD || strtolower(env('ENV')) == "prod" || strtolower(env('STAGE')) == "prod") {
+        $env = Env::PROD;
+    } else if (env('ENV') == Env::TEST || strtolower(env('ENV')) == "dev" || strtolower(env('STAGE')) == "dev") {
+        $env = Env::TEST;
+    } else {
+        $env = Env::DEV;
+    }
+
+    // Iniitalize App
+    $config = (new Config)
+        ->setBasePath(APP_BASE_PATH)
+        ->setAppPath('app')
+        ->setConfigPath('Configs')
+        ->setViewPath('Views');
+    $app = new App($config, $env);
+    // Add config files
+    $app->loadConfig('app');
+    $app->loadConfig('database');
+    $app->loadConfig('mail');
+    $app->loadConfig('services');
+    $app->loadConfig('scopes');
+    // Add error reporter
+    $app->setErrorReporter(new Reporter);
+    return $app;
+}

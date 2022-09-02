@@ -8,7 +8,7 @@
 |
 */
 
-use System\Route;
+use Busarm\PhpMini\Route;
 use App\Controllers\HTTP\Authorize;
 use App\Controllers\HTTP\Misc;
 use App\Controllers\HTTP\Resources;

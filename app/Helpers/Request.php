@@ -2,8 +2,8 @@
 
 namespace App\Helpers;
 
-use OAuth2\RequestInterface;
-use System\Request as SystemRequest;
+use Busarm\PhpMini\Request as PhpMiniRequest;
+use OAuth2\Request as OAuth2Request;
 
 /**
  * Created by VSCODE.
@@ -11,15 +11,27 @@ use System\Request as SystemRequest;
  * Date: 19/8/2022
  * Time: 11:05 AM
  * 
- * Custom request class to combine OAuth2\Request & System\Request 
+ * Custom request class to combine OAuth2\Request & Busarm\PhpMini\Request 
  */
-class Request extends SystemRequest implements RequestInterface
+class Request extends OAuth2Request
 {
     /**
-     * @return array
+     * Create request using PhpMiniRequest
+     *
+     * @param PhpMiniRequest $request
+     * @return self
      */
-    public function getAllQueryParameters()
+    public static function withPhpMiniRequest(PhpMiniRequest $request)
     {
-        return $this->query;
+        return new self(
+            $request->getQueryList(),
+            $request->getRequestList(),
+            $request->getAttributeList(),
+            $request->getCookieList(),
+            $request->getFileList(),
+            $request->getServerList(),
+            $request->getContent(),
+            $request->getHeaderList()
+        );
     }
 }

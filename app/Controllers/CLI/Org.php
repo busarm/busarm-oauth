@@ -4,6 +4,7 @@ namespace App\Controllers\CLI;
 
 use App\Controllers\OAuthBaseController;
 use Exception;
+use Busarm\PhpMini\App;
 
 /**
  * Created by PhpStorm.
@@ -14,7 +15,7 @@ use Exception;
 
 class Org extends OAuthBaseController
 {
-    public function __construct()
+    public function __construct(private App $app)
     {
         parent::__construct(true);
     }
@@ -29,8 +30,8 @@ class Org extends OAuthBaseController
     {
         $result = $this->oauth->storage->setOrganizationDetails($org_name);
         if ($result) {
-            log_debug("Successfully Added Organization");
-            log_debug("Organizatoin ID = $result");
+            $this->app->logger->debug("Successfully Added Organization");
+            $this->app->logger->debug("Organizatoin ID = $result");
         } else {
             throw new Exception("Failed to create org");
         }

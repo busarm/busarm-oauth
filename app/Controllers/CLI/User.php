@@ -6,6 +6,7 @@ use App\Helpers\Utils;
 use App\Controllers\OAuthBaseController;
 use App\Services\OAuthScopeService;
 use Exception;
+use Busarm\PhpMini\App;
 
 /**
  * Created by PhpStorm.
@@ -16,7 +17,7 @@ use Exception;
 
 class User extends OAuthBaseController
 {
-    public function __construct()
+    public function __construct(private App $app)
     {
         parent::__construct(true);
     }
@@ -49,14 +50,14 @@ class User extends OAuthBaseController
         //Insert User
         $result = $this->oauth->storage->setCustomUser($user_id, $user_password, $email, $name, $phone, $dial_code, $scopes);
         if ($result) {
-            log_debug("Successfully Created User");
-            log_debug("User ID = $result");
-            log_debug("User Name = $name");
-            log_debug("User Email = $email");
+            $this->app->logger->debug("Successfully Created User");
+            $this->app->logger->debug("User ID = $result");
+            $this->app->logger->debug("User Name = $name");
+            $this->app->logger->debug("User Email = $email");
             if (empty($password)) {
-                log_debug("User Password = $user_password");
+                $this->app->logger->debug("User Password = $user_password");
             }
-            log_debug("User Scopes = $scopes");
+            $this->app->logger->debug("User Scopes = $scopes");
         } else {
             throw new Exception("Failed to create user");
         }

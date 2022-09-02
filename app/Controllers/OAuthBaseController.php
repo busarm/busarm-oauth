@@ -5,8 +5,8 @@ namespace App\Controllers;
 use App\Exceptions\AuthorizationException;
 use App\Services\OAuthService;
 use App\Services\AuthService;
-use System\Dto\BaseDto;
-use System\Dto\ResponseDto;
+use Busarm\PhpMini\Dto\BaseDto;
+use Busarm\PhpMini\Dto\ResponseDto;
 use App\Dto\Response\OAuthErrorDto;
 
 /**

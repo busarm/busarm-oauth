@@ -18,6 +18,7 @@ use App\Dto\Page\AuthorizePageDto;
 use App\Dto\Page\FailedPageDto;
 use App\Dto\Page\LoginPageDto;
 use App\Dto\Page\SuccessPageDto;
+use Busarm\PhpMini\App;
 
 /**
  * Created by PhpStorm.
@@ -33,7 +34,7 @@ class Authorize extends OAuthBaseController
     const AUTH_REQ_TOKEN_PARAM = "auth_request_token";
     const EMAIL_REQ_TOKEN_PARAM = "email_request_token";
 
-    public function __construct()
+    public function __construct(private App $app)
     {
         parent::__construct();
     }
@@ -79,7 +80,7 @@ class Authorize extends OAuthBaseController
 
         // Redirect to login
         else {
-            return response()->redirect('authorize/login?redirect_url=' . urlencode(app()->request->currentUrl()));
+            return response()->redirect('authorize/login?redirect_url=' . urlencode($this->app->request->currentUrl()));
         }
     }
 
@@ -271,7 +272,7 @@ class Authorize extends OAuthBaseController
             $dto->user_name = $user ? $user['name'] : null;
             $dto->user_email = $user ? $user['email'] : null;
             $dto->scopes = $scopes ? array_values($scopes) : [];
-            $dto->action = app()->request->currentUrl();
+            $dto->action = $this->app->request->currentUrl();
             return new AuthorizePage($dto);
         }
         return $this->showError("authorization_failed", $this->oauth->response->getParameter("error_description") ?? "Invalid request", $redirect_uri);
@@ -301,7 +302,7 @@ class Authorize extends OAuthBaseController
     private function showError($error, $error_description = '', $redirect_uri = '')
     {
         // Report
-        app()->reporter->reportError(ucfirst(str_replace('_', ' ', $error)), $error_description);
+        $this->app->reporter->reportError(ucfirst(str_replace('_', ' ', $error)), $error_description);
 
         if (!empty($redirect_uri)) {
             return response()->redirect(URL::parseUrl($redirect_uri, [
@@ -324,10 +325,10 @@ class Authorize extends OAuthBaseController
     private function getEmailAuthView($link)
     {
         try {
-            $content = app()->loader->view("email/auth", ["link" => $link], true);
-            return app()->loader->view("email/template/simple_mail", ["content" => $content], true);
+            $content = $this->app->loader->view("email/auth", ["link" => $link], true);
+            return $this->app->loader->view("email/template/simple_mail", ["content" => $content], true);
         } catch (Exception $e) {
-            app()->reporter->reportException($e);
+            $this->app->reporter->reportException($e);
             return null;
         }
     }
@@ -344,7 +345,7 @@ class Authorize extends OAuthBaseController
                 RequestOptions::FORM_PARAMS => [
                     'secret' => RECAPTCHA_SECRET_KEY,
                     'response' => $token,
-                    'remoteip' => app()->request->ip(),
+                    'remoteip' => $this->app->request->ip(),
                 ]
             ]);
             if ($res->getStatusCode() == 200) {

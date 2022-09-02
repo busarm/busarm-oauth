@@ -4,8 +4,8 @@ namespace App\Views;
 
 use App\Dto\Page\SuccessPageDto;
 use App\Helpers\URL;
-use System\Dto\BaseDto;
-use System\View;
+use Busarm\PhpMini\Dto\BaseDto;
+use Busarm\PhpMini\View;
 
 class SuccessPage extends View
 {

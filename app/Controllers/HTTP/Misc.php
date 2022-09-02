@@ -2,8 +2,9 @@
 
 namespace App\Controllers\HTTP;
 
-use System\Crypto;
+use Busarm\PhpMini\Crypto;
 use App\Helpers\URL;
+use Busarm\PhpMini\App;
 
 /**
  * Created by VSCode.
@@ -13,6 +14,10 @@ use App\Helpers\URL;
  */
 class Misc
 {
+    public function __construct(private App $app)
+    {
+    }
+
     /**
      * Process secure link
      *
@@ -21,14 +26,14 @@ class Misc
      */
     public function link($data = null)
     {
-        $data = app()->request->query("data");
+        $data = $this->app->request->query("data");
         if (!empty($data)) {
             $link = Crypto::decrypt(ENCRYPTION_KEY, $data);
             if ($link) {
                 return response()->redirect($link);
             }
-            return app()->showMessage(400, 'Failed to process link');
+            return $this->app->showMessage(400, 'Failed to process link');
         }
-        return app()->showMessage(400, 'Secure link not available');
+        return $this->app->showMessage(400, 'Secure link not available');
     }
 }

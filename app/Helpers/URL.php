@@ -2,7 +2,7 @@
 
 namespace App\Helpers;
 
-use System\Crypto;
+use Busarm\PhpMini\Crypto;
 
 /**
  * Created by VSCODE.

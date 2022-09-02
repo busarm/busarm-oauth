@@ -4,7 +4,7 @@ namespace App\Helpers;
 
 use DateTime;
 use DateTimeZone;
-use System\Crypto;
+use Busarm\PhpMini\Crypto;
 
 /**
  * Created by VSCODE.

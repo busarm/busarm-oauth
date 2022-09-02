@@ -2,7 +2,7 @@
 
 namespace App\Dto\Page;
 
-use System\Dto\BaseDto;
+use Busarm\PhpMini\Dto\BaseDto;
 
 class SuccessPageDto extends BaseDto
 {

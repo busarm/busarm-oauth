@@ -4,8 +4,8 @@ namespace App\Services;
 
 use Exception;
 use PHPMailer\PHPMailer\PHPMailer;
-use System\Interfaces\SingletonInterface;
-use System\Traits\Singleton;
+use Busarm\PhpMini\Interfaces\SingletonInterface;
+use Busarm\PhpMini\Traits\Singleton;
 
 class MailService implements SingletonInterface
 {

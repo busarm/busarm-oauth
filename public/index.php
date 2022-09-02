@@ -1,21 +1,14 @@
 <?php
 // Define start time
 define('APP_START_TIME', floor(microtime(true) * 1000));
-
 // Load packages
 define('APP_BASE_PATH', dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR);
 require_once(boolval(getenv('SEPARATE_VENDOR')) ? '/tmp/vendor/autoload.php' : APP_BASE_PATH . 'vendor/autoload.php');
 
-use System\App;
+use Busarm\PhpMini\App;
+use Busarm\PhpMini\Config;
+use Busarm\PhpMini\Enums\Env;
 use App\Exceptions\Reporter;
-use App\Helpers\Request;
-use App\Helpers\Response;
-use System\Env;
-use System\Interfaces\RequestInterface;
-use System\Interfaces\ResponseInterface;
-
-// Bootstrap system
-App::bootstrap();
 
 // Get Application Environment
 if (env('ENV') == Env::PROD || strtolower(env('ENV')) == "prod" || strtolower(env('STAGE')) == "prod") {
@@ -27,8 +20,17 @@ if (env('ENV') == Env::PROD || strtolower(env('ENV')) == "prod" || strtolower(en
 }
 
 // Iniitalize App
-$app = new App($env);
+$config = (new Config)
+    ->setBasePath(APP_BASE_PATH)
+    ->setAppPath('app')
+    ->setConfigPath('Configs')
+    ->setViewPath('Views');
+$app = new App($config, $env);
 // Add config files
+$app->loadConfig('app');
+$app->loadConfig('database');
+$app->loadConfig('mail');
+$app->loadConfig('services');
 $app->loadConfig('scopes');
 $app->loadConfig('routes');
 // Add hooks
@@ -48,10 +50,7 @@ $app->beforeStart(function (App $app) {
         $app->showMessage(503, "System is under maintenance");
     }
 });
-// Add custom bindings
-$app->addBinding(RequestInterface::class, Request::class);
-$app->addBinding(ResponseInterface::class, Response::class);
 // Add error reporter
-$app->addErrorReporter(new Reporter);
+$app->setErrorReporter(new Reporter);
 // Run app
 $app->run();

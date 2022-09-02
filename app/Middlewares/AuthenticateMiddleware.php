@@ -4,7 +4,8 @@ namespace App\Middlewares;
 
 use App\Exceptions\AuthenticationException;
 use App\Services\OAuthService;
-use System\Interfaces\MiddlewareInterface;
+use Busarm\PhpMini\App;
+use Busarm\PhpMini\Interfaces\MiddlewareInterface;
 
 /**
  * Created by VSCODE.
@@ -14,7 +15,7 @@ use System\Interfaces\MiddlewareInterface;
  */
 class AuthenticateMiddleware implements MiddlewareInterface
 {
-    public function handle(Callable $next = null): mixed
+    public function handle(App $app, Callable $next = null): mixed
     {
         if(!OAuthService::getInstance()->validateClient() && !OAuthService::getInstance()->validateAccessToken()) {
             throw new AuthenticationException();

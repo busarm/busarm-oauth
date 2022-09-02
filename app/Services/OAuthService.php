@@ -2,16 +2,18 @@
 
 namespace App\Services;
 
-use App\Exceptions\AuthorizationException;
-use System\Traits\Singleton;
+use Busarm\PhpMini\Enums\Env;
+use Busarm\PhpMini\Traits\Singleton;
+use Busarm\PhpMini\Interfaces\SingletonInterface;
 use OAuth2\Server;
 use OAuth2\GrantType\AuthorizationCode;
 use OAuth2\GrantType\ClientCredentials;
 use OAuth2\GrantType\RefreshToken;
 use OAuth2\GrantType\UserCredentials;
-use System\Interfaces\SingletonInterface;
 use App\Helpers\Utils;
-use System\Env;
+use App\Exceptions\AuthorizationException;
+use App\Helpers\Request;
+use App\Helpers\Response;
 
 class OAuthService implements SingletonInterface
 {
@@ -44,8 +46,8 @@ class OAuthService implements SingletonInterface
     public function __construct()
     {
         // Create request & response objects
-        $this->request = clone request();
-        $this->response = clone response();
+        $this->request = Request::withPhpMiniRequest(request());
+        $this->response = Response::withPhpMiniResponse(response());
 
         // Create PDO - MYSQL DB Storage
         $this->storage = new OAuthStorageService(array('dsn' => sprintf("mysql:dbname=%s;host=%s", DB_NAME, DB_HOST), 'username' => DB_USER, 'password' => DB_PASS));
@@ -131,15 +133,15 @@ class OAuthService implements SingletonInterface
         if (!empty($this->authClient) && $this->accessType == self::ACCESS_TYPE_CLIENT) return true;
 
         // Get credentials from Authorization header
-        $authorization = app()->request->headers("authorization", '');
+        $authorization = $this->request->headers("authorization", '');
         $credentials = strpos($authorization, 'Basic ') !== false ? Utils::explode(base64_decode(str_replace('Basic ', '', $authorization)), ':') : [];
         $clientId = count($credentials) == 2 ? $credentials[0] : null;
         $clientSecret = count($credentials) == 2 ? $credentials[1] : null;
 
         // Get from header or body
         if (empty($clientId) && empty($clientSecret)) {
-            $clientId = app()->request->headers("client_id") ?? app()->request->request("client_id");
-            $clientSecret = app()->request->headers("client_secret") ?? app()->request->request("client_secret");
+            $clientId = $this->request->headers("client_id") ?? $this->request->request("client_id");
+            $clientSecret = $this->request->headers("client_secret") ?? $this->request->request("client_secret");
         }
 
         if ($this->storage->checkClientCredentials($clientId, $clientSecret)) {

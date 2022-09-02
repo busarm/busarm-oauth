@@ -2,7 +2,7 @@
 
 namespace App\Dto\Request;
 
-use System\Dto\BaseDto;
+use Busarm\PhpMini\Dto\BaseDto;
 
 class UpdateClientDto extends BaseDto
 {

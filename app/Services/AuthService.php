@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use System\Interfaces\SingletonInterface;
-use System\Traits\Singleton;
+use Busarm\PhpMini\Interfaces\SingletonInterface;
+use Busarm\PhpMini\Traits\Singleton;
 use App\Helpers\Utils;
 
 class AuthService implements SingletonInterface

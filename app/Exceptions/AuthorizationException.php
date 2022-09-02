@@ -2,7 +2,7 @@
 
 namespace App\Exceptions;
 
-use System\Exceptions\HttpException;
+use Busarm\PhpMini\Exceptions\HttpException;
 
 class AuthorizationException extends HttpException
 {

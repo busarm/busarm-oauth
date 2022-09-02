@@ -4,8 +4,8 @@ namespace App\Views;
 
 use App\Dto\Page\LoginPageDto;
 use App\Helpers\URL;
-use System\Dto\BaseDto;
-use System\View;
+use Busarm\PhpMini\Dto\BaseDto;
+use Busarm\PhpMini\View;
 
 class LoginPage extends View
 {
