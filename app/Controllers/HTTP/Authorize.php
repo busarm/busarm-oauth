@@ -80,7 +80,7 @@ class Authorize extends OAuthBaseController
 
         // Redirect to login
         else {
-            return response()->redirect('authorize/login?redirect_url=' . urlencode($this->app->request->currentUrl()));
+            return $this->app->response->redirect('authorize/login?redirect_url=' . urlencode($this->app->request->currentUrl()));
         }
     }
 
@@ -118,7 +118,7 @@ class Authorize extends OAuthBaseController
                 Utils::setCookie('request_count', $count, $timeout);
                 if ($user = ($this->oauth->storage->checkUserCredentials($dto->username, $dto->password))) {
                     $this->auth->startLoginSession($user['user_id'], 86400);
-                    return response()->redirect($dto->redirect_url);
+                    return $this->app->response->redirect($dto->redirect_url);
                 } else {
                     $remaining_count = $max_count - $count;
                     $page->msg = "Invalid Username or Password. $remaining_count attempt(s) left";
@@ -146,7 +146,7 @@ class Authorize extends OAuthBaseController
         if (!empty($redirect_url)) {
             $this->auth->clearLoginSession();
             Utils::deleteCookie(self::AUTH_REQ_TOKEN_PARAM);
-            return response()->redirect('authorize/login?redirect_url=' . urlencode($redirect_url));
+            return $this->app->response->redirect('authorize/login?redirect_url=' . urlencode($redirect_url));
         } else {
             return $this->showError("login_failed", "A Redirect Url is required");
         }
@@ -239,7 +239,7 @@ class Authorize extends OAuthBaseController
                     $this->oauth->response = new \App\Helpers\Response;
                     // Process authorization request
                     $this->oauth->server->handleAuthorizeRequest($this->oauth->request, $this->oauth->response, true, $user_id);
-                    return response()
+                    return $this->app->response
                         ->setStatusCode($this->oauth->response->getStatusCode(), $this->oauth->response->getStatusCode())
                         ->setParameters($this->oauth->response->getParameters())
                         ->addHttpHeaders($this->oauth->response->getHttpHeaders());
@@ -305,7 +305,7 @@ class Authorize extends OAuthBaseController
         $this->app->reporter->reportError(ucfirst(str_replace('_', ' ', $error)), $error_description);
 
         if (!empty($redirect_uri)) {
-            return response()->redirect(URL::parseUrl($redirect_uri, [
+            return $this->app->response->redirect(URL::parseUrl($redirect_uri, [
                 "error" => $error,
                 "error_description" => $error_description
             ]));

@@ -1,5 +1,7 @@
 <?php
 
+use function Busarm\PhpMini\Helpers\app;
+
 /*
 |--------------------------------------------------------------------------
 | ADD APPLICATION ROTUES
@@ -32,6 +34,11 @@ app()->router->addRoutes([
 
 // Authorize
 app()->router->addRoutes([
+    Route::get('/authorize/ping')->call(function () {
+        return app()->showMessage(200, "Authorize Server Online");
+    })->middlewares([
+        new ThrottleMiddleware(60, 60, 'authorize-ping')
+    ]),
     Route::get('/authorize/request')->to(Authorize::class, 'request')->middlewares([
         new ThrottleMiddleware(10, 60, 'authorize-request')
     ]),
@@ -48,6 +55,11 @@ app()->router->addRoutes([
 
 // Token
 app()->router->addRoutes([
+    Route::get('/token/ping')->call(function () {
+        return app()->showMessage(200, "Token Server Online");
+    })->middlewares([
+        new ThrottleMiddleware(60, 60, 'token-ping')
+    ]),
     Route::post('/token/request')->to(Token::class, 'request')->middlewares([
         new ThrottleMiddleware(5, 60, 'token-request')
     ]),
@@ -71,10 +83,17 @@ app()->router->addRoutes([
     ]),
     Route::post('/token/invalidate')->to(Token::class, 'invalidate')->middlewares([
         new ThrottleMiddleware(10, 60, 'token-invalidate')
+    ])
+]);
+
+
+// Resources
+app()->router->addRoutes([
+    Route::get('/resources/ping')->call(function () {
+        return app()->showMessage(200, "Resource Server Online");
+    })->middlewares([
+        new ThrottleMiddleware(60, 60, 'resources-ping')
     ]),
-
-
-    // Resources
     Route::get('/resources/scopes')->to(Resources::class, 'scopes')->middlewares([
         new AuthenticateMiddleware(),
         new ThrottleMiddleware(10, 60, 'scopes-get')
@@ -150,92 +169,6 @@ app()->router->addRoutes([
         new AuthenticateMiddleware(),
     ]),
     Route::get('/resources/getPublicKeyById')->to(Resources::class, 'getPublicKeyById')->middlewares([
-        new AuthenticateMiddleware(),
-        new AuthorizeMiddleware(SCOPE_SYSTEM, SCOPE_ADMIN),
-    ]),
-    Route::get('/resources/generateKeyPair')->to(Resources::class, 'generateKeyPair')->middlewares([
-        new AuthenticateMiddleware(),
-    ])
-]);
-
-
-// Resources
-app()->router->addRoutes([
-    Route::get('/resources/scopes')->to(Resources::class, 'scopes')->middlewares([
-        new AuthenticateMiddleware(),
-        new ThrottleMiddleware(10, 60, 'scopes-get')
-    ]),
-    Route::get('/resources/removeAccess')->to(Resources::class, 'removeAccess')->middlewares([
-        new AuthenticateMiddleware(),
-        new AuthorizeMiddleware(SCOPE_SYSTEM, SCOPE_ADMIN),
-    ]),
-    Route::post('/resources/removeAccess')->to(Resources::class, 'removeAccess')->middlewares([
-        new AuthenticateMiddleware(),
-        new AuthorizeMiddleware(SCOPE_SYSTEM, SCOPE_ADMIN),
-    ]),
-    Route::get('/resources/getUser')->to(Resources::class, 'getUser')->middlewares([
-        new AuthenticateMiddleware(),
-    ]),
-    Route::get('/resources/getUserById')->to(Resources::class, 'getUserById')->middlewares([
-        new AuthenticateMiddleware(),
-        new AuthorizeMiddleware(SCOPE_SYSTEM, SCOPE_ADMIN),
-    ]),
-    Route::get('/resources/fetchUsers')->to(Resources::class, 'fetchUsers')->middlewares([
-        new AuthenticateMiddleware(),
-        new AuthorizeMiddleware(SCOPE_SYSTEM, SCOPE_ADMIN),
-    ]),
-    Route::post('/resources/fetchUsers')->to(Resources::class, 'fetchUsers')->middlewares([
-        new AuthenticateMiddleware(),
-        new AuthorizeMiddleware(SCOPE_SYSTEM, SCOPE_ADMIN),
-    ]),
-    Route::post('/resources/createUser')->to(Resources::class, 'createUser')->middlewares([
-        new AuthenticateMiddleware(),
-        new AuthorizeMiddleware(SCOPE_SYSTEM, SCOPE_ADMIN),
-    ]),
-    Route::post('/resources/updateUser')->to(Resources::class, 'updateUser')->middlewares([
-        new AuthenticateMiddleware(),
-    ]),
-    Route::put('/resources/updateUser')->to(Resources::class, 'updateUser')->middlewares([
-        new AuthenticateMiddleware(),
-    ]),
-    Route::post('/resources/updateUserById')->to(Resources::class, 'updateUserById')->middlewares([
-        new AuthenticateMiddleware(),
-        new AuthorizeMiddleware(SCOPE_SYSTEM, SCOPE_ADMIN),
-    ]),
-    Route::put('/resources/updateUserById')->to(Resources::class, 'updateUserById')->middlewares([
-        new AuthenticateMiddleware(),
-        new AuthorizeMiddleware(SCOPE_SYSTEM, SCOPE_ADMIN),
-    ]),
-    Route::post('/resources/createClient')->to(Resources::class, 'createClient')->middlewares([
-        new AuthenticateMiddleware(),
-        new AuthorizeMiddleware(SCOPE_SYSTEM, SCOPE_ADMIN),
-    ]),
-    Route::post('/resources/updateClient')->to(Resources::class, 'updateClient')->middlewares([
-        new AuthenticateMiddleware(),
-    ]),
-    Route::put('/resources/updateClient')->to(Resources::class, 'updateClient')->middlewares([
-        new AuthenticateMiddleware(),
-    ]),
-    Route::post('/resources/updateClientById')->to(Resources::class, 'updateClientById')->middlewares([
-        new AuthenticateMiddleware(),
-        new AuthorizeMiddleware(SCOPE_SYSTEM, SCOPE_ADMIN),
-    ]),
-    Route::put('/resources/updateClientById')->to(Resources::class, 'updateClientById')->middlewares([
-        new AuthenticateMiddleware(),
-        new AuthorizeMiddleware(SCOPE_SYSTEM, SCOPE_ADMIN),
-    ]),
-    Route::post('/resources/updateClientKeys')->to(Resources::class, 'updateClientKeys')->middlewares([
-        new AuthenticateMiddleware(),
-        new AuthorizeMiddleware(SCOPE_SYSTEM, SCOPE_ADMIN),
-    ]),
-    Route::put('/resources/updateClientKeys')->to(Resources::class, 'updateClientKeys')->middlewares([
-        new AuthenticateMiddleware(),
-        new AuthorizeMiddleware(SCOPE_SYSTEM, SCOPE_ADMIN),
-    ]),
-    Route::get('/resources/getPublicKey')->to(Resources::class, 'getPublicKey')->middlewares([
-        new AuthenticateMiddleware(),
-    ]),
-    Route::get('/resources/getPublicKeyById')->to(Resources::class, 'getPublicKey')->middlewares([
         new AuthenticateMiddleware(),
         new AuthorizeMiddleware(SCOPE_SYSTEM, SCOPE_ADMIN),
     ]),

@@ -6,6 +6,8 @@ use Busarm\PhpMini\Interfaces\SingletonInterface;
 use Busarm\PhpMini\Traits\Singleton;
 use App\Helpers\Utils;
 
+use function Busarm\PhpMini\Helpers\app;
+
 class AuthService implements SingletonInterface
 {
     use Singleton;

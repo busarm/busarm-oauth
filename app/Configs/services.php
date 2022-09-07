@@ -1,5 +1,7 @@
 <?php
 
+use function Busarm\PhpMini\Helpers\env;
+
 /*
 |--------------------------------------------------------------------------
 | ADD EXTERNAL SERVICES CONFIGS

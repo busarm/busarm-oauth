@@ -9,6 +9,8 @@ use Busarm\PhpMini\Dto\BaseDto;
 use Busarm\PhpMini\Dto\ResponseDto;
 use App\Dto\Response\OAuthErrorDto;
 
+use function Busarm\PhpMini\Helpers\is_cli;
+
 /**
  * Created by PhpStorm.
  * User: Samuel

@@ -2,7 +2,7 @@
 // Define start time
 define('APP_START_TIME', floor(microtime(true) * 1000));
 // Load packages
-define('APP_BASE_PATH', dirname(__FILE__) . DIRECTORY_SEPARATOR);
+define('APP_BASE_PATH', __DIR__ . DIRECTORY_SEPARATOR);
 require_once(boolval(getenv('SEPARATE_VENDOR')) ? '/tmp/vendor/autoload.php' : APP_BASE_PATH . 'vendor/autoload.php');
 
 use App\Controllers\CLI\Client;
@@ -19,6 +19,9 @@ use Busarm\PhpMini\App;
 use Busarm\PhpMini\Config;
 use Busarm\PhpMini\Enums\Env;
 use Busarm\PhpMini\Router;
+
+use function Busarm\PhpMini\Helpers\env;
+use function Busarm\PhpMini\Helpers\run;
 
 /**
  *  Composer Command
@@ -179,8 +182,7 @@ function createApp(): App
 
     // Iniitalize App
     $config = (new Config)
-        ->setBasePath(APP_BASE_PATH)
-        ->setAppPath('app')
+        ->setAppPath(APP_BASE_PATH . 'app')
         ->setConfigPath('Configs')
         ->setViewPath('Views');
     $app = new App($config, $env);

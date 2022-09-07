@@ -5,6 +5,9 @@ namespace App\Exceptions;
 use Bugsnag\Breadcrumbs\Breadcrumb;
 use Busarm\PhpMini\ErrorReporter;
 
+use function Busarm\PhpMini\Helpers\app;
+use function Busarm\PhpMini\Helpers\is_cli;
+
 class Reporter extends ErrorReporter
 {
     /** @var \Bugsnag\Client */

@@ -15,6 +15,8 @@ use App\Exceptions\AuthorizationException;
 use App\Helpers\Request;
 use App\Helpers\Response;
 
+use function Busarm\PhpMini\Helpers\app;
+
 class OAuthService implements SingletonInterface
 {
     use Singleton;

@@ -7,6 +7,8 @@ use PHPMailer\PHPMailer\PHPMailer;
 use Busarm\PhpMini\Interfaces\SingletonInterface;
 use Busarm\PhpMini\Traits\Singleton;
 
+use function Busarm\PhpMini\Helpers\app;
+
 class MailService implements SingletonInterface
 {
     use Singleton;

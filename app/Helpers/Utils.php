@@ -6,6 +6,8 @@ use DateTime;
 use DateTimeZone;
 use Busarm\PhpMini\Crypto;
 
+use function Busarm\PhpMini\Helpers\app;
+
 /**
  * Created by VSCODE.
  * User: Samuel

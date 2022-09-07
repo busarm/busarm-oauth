@@ -2,13 +2,15 @@
 // Define start time
 define('APP_START_TIME', floor(microtime(true) * 1000));
 // Load packages
-define('APP_BASE_PATH', dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR);
+define('APP_BASE_PATH', dirname(__DIR__) . DIRECTORY_SEPARATOR);
 require_once(boolval(getenv('SEPARATE_VENDOR')) ? '/tmp/vendor/autoload.php' : APP_BASE_PATH . 'vendor/autoload.php');
 
 use Busarm\PhpMini\App;
 use Busarm\PhpMini\Config;
 use Busarm\PhpMini\Enums\Env;
 use App\Exceptions\Reporter;
+
+use function Busarm\PhpMini\Helpers\env;
 
 // Get Application Environment
 if (env('ENV') == Env::PROD || strtolower(env('ENV')) == "prod" || strtolower(env('STAGE')) == "prod") {
@@ -21,8 +23,7 @@ if (env('ENV') == Env::PROD || strtolower(env('ENV')) == "prod" || strtolower(en
 
 // Iniitalize App
 $config = (new Config)
-    ->setBasePath(APP_BASE_PATH)
-    ->setAppPath('app')
+    ->setAppPath(APP_BASE_PATH . 'app')
     ->setConfigPath('Configs')
     ->setViewPath('Views');
 $app = new App($config, $env);

@@ -1,13 +1,16 @@
 <?php
 
+
+use Busarm\PhpMini\Enums\Env;
+use function Busarm\PhpMini\Helpers\app;
+use function Busarm\PhpMini\Helpers\env;
+
 /*
 |--------------------------------------------------------------------------
 | ADD APPLICATION CONFIGS
 |--------------------------------------------------------------------------
 |
 */
-
-use Busarm\PhpMini\Enums\Env;
 
 define('APP_VERSION', env("APP_VERSION"));
 define('APP_NAME', env("APP_NAME"));

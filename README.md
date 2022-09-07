@@ -66,7 +66,6 @@ https://documenter.getpostman.com/view/20461972/UVyytYJ5
 -   `php` - Custom configurations for php server on docker environment
 -   `public` - Contains public facing scripts and files
     -   `index.php` - Public facing launch point of the app
--   `system` - Contains system framework files
 -   `workspace` - Contains docker set up for console workspace environment
 
 ## Database Migration
