@@ -16,6 +16,8 @@ use App\Helpers\Request;
 use App\Helpers\Response;
 
 use function Busarm\PhpMini\Helpers\app;
+use function Busarm\PhpMini\Helpers\request;
+use function Busarm\PhpMini\Helpers\response;
 
 class OAuthService implements SingletonInterface
 {

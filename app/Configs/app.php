@@ -2,6 +2,8 @@
 
 
 use Busarm\PhpMini\Enums\Env;
+use Busarm\PhpMini\Enums\Verbose;
+
 use function Busarm\PhpMini\Helpers\app;
 use function Busarm\PhpMini\Helpers\env;
 
@@ -48,6 +50,7 @@ define('COOKIE_PREFIX', env("COOKIE_PREFIX", "oauth"));
 */
 app()->config->setName(APP_NAME);
 app()->config->setVersion(APP_VERSION);
+app()->config->setLoggerVerborsity(app()->env != Env::PROD ? Verbose::DEBUG : Verbose::NORMAL);
 app()->config->setHttpCheckCors(env("CHECK_CORS", TRUE));
 app()->config->setHttpAllowAnyCorsDomain(app()->env != Env::PROD);
 app()->config->setHttpAllowedCorsOrigins([
