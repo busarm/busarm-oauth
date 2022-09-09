@@ -9,6 +9,7 @@ use Busarm\PhpMini\App;
 use Busarm\PhpMini\Config;
 use Busarm\PhpMini\Enums\Env;
 use App\Exceptions\Reporter;
+use Busarm\PhpMini\Middlewares\CorsMiddleware;
 
 use function Busarm\PhpMini\Helpers\env;
 
@@ -27,6 +28,8 @@ $config = (new Config)
     ->setConfigPath('Configs')
     ->setViewPath('Views');
 $app = new App($config, $env);
+// Add middlewares
+$app->addMiddleware(new CorsMiddleware());
 // Add config files
 $app->loadConfig('app');
 $app->loadConfig('database');
