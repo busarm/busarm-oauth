@@ -20,7 +20,7 @@
         "bugsnag/bugsnag": "^3.0",
         "robmorgan/phinx": "^0.12.10",
         "symfony/console": "^6.0",
-        "busarm/php-mini": "^1.0"
+        "busarm/php-mini": "^1.1"
     },
     "require-dev": {
         "odan/phinx-migrations-generator": "^5.5"

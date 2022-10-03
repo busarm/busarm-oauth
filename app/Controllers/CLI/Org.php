@@ -17,7 +17,7 @@ class Org extends OAuthBaseController
 {
     public function __construct(private App $app)
     {
-        parent::__construct(true);
+        parent::__construct();
     }
 
     /**

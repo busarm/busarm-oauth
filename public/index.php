@@ -26,17 +26,18 @@ if (env('ENV') == Env::PROD || strtolower(env('ENV')) == "prod" || strtolower(en
 $config = (new Config)
     ->setAppPath(APP_BASE_PATH . 'app')
     ->setConfigPath('Configs')
-    ->setViewPath('Views');
+    ->setViewPath('Views')
+    ->addFiles([
+        'app',
+        'database',
+        'mail',
+        'services',
+        'scopes',
+        'routes',
+    ]);
 $app = new App($config, $env);
 // Add middlewares
 $app->addMiddleware(new CorsMiddleware());
-// Add config files
-$app->loadConfig('app');
-$app->loadConfig('database');
-$app->loadConfig('mail');
-$app->loadConfig('services');
-$app->loadConfig('scopes');
-$app->loadConfig('routes');
 // Add hooks
 $app->beforeStart(function (App $app) {
     // If offline or on maintenance mode

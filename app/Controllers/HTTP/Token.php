@@ -5,6 +5,8 @@ namespace App\Controllers\HTTP;
 use App\Controllers\OAuthBaseController;
 use App\Services\OAuthScopeService;
 use Busarm\PhpMini\App;
+use Busarm\PhpMini\Interfaces\RequestInterface;
+use Busarm\PhpMini\Interfaces\ResponseInterface;
 
 /**
  * Created by PhpStorm.
@@ -15,9 +17,12 @@ use Busarm\PhpMini\App;
 
 class Token extends OAuthBaseController
 {
-    public function __construct(private App $app)
-    {
-        parent::__construct();
+    public function __construct(
+        private App $app,
+        private RequestInterface $request,
+        private ResponseInterface $response,
+    ) {
+        parent::__construct($request, $response);
     }
 
     /**
@@ -27,9 +32,9 @@ class Token extends OAuthBaseController
     {
         $result = $this->oauth->server->grantAccessToken($this->oauth->request, $this->oauth->response);
         if ($result) {
-            $this->app->sendHttpResponse(200, $result);
+            return $this->response->json($result, 200);
         }
-        $this->app->sendHttpResponse(401, $this->oauth->response->getParameters(), $this->oauth->response->getHttpHeaders());
+        return $this->response->addHttpHeaders($this->oauth->response->getHttpHeaders())->json($this->oauth->response->getParameters(), 401);
     }
 
     /**
@@ -39,9 +44,9 @@ class Token extends OAuthBaseController
     {
         // print_r($this->oauth->request);
         if ($this->oauth->validateAccessToken()) {
-            $this->app->sendHttpResponse(200, $this->success('Api access granted'));
+            return $this->success('Api access granted');
         }
-        $this->app->sendHttpResponse(401, $this->oauth->response->getParameters(), $this->oauth->response->getHttpHeaders());
+        return $this->response->addHttpHeaders($this->oauth->response->getHttpHeaders())->json($this->oauth->response->getParameters(), 401);
     }
 
     /**
@@ -50,9 +55,9 @@ class Token extends OAuthBaseController
     public function info()
     {
         if ($this->oauth->validateAccessToken()) {
-            $this->app->sendHttpResponse(200, $this->success($this->oauth->getAuthToken()));
+            return $this->success($this->oauth->getAuthToken());
         }
-        $this->app->sendHttpResponse(401, $this->oauth->response->getParameters(), $this->oauth->response->getHttpHeaders());
+        return $this->response->addHttpHeaders($this->oauth->response->getHttpHeaders())->json($this->oauth->response->getParameters(), 401);
     }
 
     /**
@@ -67,12 +72,12 @@ class Token extends OAuthBaseController
                 true
             );
             if (!empty($user)) {
-                $this->app->sendHttpResponse(200, $this->success($user));
+                return $this->success($user);
             } else {
-                $this->app->sendHttpResponse(404, $this->error('Users does not exist', 'invalid_user'));
+                return $this->response->json($this->error('Users does not exist', 'invalid_user')->toArray(), 404);
             }
         }
-        $this->app->sendHttpResponse(401, $this->oauth->response->getParameters(), $this->oauth->response->getHttpHeaders());
+        return $this->response->addHttpHeaders($this->oauth->response->getHttpHeaders())->json($this->oauth->response->getParameters(), 401);
     }
 
     /**
@@ -92,9 +97,9 @@ class Token extends OAuthBaseController
         }
 
         if ($done) {
-            $this->app->sendHttpResponse(200, $this->success('Successfully cleared access'));
+            return $this->success('Successfully cleared access');
         } else {
-            $this->app->sendHttpResponse(400, $this->error('Failed to invalidate access'));
+            return $this->response->json($this->error('Failed to invalidate access')->toArray(), 400);
         }
     }
 }

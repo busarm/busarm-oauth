@@ -15,7 +15,7 @@ class AuthorizePage extends View
 
     public function render()
     {
-    ?>
+?>
 
         <!DOCTYPE html>
         <html lang="en">
@@ -162,7 +162,7 @@ class AuthorizePage extends View
                         <!-- Logo -->
                         <?php $this->include('components/logo') ?>
                         <br>
-                        <form id="login-form" class="form" method="post" action="<?= $action ?? null ?>">
+                        <form id="login-form" class="form" method="post" action="<?= $this->data->action ?? null ?>">
                             <h3> <span style="color:#DF632D"><?= ucfirst($this->data->client_name ?? $this->data->org_name) ?></span> is requesting access to your account:</h3>
                             <?php if (!empty($this->data->user_name) || !empty($this->data->user_email)) : ?>
                                 <div>
@@ -207,6 +207,6 @@ class AuthorizePage extends View
 
         </html>
 
-    <?php
+<?php
     }
 }

@@ -49,7 +49,6 @@ class OAuthScopeService extends Scope
      * Constructor
      * @param array $scopes ['name' => 'description'][]
      * @param string $defaultScope
-     * @throws InvalidArgumentException
      */
     public function __construct($scopes = [], $defaultScope = null)
     {

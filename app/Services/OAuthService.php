@@ -3,8 +3,6 @@
 namespace App\Services;
 
 use Busarm\PhpMini\Enums\Env;
-use Busarm\PhpMini\Traits\Singleton;
-use Busarm\PhpMini\Interfaces\SingletonInterface;
 use OAuth2\Server;
 use OAuth2\GrantType\AuthorizationCode;
 use OAuth2\GrantType\ClientCredentials;
@@ -14,14 +12,16 @@ use App\Helpers\Utils;
 use App\Exceptions\AuthorizationException;
 use App\Helpers\Request;
 use App\Helpers\Response;
+use Busarm\PhpMini\Interfaces\RequestInterface;
+use Busarm\PhpMini\Interfaces\ResponseInterface;
+use Busarm\PhpMini\Interfaces\SingletonStatelessInterface;
+use Busarm\PhpMini\Traits\SingletonStateless;
 
 use function Busarm\PhpMini\Helpers\app;
-use function Busarm\PhpMini\Helpers\request;
-use function Busarm\PhpMini\Helpers\response;
 
-class OAuthService implements SingletonInterface
+class OAuthService implements SingletonStatelessInterface
 {
-    use Singleton;
+    use SingletonStateless;
 
     const ACCESS_TYPE_CLIENT = 'client';
     const ACCESS_TYPE_TOKEN = 'token';
@@ -47,11 +47,11 @@ class OAuthService implements SingletonInterface
     /** @var array Current acccess type */
     private $accessType;
 
-    public function __construct()
+    public function __construct(RequestInterface $request, ResponseInterface $response)
     {
         // Create request & response objects
-        $this->request = Request::withPhpMiniRequest(request());
-        $this->response = Response::withPhpMiniResponse(response());
+        $this->request = Request::withPhpMiniRequest($request);
+        $this->response = Response::withPhpMiniResponse($response);
 
         // Create PDO - MYSQL DB Storage
         $this->storage = new OAuthStorageService(array('dsn' => sprintf("mysql:dbname=%s;host=%s", DB_NAME, DB_HOST), 'username' => DB_USER, 'password' => DB_PASS));
@@ -65,7 +65,7 @@ class OAuthService implements SingletonInterface
             'allow_implicit' => false,
             'use_jwt_access_tokens' => true,
             'store_encrypted_token_string' => false,
-            'issuer' => app()->request->baseUrl()
+            'issuer' => $request->baseUrl()
         ));
 
         // User Credentials grant type

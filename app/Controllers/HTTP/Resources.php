@@ -11,6 +11,8 @@ use App\Dto\Request\CreateUserDto;
 use App\Dto\Request\UpdateClientDto;
 use App\Dto\Request\UpdateUserDto;
 use Busarm\PhpMini\App;
+use Busarm\PhpMini\Interfaces\RequestInterface;
+use Busarm\PhpMini\Interfaces\ResponseInterface;
 
 /**
  * Created by PhpStorm.
@@ -21,9 +23,12 @@ use Busarm\PhpMini\App;
 class Resources extends OAuthBaseController
 {
 
-    public function __construct(private App $app)
-    {
-        parent::__construct();
+    public function __construct(
+        private App $app,
+        private RequestInterface $request,
+        private ResponseInterface $response,
+    ) {
+        parent::__construct($request, $response);
     }
 
     /**
@@ -51,7 +56,7 @@ class Resources extends OAuthBaseController
         if ($done) {
             return $this->success('Successfully cleared access');
         } else {
-            $this->app->sendHttpResponse(400, $this->error('Failed to clear access'));
+            return $this->response->json($this->error('Failed to clear access')->toArray(), 400);
         }
     }
 
@@ -68,7 +73,7 @@ class Resources extends OAuthBaseController
         if (!empty($user)) {
             return $this->success($user);
         } else {
-            $this->app->sendHttpResponse(404, $this->error('Users does not exist', 'invalid_user'));
+            return $this->response->json($this->error('Users does not exist', 'invalid_user')->toArray(), 404);
         }
     }
 
@@ -81,7 +86,7 @@ class Resources extends OAuthBaseController
         if (!empty($user_id) && !empty($user = $this->oauth->storage->getCustomUser($user_id))) {
             return $this->success($user);
         } else {
-            $this->app->sendHttpResponse(404, $this->error('Users does not exist', 'invalid_user'));
+            return $this->response->json($this->error('Users does not exist', 'invalid_user')->toArray(), 404);
         }
     }
 
@@ -95,10 +100,10 @@ class Resources extends OAuthBaseController
             if (!empty($users)) {
                 return $this->success($users);
             } else {
-                $this->app->sendHttpResponse(404, $this->error('User(s) does not exist', 'invalid_users'));
+                return $this->response->json($this->error('User(s) does not exist', 'invalid_users')->toArray(), 404);
             }
         } else {
-            $this->app->sendHttpResponse(400, $this->error('User(s) not specified', 'invalid_request'));
+            return $this->response->json($this->error('User(s) not specified', 'invalid_request')->toArray(), 400);
         }
     }
 
@@ -117,13 +122,13 @@ class Resources extends OAuthBaseController
 
         // Validate Parameters
         if (!$email || !$phone || !$dial_code || !$password || !$scope) {
-            $this->app->sendHttpResponse(400, $this->error("Invalid Parameters. 'email', 'phone', 'dial_code', 'password', and 'scope' are required", 'invalid_request'));
+            return $this->response->json($this->error("Invalid Parameters. 'email', 'phone', 'dial_code', 'password', and 'scope' are required", 'invalid_request')->toArray(), 400);
         }
 
         //Check if scope is valid
         $scope = array_keys(OAuthScopeService::findScope($scope) ?: []);
         if (empty($scope)) {
-            $this->app->sendHttpResponse(400, $this->error('Invalid requested scope(s)', 'invalid_scopes'));
+            return $this->response->json($this->error('Invalid requested scope(s)', 'invalid_scopes')->toArray(), 400);
         }
 
         // Add claim scopes if openid scope is included
@@ -138,7 +143,7 @@ class Resources extends OAuthBaseController
         // Check if user exists
         if ($email && ($user = $this->oauth->storage->getUser($email))) {
             if ($force) {
-                $this->app->sendHttpResponse(400, $this->error(sprintf("User with email %s already exists", $email), 'duplicate_user'));
+                return $this->response->json($this->error(sprintf("User with email %s already exists", $email), 'duplicate_user'), 400);
             } else {
                 return $this->success([
                     'user_id' => $user['user_id'],
@@ -154,7 +159,7 @@ class Resources extends OAuthBaseController
                     'existing' => false
                 ]);
             } else {
-                $this->app->sendHttpResponse(500, $this->error('Failed to create user', 'internal_error'));
+                return $this->response->json($this->error('Failed to create user', 'internal_error')->toArray(), 500);
             }
         }
     }
@@ -192,7 +197,7 @@ class Resources extends OAuthBaseController
 
                 // Merge current scope with new scopes and remove scopes
                 $new_scopes = array_diff(
-                    array_unique(array_merge(Utils::explode($user["scope"]), $scope ?: [])), 
+                    array_unique(array_merge(Utils::explode($user["scope"]), $scope ?: [])),
                     Utils::explode($remove_scope)
                 );
 
@@ -210,13 +215,13 @@ class Resources extends OAuthBaseController
                 if ($result) {
                     return $this->success('Update Successful');
                 } else {
-                    $this->app->sendHttpResponse(400, $this->error('Failed to update user', 'invalid_user'));
+                    return $this->response->json($this->error('Failed to update user', 'invalid_user')->toArray(), 400);
                 }
             } else {
-                $this->app->sendHttpResponse(404, $this->error('User does not exist', 'invalid_user'));
+                return $this->response->json($this->error('User does not exist', 'invalid_user')->toArray(), 404);
             }
         } else {
-            $this->app->sendHttpResponse(404, $this->error('Invalid User Request', 'invalid_request'));
+            return $this->response->json($this->error('Invalid User Request', 'invalid_request')->toArray(), 404);
         }
     }
 
@@ -234,13 +239,13 @@ class Resources extends OAuthBaseController
 
         // Validate Parameters
         if (!$client_name || !$org_id || !$grant_types || !$scope) {
-            $this->app->sendHttpResponse(404, $this->error('Invalid Parameters', 'invalid_request'));
+            return $this->response->json($this->error('Invalid Parameters', 'invalid_request')->toArray(), 404);
         }
 
         // Check if scope is valid
         $scope = array_keys(OAuthScopeService::findScope($scope) ?: []);
         if (empty($scope)) {
-            $this->app->sendHttpResponse(400, $this->error('Invalid requested scope(s)', 'invalid_scopes'));
+            return $this->response->json($this->error('Invalid requested scope(s)', 'invalid_scopes')->toArray(), 400);
         }
 
         // Add claim scopes if openid scope is included
@@ -285,7 +290,7 @@ class Resources extends OAuthBaseController
                 ]);
             }
         } else {
-            $this->app->sendHttpResponse(500, $this->error('Failed to create client', 'server_error'));
+            return $this->response->json($this->error('Failed to create client', 'server_error')->toArray(), 500);
         }
     }
 
@@ -321,7 +326,7 @@ class Resources extends OAuthBaseController
 
                 // Merge current scope with new scopes and remove scopes
                 $new_scopes = array_diff(
-                    array_unique(array_merge(Utils::explode($client["scope"]), $scope ?: [])), 
+                    array_unique(array_merge(Utils::explode($client["scope"]), $scope ?: [])),
                     Utils::explode($remove_scope)
                 );
 
@@ -344,13 +349,13 @@ class Resources extends OAuthBaseController
                 if ($result) {
                     return $this->success('Update Successful');
                 } else {
-                    $this->app->sendHttpResponse(400, $this->error('Failed to update client', 'invalid_client'));
+                    return $this->response->json($this->error('Failed to update client', 'invalid_client')->toArray(), 400);
                 }
             } else {
-                $this->app->sendHttpResponse(404, $this->error('Client does not exist', 'invalid_client'));
+                return $this->response->json($this->error('Client does not exist', 'invalid_client')->toArray(), 404);
             }
         } else {
-            $this->app->sendHttpResponse(400, $this->error('Invalid Client Request', 'invalid_request'));
+            return $this->response->json($this->error('Invalid Client Request', 'invalid_request')->toArray(), 400);
         }
     }
 
@@ -375,10 +380,10 @@ class Resources extends OAuthBaseController
                     'encode' => 'base64'
                 ]);
             } else {
-                $this->app->sendHttpResponse(500, $this->error('Failed to update client keys', 'server_error'));
+                return $this->response->json($this->error('Failed to update client keys', 'server_error')->toArray(), 500);
             }
         } else {
-            $this->app->sendHttpResponse(400, $this->error('Invalid Client', 'invalid_request'));
+            return $this->response->json($this->error('Invalid Client', 'invalid_request')->toArray(), 400);
         }
     }
 
@@ -396,10 +401,10 @@ class Resources extends OAuthBaseController
                     'encode' => 'base64'
                 ]);
             } else {
-                $this->app->sendHttpResponse(404, $this->error('No public key available for this client', 'not_found'));
+                return $this->response->json($this->error('No public key available for this client', 'not_found')->toArray(), 404);
             }
         } else {
-            $this->app->sendHttpResponse(400, $this->error('Invalid Client', 'invalid_request'));
+            return $this->response->json($this->error('Invalid Client', 'invalid_request')->toArray(), 400);
         }
     }
 
@@ -417,10 +422,10 @@ class Resources extends OAuthBaseController
                     'encode' => 'base64'
                 ]);
             } else {
-                $this->app->sendHttpResponse(404, $this->error('Invalid client or no public key available for client', 'not_found'));
+                return $this->response->json($this->error('Invalid client or no public key available for client', 'not_found')->toArray(), 404);
             }
         } else {
-            $this->app->sendHttpResponse(400, $this->error('Invalid Client', 'invalid_request'));
+            return $this->response->json($this->error('Invalid Client', 'invalid_request')->toArray(), 400);
         }
     }
 
@@ -445,7 +450,7 @@ class Resources extends OAuthBaseController
                 'encode' => 'base64'
             ]);
         } else {
-            $this->app->sendHttpResponse(500, $this->error('Failed to generate key pair', 'server_error'));
+            return $this->response->json($this->error('Failed to generate key pair', 'server_error')->toArray(), 500);
         }
     }
 }

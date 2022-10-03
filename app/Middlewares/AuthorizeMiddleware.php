@@ -4,8 +4,10 @@ namespace App\Middlewares;
 
 use App\Exceptions\AuthorizationException;
 use App\Services\OAuthService;
-use Busarm\PhpMini\App;
 use Busarm\PhpMini\Interfaces\MiddlewareInterface;
+use Busarm\PhpMini\Interfaces\RequestInterface;
+use Busarm\PhpMini\Interfaces\ResponseInterface;
+use Busarm\PhpMini\Interfaces\RouteInterface;
 
 /**
  * Created by VSCODE.
@@ -22,10 +24,20 @@ class AuthorizeMiddleware implements MiddlewareInterface
         $this->scopes = $scopes;
     }
 
-    public function handle(App $app, callable $next = null): mixed
+    /**
+     * Middleware handler
+     *
+     * @param RequestInterface|RouteInterface $request
+     * @param ResponseInterface $response
+     * @param callable|null $next
+     * @return false|mixed Return `false` if failed
+     */
+    public function handle(RequestInterface|RouteInterface &$request, ResponseInterface &$response, callable $next = null): mixed
     {
-        if (!OAuthService::getInstance()->validatePermission($this->scopes)) {
-            throw new AuthorizationException();
+        if ($request instanceof RequestInterface) {
+            if (!OAuthService::make($request, $response)->validatePermission($this->scopes)) {
+                throw new AuthorizationException();
+            }
         }
         return $next ? $next() : true;
     }

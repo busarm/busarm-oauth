@@ -50,8 +50,9 @@ define('COOKIE_PREFIX', env("COOKIE_PREFIX", "oauth"));
 */
 app()->config->setName(APP_NAME);
 app()->config->setVersion(APP_VERSION);
+app()->config->setEncryptionKey(ENCRYPTION_KEY);
 app()->config->setLoggerVerborsity(app()->env != Env::PROD ? Verbose::DEBUG : Verbose::NORMAL);
-app()->config->setHttpCheckCors(env("CHECK_CORS", TRUE));
+app()->config->setHttpCheckCors(boolval(env("CHECK_CORS", TRUE)));
 app()->config->setHttpAllowAnyCorsDomain(app()->env != Env::PROD);
 app()->config->setHttpAllowedCorsOrigins([
     APP_URL,
@@ -83,3 +84,4 @@ app()->config->setHttpAllowedCorsHeaders([
 ]);
 app()->config->setHttpExposedCorsHeaders(['*']);
 app()->config->setHttpCorsMaxAge(env("MAX_CORS_AGE", 3600));
+app()->config->setHttpSessionAutoStart(false);

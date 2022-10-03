@@ -4,8 +4,10 @@ namespace App\Middlewares;
 
 use App\Exceptions\AuthenticationException;
 use App\Services\OAuthService;
-use Busarm\PhpMini\App;
 use Busarm\PhpMini\Interfaces\MiddlewareInterface;
+use Busarm\PhpMini\Interfaces\RequestInterface;
+use Busarm\PhpMini\Interfaces\ResponseInterface;
+use Busarm\PhpMini\Interfaces\RouteInterface;
 
 /**
  * Created by VSCODE.
@@ -15,10 +17,21 @@ use Busarm\PhpMini\Interfaces\MiddlewareInterface;
  */
 class AuthenticateMiddleware implements MiddlewareInterface
 {
-    public function handle(App $app, Callable $next = null): mixed
+
+    /**
+     * Middleware handler
+     *
+     * @param RequestInterface|RouteInterface $request
+     * @param ResponseInterface $response
+     * @param callable|null $next
+     * @return false|mixed Return `false` if failed
+     */
+    public function handle(RequestInterface|RouteInterface &$request, ResponseInterface &$response, callable $next = null): mixed
     {
-        if(!OAuthService::getInstance()->validateClient() && !OAuthService::getInstance()->validateAccessToken()) {
-            throw new AuthenticationException();
+        if ($request instanceof RequestInterface) {
+            if (!OAuthService::make($request, $response)->validateClient() && !OAuthService::make($request, $response)->validateAccessToken()) {
+                throw new AuthenticationException();
+            }
         }
         return $next ? $next() : true;
     }

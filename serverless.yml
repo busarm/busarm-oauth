@@ -212,21 +212,6 @@ functions:
             type: AllAtOnce
             alias: Live
 
-    Misc:
-        image:
-            name: busarm-oauth
-        description: "Perform Miscellaneous tasks"
-        memorySize: ${self:custom.avgMem.${self:provider.stage}}
-        timeout: 28 # in seconds (API Gateway has a timeout of 29 seconds)
-        events:
-            - http:
-                  path: "/misc/{any+}"
-                  method: ANY
-                  cors: false
-        deploymentSettings:
-            type: AllAtOnce
-            alias: Live
-
 resources:
     Resources:
         BusarmOauthLambdaRole:

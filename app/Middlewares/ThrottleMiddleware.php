@@ -4,17 +4,19 @@ namespace App\Middlewares;
 
 use App\Exceptions\ThrottleException;
 use App\Helpers\Utils;
-use Busarm\PhpMini\App;
 use Busarm\PhpMini\Interfaces\MiddlewareInterface;
+use Busarm\PhpMini\Interfaces\RequestInterface;
+use Busarm\PhpMini\Interfaces\ResponseInterface;
+use Busarm\PhpMini\Interfaces\RouteInterface;
 
-// TODO Use Cache instead of cookie
 /**
+ * Basic throttling using browser cookies
+ * // TODO Use Cache instead of cookie
+ * 
  * Created by VSCODE.
  * User: Samuel
  * Date: 30/7/2022
  * Time: 1:20 AM
- * 
- * Basic throttling using browser cookies
  */
 class ThrottleMiddleware implements MiddlewareInterface
 {
@@ -23,14 +25,24 @@ class ThrottleMiddleware implements MiddlewareInterface
     {
     }
 
-    public function handle(App $app, callable $next = null): mixed
+    /**
+     * Middleware handler
+     *
+     * @param RequestInterface|RouteInterface $request
+     * @param ResponseInterface $response
+     * @param callable|null $next
+     * @return false|mixed Return `false` if failed
+     */
+    public function handle(RequestInterface|RouteInterface &$request, ResponseInterface &$response, callable $next = null): mixed
     {
-        $key = md5('throttle:' . $this->name . $app->router->getRequestPath() . $app->router->getRequestMethod());
-        $count = (Utils::getCookie($key, $app->request->ip()) ?? 0) + 1;
-        if ($this->limit > 0 && $count >= $this->limit) {
-            throw new ThrottleException("Too many request. Please try again later");
-        } else {
-            Utils::setCookie($key, $count, $this->seconds, $app->request->ip());
+        if ($request instanceof RequestInterface) {
+            $key = md5('throttle:' . $this->name . $request->uri() . $request->method());
+            $count = ($request->cookie()->get($key) ?? 0) + 1;
+            if ($this->limit > 0 && $count >= $this->limit) {
+                throw new ThrottleException("Too many request. Please try again later");
+            } else {
+                $request->cookie()->set($key, $count, $this->seconds);
+            }
         }
         return $next ? $next() : true;
     }

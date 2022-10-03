@@ -8,8 +8,12 @@ use App\Services\AuthService;
 use Busarm\PhpMini\Dto\BaseDto;
 use Busarm\PhpMini\Dto\ResponseDto;
 use App\Dto\Response\OAuthErrorDto;
+use Busarm\PhpMini\Interfaces\RequestInterface;
+use Busarm\PhpMini\Interfaces\ResponseInterface;
+use Busarm\PhpMini\Request;
+use Busarm\PhpMini\Response;
 
-use function Busarm\PhpMini\Helpers\is_cli;
+use function Busarm\PhpMini\Helpers\app;
 
 /**
  * Created by PhpStorm.
@@ -19,7 +23,7 @@ use function Busarm\PhpMini\Helpers\is_cli;
  */
 class OAuthBaseController
 {
-    
+
     /** @var OAuthService */
     protected $oauth;
 
@@ -28,20 +32,25 @@ class OAuthBaseController
 
     /**
      * Server constructor.
-     * @param boolean $isCLI Is CLI Application
+     *
+     * @param RequestInterface|null $request Set to NULL if CLI
+     * @param ResponseInterface|null $response Set to NULL if CLI
      */
-    protected function __construct(public $isCLI = false)
+    protected function __construct(RequestInterface|null $request = null, ResponseInterface|null $response = null)
     {
         // Check cli
-        if ($isCLI && !is_cli()) {
+        if (!($request && $response) && !app()->isCli) {
             throw new AuthorizationException('Unauthorized request');
         }
 
+        $request = $request ?? Request::fromGlobal();
+        $response = $response ?? new Response();
+
         // Create OAuth Service
-        $this->oauth = OAuthService::getInstance();
+        $this->oauth = OAuthService::make($request, $response);
 
         // Create Auth Service
-        $this->auth = AuthService::getInstance();
+        $this->auth = AuthService::make($request, $response);
     }
 
     /**

@@ -2,29 +2,36 @@
 
 namespace App\Services;
 
-use Busarm\PhpMini\Interfaces\SingletonInterface;
-use Busarm\PhpMini\Traits\Singleton;
-use App\Helpers\Utils;
+use Busarm\PhpMini\Interfaces\RequestInterface;
+use Busarm\PhpMini\Interfaces\SingletonStatelessInterface;
+use Busarm\PhpMini\Traits\SingletonStateless;
+use DateTime;
+use DateTimeZone;
 
 use function Busarm\PhpMini\Helpers\app;
 
-class AuthService implements SingletonInterface
+class AuthService implements SingletonStatelessInterface
 {
-    use Singleton;
-    
-    const LOGIN_USER_KEY = 'login_user';
+    use SingletonStateless;
+
+    const LOGIN_USER_PARAM = 'login_user';
+    const CSRF_KEY_PARAM = 'csrf_key';
+
+    public function __construct(private RequestInterface $request)
+    {
+    }
     
     /**
      * Start Login session
      *
      * @param string $user User Id or Token
      * @param string $duration Session duration in seconds. default = 1hr
-     * @return void
+     * @return bool
      */
     public function startLoginSession($user, $duration = 3600)
     {
-        if (!$user) return;
-        return Utils::setCookie(self::LOGIN_USER_KEY, $user, $duration, app()->request->ip());
+        if (!$user) return false;
+        return $this->request->cookie()->set(self::LOGIN_USER_PARAM, $user, $duration);
     }
 
     /**
@@ -34,7 +41,7 @@ class AuthService implements SingletonInterface
      */
     public function clearLoginSession()
     {
-        Utils::deleteCookie(self::LOGIN_USER_KEY);
+        $this->request->cookie()->remove(self::LOGIN_USER_PARAM);
     }
 
     /**
@@ -44,6 +51,49 @@ class AuthService implements SingletonInterface
      */
     public function getLoginUser()
     {
-        return Utils::getCookie(self::LOGIN_USER_KEY, app()->request->ip());
+        return $this->request->cookie()->get(self::LOGIN_USER_PARAM);
+    }
+
+    /**
+     * Generate CSRF Token
+     * 
+     * @return string $key
+     * @return bool $force Force generate new key even if it exists
+     * @return string
+     */
+    public function generateCsrfToken($key = null, $force = false)
+    {
+        if ($force || (empty($key) && empty($key = $this->request->cookie()->get(self::CSRF_KEY_PARAM)))) {
+            $key = md5(uniqid($this->request->ip()));
+            $this->request->cookie()->set(self::CSRF_KEY_PARAM, $key);
+        }
+        $date = new DateTime("now", new DateTimeZone("GMT"));
+        return sha1(sprintf("%s:%s:%s", $key, $this->request->ip(), $date->format('Y-m-d H')));
+    }
+
+
+    /**
+     * Get CSRF Token
+     * @return string
+     */
+    public function getCsrfToken()
+    {
+        if (!empty($key = $this->request->cookie()->get(self::CSRF_KEY_PARAM))) {
+            return $this->generateCsrfToken($key);
+        }
+        return null;
+    }
+
+    /**
+     * CSRF Validation
+     * @param string $csrfToken
+     * @return boolean
+     */
+    public function validateCsrf($csrfToken)
+    {
+        if ($csrfToken) {
+            return $csrfToken == $this->getCsrfToken();
+        }
+        return false;
     }
 }

@@ -2,11 +2,15 @@
 
 namespace App\Services;
 
+use Busarm\PhpMini\Traits\SingletonStateless;
 use OAuth2\Storage\Pdo;
 use App\Services\OAuthScopeService;
+use Busarm\PhpMini\Interfaces\SingletonStatelessInterface;
 
-class OAuthStorageService extends Pdo
+class OAuthStorageService extends Pdo implements SingletonStatelessInterface
 {
+    use SingletonStateless;
+    
     public function __construct($connection, $config = array())
     {
         // Add custom configs
@@ -48,7 +52,7 @@ class OAuthStorageService extends Pdo
     /**
      * @param string $unique (e.g user_id, email, phone)
      * @param string $password
-     * @return bool
+     * @return array|false
      */
     public function checkUserCredentials($unique, $password)
     {
@@ -264,7 +268,7 @@ class OAuthStorageService extends Pdo
      * @param string $client_id
      * @param string $client_name
      * @param null|string $redirect_uri
-     * @param null|array  $grant_types
+     * @param null|string  $grant_types
      * @param null|string $scope
      * @param null|string $user_id
      * @param bool $issue_jwt

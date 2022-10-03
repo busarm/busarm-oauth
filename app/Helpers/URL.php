@@ -26,7 +26,7 @@ class URL
      * Get PATH for APP
      *
      * @param string $path
-     * @return void
+     * @return string
      */
     public static function appUrl($path = '')
     {
@@ -37,26 +37,11 @@ class URL
      * Get PATH for Asset
      *
      * @param string $path
-     * @return void
+     * @return string
      */
     public static function assetUrl($path = '')
     {
         return trim(ASSET_URL, ' /') . '/' . $path;
-    }
-
-    /**
-     * Get base url
-     *
-     * @param string $path
-     * @return string
-     */
-    public static function baseUrl($path = '', $params = [])
-    {
-        $url = trim(app()->request->baseUrl(), ' /') . '/' . $path;
-        if (!empty($params)) {
-            $url .= '?' . ((function_exists('http_build_query')) ? http_build_query($params) : self::buildUrlParams($params));
-        }
-        return $url;
     }
 
     /**
@@ -112,22 +97,5 @@ class URL
             }
         }
         return $url;
-    }
-
-    /**
-     * Generate secure link
-     *
-     * @param string $link
-     * @return string
-     */
-    public static function generateSecureLink($link)
-    {
-        if ($link) {
-            $data = Crypto::encrypt(ENCRYPTION_KEY, $link);
-            if ($data) {
-                return URL::baseUrl('misc/link', ['data' => $data]);
-            }
-        }
-        return null;
     }
 }

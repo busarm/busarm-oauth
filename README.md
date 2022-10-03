@@ -7,8 +7,8 @@ Busarm Authorization server. Manages user authentication and authorization to ac
 ## Specification
 
 -   PHP Version - Version >= 8.0
--   Framework - Bshaffer's Oauth 2.0 Server build on top of Busarm Mini PHP Framework
-    -   Busarm Mini - https://github.com/Busarm/php-mini
+-   Framework - Bshaffer's Oauth 2.0 Server build on top of Busarm PHP Mini Framework
+    -   Busarm PHP Mini - https://github.com/Busarm/php-mini
     -   Bshaffer OAuth 2.0 - https://bshaffer.github.io/oauth2-server-php-docs/
     -   OAuth 2.0 - See https://auth0.com/intro-to-iam/what-is-oauth-2/ and https://oauth.net/2/
 -   MYSQL Version - Version >= 8.0
