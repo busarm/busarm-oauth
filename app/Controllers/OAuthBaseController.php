@@ -5,7 +5,6 @@ namespace App\Controllers;
 use App\Exceptions\AuthorizationException;
 use App\Services\OAuthService;
 use App\Services\AuthService;
-use Busarm\PhpMini\Dto\BaseDto;
 use Busarm\PhpMini\Dto\ResponseDto;
 use App\Dto\Response\OAuthErrorDto;
 use Busarm\PhpMini\Interfaces\RequestInterface;
@@ -36,7 +35,7 @@ class OAuthBaseController
      * @param RequestInterface|null $request Set to NULL if CLI
      * @param ResponseInterface|null $response Set to NULL if CLI
      */
-    protected function __construct(RequestInterface|null $request = null, ResponseInterface|null $response = null)
+    protected function __construct(private RequestInterface|null $request = null, private ResponseInterface|null $response = null)
     {
         // Check cli
         if (!($request && $response) && !app()->isCli) {
@@ -54,9 +53,23 @@ class OAuthBaseController
     }
 
     /**
+     * Get server status
+     */
+    public function ping()
+    {
+        $response = new ResponseDto();
+        $response->success = true;
+        $response->message = 'Server Online';
+        $response->env = app()->env;
+        $response->version = app()->config->version;
+        $response->duration = (floor(microtime(true) * 1000) - app()->startTimeMs);
+        return $response;
+    }
+
+    /**
      * Get success response
      *
-     * @param BaseDto|string|array|object $data
+     * @param \Busarm\PhpMini\Dto\BaseDto|string|array|object $data
      * @return ResponseDto
      */
     public function success($data): ResponseDto

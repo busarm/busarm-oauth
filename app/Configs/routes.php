@@ -26,9 +26,7 @@ app()->get('ping')->call(function () {
 
 // Authorize
 app()->router->addRoutes([
-    Route::get('authorize/ping')->call(function () {
-        return "Authorize Server Online";
-    })->middlewares([
+    Route::get('authorize/ping')->to(Authorize::class, 'ping')->middlewares([
         new ThrottleMiddleware(60, 60, 'authorize-ping')
     ]),
     Route::get('authorize/request')->to(Authorize::class, 'request')->middlewares([
@@ -47,9 +45,7 @@ app()->router->addRoutes([
 
 // Token
 app()->router->addRoutes([
-    Route::get('token/ping')->call(function () {
-        return "Token Server Online";
-    })->middlewares([
+    Route::get('token/ping')->to(Token::class, 'ping')->middlewares([
         new ThrottleMiddleware(60, 60, 'token-ping')
     ]),
     Route::post('token/request')->to(Token::class, 'request')->middlewares([
@@ -81,9 +77,7 @@ app()->router->addRoutes([
 
 // Resources
 app()->router->addRoutes([
-    Route::get('resources/ping')->call(function () {
-        return "Resource Server Online";
-    })->middlewares([
+    Route::get('resources/ping')->to(Resources::class, 'ping')->middlewares([
         new ThrottleMiddleware(60, 60, 'resources-ping')
     ]),
     Route::get('resources/scopes')->to(Resources::class, 'scopes')->middlewares([

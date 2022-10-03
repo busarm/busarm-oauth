@@ -9,6 +9,7 @@ use Busarm\PhpMini\App;
 use Busarm\PhpMini\Config;
 use Busarm\PhpMini\Enums\Env;
 use App\Exceptions\Reporter;
+use App\Middlewares\HelmetMiddleware;
 use Busarm\PhpMini\Middlewares\CorsMiddleware;
 
 use function Busarm\PhpMini\Helpers\env;
@@ -38,6 +39,7 @@ $config = (new Config)
 $app = new App($config, $env);
 // Add middlewares
 $app->addMiddleware(new CorsMiddleware());
+$app->addMiddleware(new HelmetMiddleware(csp: false));
 // Add hooks
 $app->beforeStart(function (App $app) {
     // If offline or on maintenance mode

@@ -33,7 +33,7 @@ class Resources extends OAuthBaseController
 
     /**
      * Get all scopes
-     * */
+     */
     public function scopes()
     {
         return $this->success(OAuthScopeService::$allScopes);
@@ -143,7 +143,7 @@ class Resources extends OAuthBaseController
         // Check if user exists
         if ($email && ($user = $this->oauth->storage->getUser($email))) {
             if ($force) {
-                return $this->response->json($this->error(sprintf("User with email %s already exists", $email), 'duplicate_user'), 400);
+                return $this->response->json($this->error(sprintf("User with email %s already exists", $email), 'duplicate_user')->toArray(), 400);
             } else {
                 return $this->success([
                     'user_id' => $user['user_id'],
