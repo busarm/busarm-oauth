@@ -47,11 +47,11 @@ class OAuthService implements SingletonStatelessInterface
     /** @var array Current acccess type */
     private $accessType;
 
-    public function __construct(RequestInterface $request, ResponseInterface $response)
+    public function __construct(RequestInterface $request)
     {
         // Create request & response objects
         $this->request = Request::withPhpMiniRequest($request);
-        $this->response = Response::withPhpMiniResponse($response);
+        $this->response = new Response;
 
         // Create PDO - MYSQL DB Storage
         $this->storage = new OAuthStorageService(array('dsn' => sprintf("mysql:dbname=%s;host=%s", DB_NAME, DB_HOST), 'username' => DB_USER, 'password' => DB_PASS));

@@ -5,6 +5,7 @@ namespace App\Middlewares;
 use App\Exceptions\ThrottleException;
 use App\Helpers\Utils;
 use Busarm\PhpMini\Interfaces\MiddlewareInterface;
+use Busarm\PhpMini\Interfaces\RequestHandlerInterface;
 use Busarm\PhpMini\Interfaces\RequestInterface;
 use Busarm\PhpMini\Interfaces\ResponseInterface;
 use Busarm\PhpMini\Interfaces\RouteInterface;
@@ -29,11 +30,10 @@ class ThrottleMiddleware implements MiddlewareInterface
      * Middleware handler
      *
      * @param RequestInterface|RouteInterface $request
-     * @param ResponseInterface $response
-     * @param callable|null $next
-     * @return false|mixed Return `false` if failed
+     * @param RequestHandlerInterface $handle
+     * @return ResponseInterface
      */
-    public function handle(RequestInterface|RouteInterface &$request, ResponseInterface &$response, callable $next = null): mixed
+    public function process(RequestInterface|RouteInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         if ($request instanceof RequestInterface) {
             $key = md5('throttle:' . $this->name . $request->uri() . $request->method());
@@ -44,6 +44,6 @@ class ThrottleMiddleware implements MiddlewareInterface
                 $request->cookie()->set($key, $count, $this->seconds);
             }
         }
-        return $next ? $next() : true;
+        return $handler->handle($request);
     }
 }

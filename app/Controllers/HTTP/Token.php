@@ -22,7 +22,7 @@ class Token extends OAuthBaseController
         private RequestInterface $request,
         private ResponseInterface $response,
     ) {
-        parent::__construct($request, $response);
+        parent::__construct($request);
     }
 
     /**
@@ -42,7 +42,6 @@ class Token extends OAuthBaseController
      */
     public function verify()
     {
-        // print_r($this->oauth->request);
         if ($this->oauth->validateAccessToken()) {
             return $this->success('Api access granted');
         }

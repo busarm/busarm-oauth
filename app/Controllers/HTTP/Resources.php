@@ -28,7 +28,7 @@ class Resources extends OAuthBaseController
         private RequestInterface $request,
         private ResponseInterface $response,
     ) {
-        parent::__construct($request, $response);
+        parent::__construct($request);
     }
 
     /**

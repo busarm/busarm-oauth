@@ -43,7 +43,7 @@ class Authorize extends OAuthBaseController
         private ResponseInterface $response,
         private AuthService $authService
     ) {
-        parent::__construct($request, $response);
+        parent::__construct($request);
     }
 
     /**
@@ -87,7 +87,7 @@ class Authorize extends OAuthBaseController
 
         // Redirect to login
         else {
-            return $this->response->redirect('authorize/login?redirect_url=' . urlencode($this->request->currentUrl()));
+            return $this->response->redirect($this->request->baseUrl() . '/authorize/login?redirect_url=' . urlencode($this->request->currentUrl()));
         }
     }
 
@@ -153,7 +153,7 @@ class Authorize extends OAuthBaseController
         if (!empty($redirect_url)) {
             $this->auth->clearLoginSession();
             $this->request->cookie()->remove(self::AUTH_REQ_TOKEN_PARAM);
-            return $this->response->redirect('authorize/login?redirect_url=' . urlencode($redirect_url));
+            return $this->response->redirect($this->request->baseUrl() . '/authorize/login?redirect_url=' . urlencode($redirect_url));
         } else {
             return $this->showError("login_failed", "A Redirect Url is required");
         }

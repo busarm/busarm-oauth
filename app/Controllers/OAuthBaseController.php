@@ -33,23 +33,21 @@ class OAuthBaseController
      * Server constructor.
      *
      * @param RequestInterface|null $request Set to NULL if CLI
-     * @param ResponseInterface|null $response Set to NULL if CLI
      */
-    protected function __construct(private RequestInterface|null $request = null, private ResponseInterface|null $response = null)
+    protected function __construct(private RequestInterface|null $request = null)
     {
         // Check cli
-        if (!($request && $response) && !app()->isCli) {
+        if (!$request && !app()->isCli) {
             throw new AuthorizationException('Unauthorized request');
         }
 
         $request = $request ?? Request::fromGlobal();
-        $response = $response ?? new Response();
 
         // Create OAuth Service
-        $this->oauth = OAuthService::make($request, $response);
+        $this->oauth = OAuthService::make($request);
 
         // Create Auth Service
-        $this->auth = AuthService::make($request, $response);
+        $this->auth = AuthService::make($request);
     }
 
     /**

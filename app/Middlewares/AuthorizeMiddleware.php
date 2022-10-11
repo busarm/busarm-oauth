@@ -5,6 +5,7 @@ namespace App\Middlewares;
 use App\Exceptions\AuthorizationException;
 use App\Services\OAuthService;
 use Busarm\PhpMini\Interfaces\MiddlewareInterface;
+use Busarm\PhpMini\Interfaces\RequestHandlerInterface;
 use Busarm\PhpMini\Interfaces\RequestInterface;
 use Busarm\PhpMini\Interfaces\ResponseInterface;
 use Busarm\PhpMini\Interfaces\RouteInterface;
@@ -28,17 +29,16 @@ class AuthorizeMiddleware implements MiddlewareInterface
      * Middleware handler
      *
      * @param RequestInterface|RouteInterface $request
-     * @param ResponseInterface $response
-     * @param callable|null $next
-     * @return false|mixed Return `false` if failed
+     * @param RequestHandlerInterface $handle
+     * @return ResponseInterface
      */
-    public function handle(RequestInterface|RouteInterface &$request, ResponseInterface &$response, callable $next = null): mixed
+    public function process(RequestInterface|RouteInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         if ($request instanceof RequestInterface) {
-            if (!OAuthService::make($request, $response)->validatePermission($this->scopes)) {
+            if (!OAuthService::make($request)->validatePermission($this->scopes)) {
                 throw new AuthorizationException();
             }
         }
-        return $next ? $next() : true;
+        return $handler->handle($request);
     }
 }

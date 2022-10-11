@@ -4,6 +4,7 @@ namespace App\Middlewares;
 
 use App\Exceptions\ThrottleException;
 use Busarm\PhpMini\Interfaces\MiddlewareInterface;
+use Busarm\PhpMini\Interfaces\RequestHandlerInterface;
 use Busarm\PhpMini\Interfaces\RequestInterface;
 use Busarm\PhpMini\Interfaces\ResponseInterface;
 use Busarm\PhpMini\Interfaces\RouteInterface;
@@ -39,28 +40,21 @@ class HelmetMiddleware implements MiddlewareInterface
      * Middleware handler
      *
      * @param RequestInterface|RouteInterface $request
-     * @param ResponseInterface $response
-     * @param callable|null $next
-     * @return false|mixed Return `false` if failed
+     * @param RequestHandlerInterface $handle
+     * @return ResponseInterface
      */
-    public function handle(RequestInterface|RouteInterface &$request, ResponseInterface &$response, callable $next = null): mixed
+    public function process(RequestInterface|RouteInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $result = $next ? $next() : true;
-        if ($result && $result instanceof ResponseInterface) {
-            $this->process($result);
-        } else {
-            $this->process($response);
-        }
-        return $result;
+        return $this->handle($handler->handle($request));
     }
 
     /**
      * Process
      *
      * @param ResponseInterface $response
-     * @return void
+     * @return ResponseInterface
      */
-    private function process(ResponseInterface &$response)
+    private function handle(ResponseInterface $response): ResponseInterface
     {
         $this->referrerPolicy and $response->setHttpHeader('Referrer-Policy', $this->referrerPolicy);
         $this->xssProtection and $response->setHttpHeader('X-XSS-Protection', $this->xssProtection);
@@ -68,8 +62,8 @@ class HelmetMiddleware implements MiddlewareInterface
         $this->xContentTypeOption and $response->setHttpHeader('X-Content-Type-Options', $this->xContentTypeOption);
         $this->hsts and $response->setHttpHeader('Strict-Transport-Security', $this->hsts);
         $this->csp and $response->setHttpHeader('Content-Security-Policy', $this->generateCSP($this->csp));
+        return $response;
     }
-
 
     /**
      * Generate Content Site Policy string from array
