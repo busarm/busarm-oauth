@@ -21,7 +21,9 @@ use App\Middlewares\ThrottleMiddleware;
 // Generic
 app()->get('ping')->call(function () {
     return "Server Online";
-});
+})->middlewares([
+    new ThrottleMiddleware(5, 60, 'app-ping')
+]);
 
 
 // Authorize

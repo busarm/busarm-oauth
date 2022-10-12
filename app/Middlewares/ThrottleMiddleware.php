@@ -10,9 +10,11 @@ use Busarm\PhpMini\Interfaces\RequestInterface;
 use Busarm\PhpMini\Interfaces\ResponseInterface;
 use Busarm\PhpMini\Interfaces\RouteInterface;
 
+use function Busarm\PhpMini\Helpers\out;
+
 /**
  * Basic throttling using browser cookies
- * // TODO Use Cache instead of cookie
+ * // TODO Add Handling with Cache
  * 
  * Created by VSCODE.
  * User: Samuel
@@ -22,8 +24,18 @@ use Busarm\PhpMini\Interfaces\RouteInterface;
 class ThrottleMiddleware implements MiddlewareInterface
 {
 
-    public function __construct(private $limit = 0, private $seconds = 60, private $name = null)
-    {
+    /**
+     * @param integer $limit
+     * @param integer $seconds
+     * @param string|null|null $name
+     * @param boolean $route Used for specific route. Set to false if used as a global middleware
+     */
+    public function __construct(
+        private int $limit = 0,
+        private int $seconds = 60,
+        private string|null $name = null,
+        private bool $route = true
+    ) {
     }
 
     /**
@@ -36,14 +48,55 @@ class ThrottleMiddleware implements MiddlewareInterface
     public function process(RequestInterface|RouteInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         if ($request instanceof RequestInterface) {
-            $key = md5('throttle:' . $this->name . $request->uri() . $request->method());
-            $count = ($request->cookie()->get($key) ?? 0) + 1;
-            if ($this->limit > 0 && $count >= $this->limit) {
-                throw new ThrottleException("Too many request. Please try again later");
+            if (!empty($request->session()->getId())) {
+                $this->handleWithSession($request);
             } else {
-                $request->cookie()->set($key, $count, $this->seconds);
+                $this->handleWithCookie($request);
             }
         }
         return $handler->handle($request);
+    }
+
+    /**
+     * Handle throttling with cookies
+     *
+     * @param RequestInterface $request
+     * @return void
+     */
+    private function handleWithCookie(RequestInterface $request)
+    {
+        $key = md5(ThrottleMiddleware::class . $this->name . ($this->route ? $request->uri() . $request->method() : ''));
+        $count = ($request->cookie()->get($key) ?? 0) + 1;
+        if ($this->limit > 0 && $count >= $this->limit) {
+            throw new ThrottleException("Too many request. Please try again later");
+        }
+        $request->cookie()->set($key, $count, $this->seconds);
+    }
+
+    /**
+     * Handle throttling with session
+     *
+     * @param RequestInterface $request
+     * @return void
+     */
+    private function handleWithSession(RequestInterface $request)
+    {
+        $key = md5(ThrottleMiddleware::class . $this->name . ($this->route ? $request->uri() . $request->method() : ''));
+        $count = 0;
+        $expiry = time() + $this->seconds;
+        $data = $request->session()->get($key) ?? [];
+        if (!empty($data)) {
+            $count = ($data['count'] ?? $count) + 1;
+            $expiry = $data['expiry'] ?? $expiry;
+            if ($this->limit > 0 && $count >= $this->limit) {
+                // Remove session if expired
+                if ($expiry <= time()) $request->session()->remove($key);
+                throw new ThrottleException("Too many request. Please try again later");
+            }
+        }
+        $request->session()->set($key, [
+            'count' => $count,
+            'expiry' => $expiry,
+        ]);
     }
 }

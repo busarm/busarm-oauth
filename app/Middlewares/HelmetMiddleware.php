@@ -2,7 +2,6 @@
 
 namespace App\Middlewares;
 
-use App\Exceptions\ThrottleException;
 use Busarm\PhpMini\Interfaces\MiddlewareInterface;
 use Busarm\PhpMini\Interfaces\RequestHandlerInterface;
 use Busarm\PhpMini\Interfaces\RequestInterface;

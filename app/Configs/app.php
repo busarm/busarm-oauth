@@ -23,8 +23,6 @@ define('SYSTEM_SHUT_DOWN_TIME', env("SYSTEM_SHUT_DOWN_TIME", false));
 define('SYSTEM_START_UP_TIME', env("SYSTEM_START_UP_TIME", false));
 define('MAINTENANCE_MODE', env("MAINTENANCE_MODE", false));
 
-define('ENCRYPTION_KEY', env("ENCRYPTION_KEY", ""));
-
 define('EMAIL_INFO', env("EMAIL_INFO", ""));
 define('EMAIL_SUPPORT', env("EMAIL_SUPPORT", ""));
 
@@ -33,14 +31,6 @@ define('API_URL', env("API_URL"));
 define('ASSET_URL', env("ASSET_URL"));
 define('PARTNER_URL', env("PARTNER_URL"));
 
-/*
-|--------------------------------------------------------------------------
-| Cookie Prefix
-|--------------------------------------------------------------------------
-|
-| Prefix appended to cookie name to prevent collisions
-*/
-define('COOKIE_PREFIX', env("COOKIE_PREFIX", "oauth"));
 
 /*
 |--------------------------------------------------------------------------
@@ -50,7 +40,7 @@ define('COOKIE_PREFIX', env("COOKIE_PREFIX", "oauth"));
 */
 app()->config->setName(APP_NAME);
 app()->config->setVersion(APP_VERSION);
-app()->config->setEncryptionKey(ENCRYPTION_KEY);
+app()->config->setEncryptionKey(env("ENCRYPTION_KEY", md5(app()->env . APP_NAME . APP_VERSION)));
 app()->config->setLoggerVerborsity(app()->env != Env::PROD ? Verbose::DEBUG : Verbose::NORMAL);
 app()->config->setHttpCheckCors(boolval(env("CHECK_CORS", TRUE)));
 app()->config->setHttpAllowAnyCorsDomain(app()->env != Env::PROD);
@@ -85,3 +75,4 @@ app()->config->setHttpAllowedCorsHeaders([
 app()->config->setHttpExposedCorsHeaders(['*']);
 app()->config->setHttpCorsMaxAge(env("MAX_CORS_AGE", 3600));
 app()->config->setHttpSessionAutoStart(false);
+app()->config->setCookiePrefix(env("COOKIE_PREFIX", "oauth"));

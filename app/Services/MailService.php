@@ -65,8 +65,8 @@ class MailService implements SingletonInterface
 
             // Recipients
             $from = !empty($from) ? $from : EMAIL_INFO;
-            $this->mailer->setFrom($from, COMPANY_NAME ?? APP_NAME);
-            $this->mailer->addReplyTo($from, COMPANY_NAME ?? APP_NAME);
+            $this->mailer->setFrom($from, COMPANY_NAME ?? app()->config->name);
+            $this->mailer->addReplyTo($from, COMPANY_NAME ?? app()->config->name);
             $this->mailer->addAddress($to);
 
             // Content
